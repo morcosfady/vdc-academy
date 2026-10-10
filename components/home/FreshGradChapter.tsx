@@ -110,7 +110,7 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
 
 export function FreshGradChapter() {
   return (
-    <section id="ch-5" aria-labelledby="grad-title" className="theme-light cv-auto relative overflow-hidden py-24 md:py-36">
+    <section id="ch-5" aria-labelledby="grad-title" className="theme-light relative overflow-hidden py-20 md:py-32">
       <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#1f5c99] opacity-[0.06]" />
       <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-12 px-5 md:px-8 lg:grid-cols-12">
         <div className="lg:col-span-6">

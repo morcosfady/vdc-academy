@@ -24,7 +24,7 @@ const software = ["Revit", "Navisworks", "AutoCAD", "Autodesk Construction Cloud
 
 export function Why() {
   return (
-    <section id="ch-3" aria-labelledby="why-title" className="theme-light cv-auto relative overflow-hidden py-24 md:py-36">
+    <section id="ch-3" aria-labelledby="why-title" className="theme-light relative overflow-hidden py-20 md:py-32">
       <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#1f5c99] opacity-[0.07]" />
       <div className="relative z-10 mx-auto max-w-[1280px] px-5 md:px-8">
         <Slab className="max-w-3xl">

@@ -1,0 +1,142 @@
+[
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 0,
+  "y": 0,
+  "std": 52,
+  "mean": 57,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 1,
+  "y": 720,
+  "std": 46.9,
+  "mean": 48,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 2,
+  "y": 1440,
+  "std": 102.4,
+  "mean": 118,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 3,
+  "y": 2160,
+  "std": 94.7,
+  "mean": 156,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 4,
+  "y": 2880,
+  "std": 96.5,
+  "mean": 182,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 5,
+  "y": 3600,
+  "std": 33.7,
+  "mean": 37,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 6,
+  "y": 4320,
+  "std": 84.3,
+  "mean": 69,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 7,
+  "y": 5040,
+  "std": 55.3,
+  "mean": 214,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 8,
+  "y": 5760,
+  "std": 85.5,
+  "mean": 70,
+  "empty": false,
+  "indicatorOverlap": false
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 9,
+  "y": 6480,
+  "std": 33.6,
+  "mean": 31,
+  "empty": false,
+  "indicatorOverlap": true
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 10,
+  "y": 7200,
+  "std": 36.8,
+  "mean": 33,
+  "empty": false,
+  "indicatorOverlap": true
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 11,
+  "y": 7920,
+  "std": 40,
+  "mean": 36,
+  "empty": false,
+  "indicatorOverlap": true
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 12,
+  "y": 8640,
+  "std": 41.4,
+  "mean": 37,
+  "empty": false,
+  "indicatorOverlap": true
+ },
+ {
+  "theme": "dark",
+  "w": 1440,
+  "i": 13,
+  "y": 9360,
+  "std": 43,
+  "mean": 38,
+  "empty": false,
+  "indicatorOverlap": false
+ }
+]

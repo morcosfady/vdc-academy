@@ -30,7 +30,7 @@ export function Closing() {
   const state = useRef(newState({ lod: 400 }));
   return (
     <>
-      <section id="ch-7" className="theme-dark relative overflow-hidden py-24 md:py-40">
+      <section id="ch-7" className="theme-dark relative overflow-hidden py-20 md:py-32">
         <div className="absolute inset-0" aria-hidden>
           <Photo photo={photos.facade} className="opacity-45" style={{ objectPosition: "50% 40%" }} />
         </div>
@@ -54,7 +54,7 @@ export function Closing() {
         </div>
       </section>
 
-      <section aria-labelledby="faq-title" className="cv-auto mx-auto max-w-4xl px-5 py-24 md:px-10">
+      <section aria-labelledby="faq-title" className="mx-auto max-w-4xl px-5 py-24 md:px-10">
         <p className="label mb-5">Questions</p>
         <h2 id="faq-title" className="display-md mb-10">Before you apply</h2>
         <Faq />

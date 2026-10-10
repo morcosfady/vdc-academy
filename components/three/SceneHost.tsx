@@ -12,7 +12,7 @@ export default function SceneHost() {
       style={{ position: "fixed", inset: 0, zIndex: 5 }}
       dpr={[1, 1.5]}
       gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
-      eventSource={undefined}
+      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
     >
       <PerformanceMonitor
         onDecline={() => {

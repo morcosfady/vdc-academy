@@ -38,10 +38,17 @@ export function Slab({
           io.disconnect();
         }
       },
-      { rootMargin: "0px 0px -8% 0px" },
+      { rootMargin: "0px 0px 18% 0px" },
     );
     io.observe(el);
-    return () => io.disconnect();
+    // Safety net: content must never stay hidden
+    const safety = window.setTimeout(() => {
+      if (el.getBoundingClientRect().top < window.innerHeight * 2.5) setState("shown");
+    }, 3500);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(safety);
+    };
   }, [reduce]);
 
   return (

@@ -289,12 +289,6 @@ html.lenis body {
     opacity 0.7s ease-out;
 }
 
-/* Skip layout and paint of off-screen chapters until they are near the viewport */
-.cv-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 900px;
-}
-
 /* Abstract floor-plan pattern used inside cards */
 .blueprint-lines {
   background-image:

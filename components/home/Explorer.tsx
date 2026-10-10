@@ -73,7 +73,7 @@ export function Explorer() {
   }
 
   return (
-    <section id="ch-2" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden py-24 md:py-36">
+    <section id="ch-2" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden py-20 md:py-32">
       <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#7db3e8] opacity-[0.07]" />
       <div aria-hidden className="pointer-events-none absolute end-[-10%] top-1/2 size-[760px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(90,160,225,0.22),transparent_65%)]" />
       <div className="relative z-10 mx-auto grid max-w-[1280px] gap-10 px-5 md:px-8 lg:grid-cols-12">

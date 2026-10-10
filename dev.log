@@ -1,0 +1,299 @@
+$ next dev --turbopack
+   ▲ Next.js 15.5.27 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.137.1:3000
+
+ ✓ Starting...
+ ✓ Ready in 4.1s
+ ○ Compiling / ...
+ ✓ Compiled / in 14.5s
+ ⚠ ./assets/images/card-facade.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-facade.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/card-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/card-steel.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-steel.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/hero-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/hero-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/light-crane.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/light-crane.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-facade.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-facade.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-steel.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-steel.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ GET / 200 in 18976ms
+ ⚠ ./assets/images/card-facade.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-facade.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/card-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/card-steel.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-steel.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/hero-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/hero-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/light-crane.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/light-crane.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-facade.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-facade.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-steel.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-steel.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ GET /?gl=force 200 in 1183ms
+ ⚠ ./assets/images/card-facade.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-facade.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/card-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/card-steel.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/card-steel.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/hero-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/hero-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/light-crane.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/light-crane.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-facade.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-facade.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-glass.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-glass.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+
+ ⚠ ./assets/images/panel-steel.avif
+AVIF image not supported
+This version of Turbopack does not support AVIF images, will emit without optimization or encoding
+
+Import trace:
+  Server Component:
+    ./assets/images/panel-steel.avif
+    ./assets/images/index.ts
+    ./components/home/Why.tsx
+    ./app/page.tsx
+
+

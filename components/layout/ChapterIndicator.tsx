@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-// Elevator-style floor numbers on the right edge. Items are { id, label }, ids match section ids.
+// A slim progress rail in the right margin (6 ticks). It only appears on wide screens (1400px and up) where the
+// 1280px content leaves a 60px safe zone, so it can never sit on top of text or images. Labels show on hover or focus.
 export function ChapterIndicator({ items }: { items: { id: string; label: string }[] }) {
   const [active, setActive] = useState(items[0]?.id);
 
@@ -19,21 +20,29 @@ export function ChapterIndicator({ items }: { items: { id: string; label: string
   }, [items]);
 
   return (
-    <nav aria-label="Chapters" className="fixed end-4 top-1/2 z-40 hidden -translate-y-1/2 xl:block">
-      <ol className="glass-blur space-y-3 rounded-full border border-[#365b62] bg-[#0a1d23]/75 px-4 py-5">
-        {items.map((it, i) => (
-          <li key={it.id}>
-            <a
-              href={`#${it.id}`}
-              aria-label={`Chapter ${i + 1}: ${it.label}`}
-              aria-current={active === it.id ? "true" : undefined}
-              className={`label flex items-center justify-end gap-3 !text-[10px] transition-colors ${active === it.id ? "!text-[#7db3e8]" : "!text-[#a9bcc4] hover:!text-[#f2f7fb]"}`}
-            >
-              <span className={`transition-opacity ${active === it.id ? "opacity-100" : "opacity-0"}`}>{it.label}</span>
-              <span>{String(i + 1).padStart(2, "0")}</span>
-            </a>
-          </li>
-        ))}
+    <nav aria-label="Chapters" className="fixed end-2 top-1/2 z-40 hidden -translate-y-1/2 min-[1400px]:block">
+      <ol className="flex flex-col items-end gap-1">
+        {items.map((it, i) => {
+          const on = active === it.id;
+          return (
+            <li key={it.id}>
+              <a
+                href={`#${it.id}`}
+                aria-label={`Chapter ${i + 1}: ${it.label}`}
+                aria-current={on ? "true" : undefined}
+                className="group relative flex h-7 w-10 items-center justify-end"
+              >
+                <span className="pointer-events-none absolute end-12 whitespace-nowrap rounded-md border border-[#365b62] bg-[#0a1d23]/90 px-3 py-1.5 text-[13px] text-[#eaf2f7] opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                  {it.label}
+                </span>
+                <span
+                  aria-hidden
+                  className={`block h-[3px] rounded-full transition-all duration-300 ${on ? "w-8 bg-[#7db3e8]" : "w-4 bg-[#365b62] group-hover:w-6 group-hover:bg-[#7db3e8]/70"}`}
+                />
+              </a>
+            </li>
+          );
+        })}
       </ol>
     </nav>
   );
