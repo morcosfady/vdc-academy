@@ -34,7 +34,7 @@ export function Header() {
       <header
         className={cn(
           "fixed inset-x-0 top-0 z-50 h-[72px] transition-[transform,background-color,border-color] duration-500",
-          scrolled ? "glass-blur border-b border-border bg-bg/80" : "border-b border-transparent",
+          scrolled ? "glass-blur border-b border-border bg-bg/80" : "theme-dark !bg-transparent border-b border-transparent",
           hidden && !menu ? "-translate-y-full" : "translate-y-0",
         )}
       >

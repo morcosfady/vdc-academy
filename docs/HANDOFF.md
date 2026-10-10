@@ -4,6 +4,18 @@ Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, re
 Repo (public): https://github.com/morcosfady/vdc-academy
 Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
+## v4: clean, comfortable, cinematic (2026-10-10)
+
+Owner feedback: "cleaner, easier on the eyes, add real motion graphics". Audit and fixes: `docs/audit/v4-audit.md`, before/after in `docs/audit/v4-before/` and `v4-after/`.
+
+- **Critical fixes**: the round chapter indicator is now a slim 6-tick rail in the right margin, shown only at 1400px and wider (never over content). The empty stretch between chapters 3 and 4 came from stacked padding plus headings that stayed hidden until well inside the viewport: reveals now start 18% before the block enters, a 3.5s safety net shows anything still hidden, `content-visibility` is gone, the canvas clear color is forced transparent.
+- **Comfort**: no pure white or black (headings #EAF2F7, body #B4C6CE, dim #8BA2AB, darkest #06141A, light sections #EEF5FB), text-wrap balance/pretty, 14px minimum (eyebrows 12.5px, floating field labels and tags 13px), Eurostile (Michroma) only for logo, eyebrows and section numbers (`.label`), everything else Poppins (`.meta` = 14px secondary text), chips and buttons at least 44px, aligned "Why" cards (middle card exactly 64px), smooth gradient bands between dark and light chapters (`.band-both`), softer 3D (gray-blue columns, tinted glass, lower env light, contact shadow and fading grid), header without a duplicate desktop menu, site follows the OS theme by default.
+- **Comfort mode** (footer checkbox, remembered): calm static version, no grain/glow/motion, text one step larger.
+- **Motion language**: tokens and helpers in `lib/motion.ts` and `hooks/useReveal.ts`, CSS in `app/motion.css`. Hero intro (about 2.2s, once per visit, skipped on repeat via sessionStorage + inline script and with reduced motion): photo fades and settles, blueprint lines draw, floors drop, systems switch on in order, headline lines rise, sub line, buttons, trust row, then tags pop with drawn leader lines. Scroll: hero hands the building off to the explorer (turns 25 degrees, floors lift apart and rejoin). Explorer: ghosting fades smoothly, selected system pulses once, panel slides in, clash has a pulsing red ring and a dashed reroute path with the duct travelling along it, 4D floors flash as they appear. Why: stepped slab entrances, parallax photos (CSS scroll-driven, Chromium and Safari 26+), icons draw once and on hover. Programs fan in; cards draw an accent border, covers zoom 1.04. Fresh grads: brass underline draws, light sweep crosses once. Path: drawn line with glowing marker. Closing: windows light floor by floor, Apply pulses once. Micro: button lift and press, link underlines draw, accordion height animates with plus turning to minus, odometer numbers, strikethrough draws, route changes sweep three ink bars (`PageTransition`).
+- **Tiny loops**: animated clash-to-resolved icon and Gantt icon on two program cards (paused off screen), 6 benefit icons.
+- **UX fix found by tests**: form error messages are absolutely positioned so removing one on blur can no longer shift the button and swallow the click.
+- **Not done**: no Lottie/Rive files (small SVG + CSS animations are used instead, each under 1 KB); View Transitions API is not used (bars overlay instead); no real people photography (see `docs/image-credits.md`).
+
 ## v3 visual overhaul (2026-10-10), supersedes the v2 look
 
 Owner feedback: "basic, blank background, nasty green, not professional". Done:

@@ -18,9 +18,9 @@ const lines = ["Train on real BIM", "projects. Build a", "real career."];
 
 // Callout tags attached to the model by a thin leader line, like Revit tags. They pop in last.
 const tags = [
-  { text: "LOD 350", top: "20%", left: "4%", dir: "right", d: 1.9 },
-  { text: "MEP · Ducts", top: "47%", right: "0%", dir: "left", d: 2.05 },
-  { text: "Clash resolved ✓", top: "74%", left: "8%", dir: "right", d: 2.2 },
+  { text: "LOD 350", top: "20%", left: "4%", dir: "right", d: 1.45 },
+  { text: "MEP · Ducts", top: "47%", right: "0%", dir: "left", d: 1.6 },
+  { text: "Clash resolved ✓", top: "74%", left: "8%", dir: "right", d: 1.75 },
 ] as const;
 
 const seen = () => {
@@ -80,7 +80,7 @@ export function Hero() {
   return (
     <section ref={section} id="ch-1" className="theme-dark relative overflow-hidden lg:min-h-[100svh]">
       {/* Layer 1: graded architectural photo. Fades in and settles (1.08 to 1.0) */}
-      <div className="fade-in absolute inset-0 overflow-hidden" aria-hidden style={d(0)}>
+      <div className="absolute inset-0 overflow-hidden" aria-hidden>
         <Photo photo={photos.hero} priority className="settle opacity-70" />
       </div>
       {/* Layer 2: ink gradient so text reads on the left, light fades toward the model */}
@@ -94,14 +94,14 @@ export function Hero() {
 
       <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-4 px-5 pt-24 md:px-8 lg:min-h-[calc(100svh-64px)] lg:grid-cols-[45fr_55fr] lg:pt-20">
         <div className="order-2 pb-10 lg:order-1 lg:pb-0">
-          <p className="label fade-up mb-5" style={d(0.4)}>VDC Academy · by Bay BIM Designs</p>
+          <p className="label fade-up mb-5" style={d(0.1)}>VDC Academy · by Bay BIM Designs</p>
           <h1 className="text-[clamp(2.25rem,4.1vw,4rem)] text-[#eaf2f7]" aria-label="Train on real BIM projects. Build a real career.">
-            <RiseLines lines={lines} delay={0.55} />
+            <RiseLines lines={lines} delay={0.2} />
           </h1>
-          <p className="fade-up mt-6 max-w-[34rem] text-lg text-[#b4c6ce]" style={d(1.15)}>
+          <p className="fade-up mt-6 max-w-[34rem] text-lg text-[#b4c6ce]" style={d(0.7)}>
             Hands-on Revit, Navisworks and VDC training from the team behind Bay BIM Designs, with fresh graduate pricing.
           </p>
-          <div className="fade-up mt-8 flex flex-wrap items-center gap-4" style={d(1.3)}>
+          <div className="fade-up mt-8 flex flex-wrap items-center gap-4" style={d(0.85)}>
             <Button href="/apply" variant="glow" magnetic>
               Apply now
             </Button>
@@ -109,7 +109,7 @@ export function Hero() {
               Explore programs
             </Button>
           </div>
-          <ul className="fade-up mt-10 flex flex-wrap divide-x divide-[#365b62] text-sm text-[#b4c6ce]" style={d(1.5)}>
+          <ul className="fade-up mt-10 flex flex-wrap divide-x divide-[#365b62] text-sm text-[#b4c6ce]" style={d(1.0)}>
             <li className="pe-5">{site.city}</li>
             <li className="px-5">Revit · Navisworks · ACC</li>
             <li className="ps-5">
