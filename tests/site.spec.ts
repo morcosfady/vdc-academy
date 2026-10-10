@@ -28,7 +28,7 @@ test("hero heading reads correctly with spaces", async ({ page }) => {
 });
 
 test("fresh grad number is real text (no JS needed)", async ({ browser }) => {
-  const ctx = await browser.newContext({ javaScriptEnabled: false, baseURL: "http://localhost:4173/vdc-academy/" });
+  const ctx = await browser.newContext({ javaScriptEnabled: false, baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/" });
   const page = await ctx.newPage();
   await page.goto("fresh-graduates/");
   expect(await page.content()).toContain(">40<");
@@ -36,7 +36,7 @@ test("fresh grad number is real text (no JS needed)", async ({ browser }) => {
 });
 
 test("fresh grad number shows 40% with reduced motion", async ({ browser }) => {
-  const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: "http://localhost:4173/vdc-academy/" });
+  const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/" });
   const page = await ctx.newPage();
   await page.goto("fresh-graduates/");
   await page.getByText("our biggest discount").first().scrollIntoViewIfNeeded();
@@ -65,7 +65,7 @@ test("apply without keys shows the honest fallback", async ({ page }) => {
 });
 
 test("explorer works without WebGL", async ({ browser }) => {
-  const ctx = await browser.newContext({ baseURL: "http://localhost:4173/vdc-academy/" });
+  const ctx = await browser.newContext({ baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/" });
   await ctx.addInitScript(() => {
     const orig = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...a: unknown[]) {
@@ -82,7 +82,7 @@ test("explorer works without WebGL", async ({ browser }) => {
 });
 
 test("reduced motion: no smooth scroll, building complete", async ({ browser }) => {
-  const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: "http://localhost:4173/vdc-academy/" });
+  const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/" });
   const page = await ctx.newPage();
   await page.goto("");
   await page.waitForTimeout(1500);
