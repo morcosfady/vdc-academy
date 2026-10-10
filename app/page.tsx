@@ -1,35 +1,32 @@
 import { Hero } from "@/components/home/Hero";
-import { Stats } from "@/components/home/Stats";
-import { ScrollStory } from "@/components/home/ScrollStory";
-import { Features } from "@/components/home/Features";
-import { SoftwareMarquee } from "@/components/home/SoftwareMarquee";
-import { ProgramsPreview } from "@/components/home/ProgramsPreview";
-import { LearningPath } from "@/components/home/LearningPath";
-import { FreshGrad } from "@/components/home/FreshGrad";
-import { GalleryPreview } from "@/components/home/GalleryPreview";
-import { Instructors } from "@/components/home/Instructors";
-import { Testimonials } from "@/components/home/Testimonials";
-import { PricingTeaser } from "@/components/home/PricingTeaser";
-import { FaqPreview } from "@/components/home/FaqPreview";
-import { FinalCta } from "@/components/home/FinalCta";
+import { Explorer } from "@/components/home/Explorer";
+import { Why } from "@/components/home/Why";
+import { FinderChapter } from "@/components/home/FinderChapter";
+import { FreshGradChapter } from "@/components/home/FreshGradChapter";
+import { Journey } from "@/components/home/Journey";
+import { Closing } from "@/components/home/Closing";
+import { ChapterIndicator } from "@/components/layout/ChapterIndicator";
+
+const chapters = [
+  { id: "ch-1", label: "Start" },
+  { id: "ch-2", label: "Model" },
+  { id: "ch-3", label: "Why" },
+  { id: "ch-4", label: "Programs" },
+  { id: "ch-5", label: "Fresh grads" },
+  { id: "ch-6", label: "Path" },
+];
 
 export default function Home() {
   return (
     <>
+      <ChapterIndicator items={chapters} />
       <Hero />
-      <Stats />
-      <ScrollStory />
-      <Features />
-      <SoftwareMarquee />
-      <ProgramsPreview />
-      <LearningPath />
-      <FreshGrad />
-      <GalleryPreview />
-      <Instructors />
-      <Testimonials />
-      <PricingTeaser />
-      <FaqPreview />
-      <FinalCta />
+      <Explorer />
+      <Why />
+      <FinderChapter />
+      <FreshGradChapter />
+      <Journey />
+      <Closing />
     </>
   );
 }

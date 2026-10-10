@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
 import { Button } from "@/components/ui/Button";
-import { Counter } from "@/components/ui/Counter";
+import { CountUp } from "@/components/ui/CountUp";
 import { DiscountCalculator } from "@/components/programs/DiscountCalculator";
 import { discounts, freshGradMonths } from "@/config/discounts";
 
@@ -27,7 +27,7 @@ export default function FreshGradsPage() {
         <div className="grid items-center gap-10 md:grid-cols-2">
           <div className="text-center">
             <div className="font-heading text-8xl font-bold text-brand-warm md:text-9xl" aria-label={`Up to ${discounts.freshGrad.percent} percent off`}>
-              <Counter to={discounts.freshGrad.percent} suffix="%" />
+              <CountUp to={discounts.freshGrad.percent} suffix="%" />
             </div>
             <p className="text-text-muted">off, up to. Early bird can stack on top.</p>
           </div>

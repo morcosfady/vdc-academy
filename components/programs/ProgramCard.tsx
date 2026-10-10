@@ -1,26 +1,38 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { site } from "@/config/site";
+import { calcPrice, money } from "@/lib/pricing";
+import { discounts } from "@/config/discounts";
 import type { Program } from "@/content/programs";
-import { programIcons, Val } from "./bits";
+import { ProgramGlyph } from "./ProgramGlyph";
 
-export function ProgramCard({ p }: { p: Program }) {
-  const Icon = programIcons[p.icon] ?? programIcons.Building2;
+// Unique icon per program. Price area only shows what we know: no placeholders.
+export function ProgramCard({ p, freshGrad = false }: { p: Program; freshGrad?: boolean }) {
+  const r = calcPrice(p.priceFull, freshGrad ? "freshGrad" : null, false);
   return (
     <Link
       href={`/programs/${p.slug}`}
-      className="group flex h-full flex-col rounded-card border border-border bg-bg-elevated p-6 transition hover:-translate-y-1 hover:border-brand-accent hover:shadow-[0_0_28px_var(--glow)]"
+      className="glass group relative flex h-full flex-col p-6 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-accent hover:shadow-[0_0_40px_var(--glow)]"
     >
-      <Icon className="mb-4 text-brand-accent transition group-hover:scale-110" size={32} aria-hidden />
-      <h3 className="text-base font-bold">{p.title}</h3>
-      <p className="mt-2 flex-1 text-sm text-text-muted">{p.summary}</p>
-      <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        <Badge>{p.level}</Badge>
-        <Badge><Val v={p.durationWeeks} ph="DURATION" suffix=" weeks" /></Badge>
-        <Badge><Val v={p.format} ph="FORMAT" /></Badge>
+      <ProgramGlyph slug={p.slug} className="mb-8 size-14 text-text transition-transform duration-500 group-hover:-translate-y-1 group-hover:text-accent-text" />
+      <p className="label mb-2">{p.level}</p>
+      <h3 className="text-[1.05rem] leading-snug">{p.title}</h3>
+      <p className="mt-3 flex-1 text-sm text-muted">{p.summary}</p>
+      <ul className="mt-5 flex flex-wrap gap-2">
+        {p.software.slice(0, 2).map((s) => (
+          <li key={s}><Badge>{s}</Badge></li>
+        ))}
+      </ul>
+      <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-sm">
+        {p.priceFull === null ? (
+          <span className="text-muted">Price on request</span>
+        ) : (
+          <span>
+            {r.final !== null && money(r.final)}
+            {freshGrad && <span className="ms-2 text-warm">−{discounts.freshGrad.percent}% for fresh grads</span>}
+          </span>
+        )}
+        <span aria-hidden className="text-accent-text transition-transform group-hover:translate-x-1">→</span>
       </div>
-      <Badge className="mt-3 w-fit border-brand-warm text-brand-warm">🎓 Fresh grad: up to {site.freshGradMaxDiscount}% off</Badge>
-      <span className="mt-4 text-sm font-medium text-brand-accent">View program →</span>
     </Link>
   );
 }

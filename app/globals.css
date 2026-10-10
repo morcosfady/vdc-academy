@@ -1,122 +1,196 @@
 @import "tailwindcss";
 
-/* Brand tokens come from baybimdesigns.com, see docs/brand-reference.md */
+/* Bay BIM Designs palette (docs/brand-reference.md): teal #365B62, ink #0A1D23, deepest #000E12,
+   muted #83969A, light #A3BEC7, pale #DEEFFD. Accent glow is a lightened tint of the brand teal. */
 :root {
   --brand-primary: #365b62;
-  --brand-secondary: #83969a;
-  --brand-accent: #5fd0c4;
+  --brand-ink: #0a1d23;
+  --brand-deep: #000e12;
+  --brand-muted: #83969a;
+  --brand-light: #a3bec7;
+  --brand-pale: #deeffd;
   --brand-warm: #ffbc7d;
 
-  --bg: #f4f9fc;
-  --bg-elevated: #ffffff;
-  --surface: #deeffd;
+  --bg: #eef4f6;
+  --bg-2: #e2edf0;
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-solid: #ffffff;
   --text: #0a1d23;
-  --text-muted: #44585d;
-  --border: #b9d0d6;
-  --glow: rgba(54, 91, 98, 0.35);
-  --grid-line: rgba(54, 91, 98, 0.1);
-  --cta-bg: #365b62;
+  --text-muted: #3d5359;
+  --border: rgba(10, 29, 35, 0.16);
+  --accent: #1f6f78;
+  --accent-text: #1a5d65;
+  --glow: rgba(31, 111, 120, 0.35);
+  --cta-bg: #0a1d23;
   --cta-text: #ffffff;
+  --grid-line: rgba(10, 29, 35, 0.06);
+  --grain: 0.05;
 }
 
 .dark {
-  --bg: #000e12;
-  --bg-elevated: #0a1d23;
-  --surface: #102a31;
-  --text: #e8f1f4;
-  --text-muted: #a3bec7;
-  --border: #23424a;
-  --glow: rgba(95, 208, 196, 0.35);
-  --grid-line: rgba(163, 190, 199, 0.08);
-  --cta-bg: #5fd0c4;
-  --cta-text: #000e12;
+  --bg: #030e12;
+  --bg-2: #07181d;
+  --surface: rgba(16, 42, 49, 0.55);
+  --surface-solid: #0a1d23;
+  --text: #eef5f7;
+  --text-muted: rgba(238, 245, 247, 0.68);
+  --border: rgba(163, 190, 199, 0.18);
+  --accent: #6fd6cd;
+  --accent-text: #6fd6cd;
+  --glow: rgba(111, 214, 205, 0.4);
+  --cta-bg: #6fd6cd;
+  --cta-text: #021013;
+  --grid-line: rgba(163, 190, 199, 0.05);
+  --grain: 0.035;
 }
 
 @theme inline {
-  --color-brand-primary: var(--brand-primary);
-  --color-brand-secondary: var(--brand-secondary);
-  --color-brand-accent: var(--brand-accent);
-  --color-brand-warm: var(--brand-warm);
   --color-bg: var(--bg);
-  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-2: var(--bg-2);
   --color-surface: var(--surface);
+  --color-solid: var(--surface-solid);
   --color-text: var(--text);
-  --color-text-muted: var(--text-muted);
+  --color-muted: var(--text-muted);
   --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
   --color-cta: var(--cta-bg);
   --color-cta-text: var(--cta-text);
-  --font-heading: var(--font-heading);
+  --color-warm: var(--brand-warm);
+  --font-display: var(--font-display);
   --font-sans: var(--font-body);
-  --radius-card: 16px;
-  --radius-btn: 4px;
+  /* Aliases so older pages keep working until they are redesigned */
+  --color-text-muted: var(--text-muted);
+  --color-bg-elevated: var(--surface-solid);
+  --color-brand-accent: var(--accent);
+  --color-brand-warm: var(--brand-warm);
+  --color-brand-primary: var(--brand-primary);
+  --font-heading: var(--font-display);
+  --radius-btn: 2px;
+  --radius-card: 2px;
 }
 
 html {
-  scroll-behavior: smooth;
+  background: var(--bg);
 }
 
 body {
-  background: var(--bg);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%) fixed;
   color: var(--text);
   font-family: var(--font-body), system-ui, sans-serif;
-  font-size: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
-  line-height: 1.6;
+  font-size: clamp(1rem, 0.96rem + 0.18vw, 1.125rem);
+  line-height: 1.65;
+  overflow-x: clip;
+}
+
+/* Film grain + faint blueprint grid */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
 }
 
 h1,
 h2,
-h3,
-h4 {
-  font-family: var(--font-heading), system-ui, sans-serif;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+h3 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
 }
 
-/* Blueprint grid background */
-.blueprint-grid {
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
+/* Editorial display sizes */
+.display-xl,
+.display-lg,
+.display-md {
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1.06;
+}
+.display-xl {
+  font-size: clamp(2.6rem, 8.4vw, 8rem);
+}
+.display-lg {
+  font-size: clamp(2.2rem, 6vw, 5.5rem);
+}
+.display-md {
+  font-size: clamp(1.8rem, 4vw, 3.4rem);
+}
+
+/* Small technical label: uppercase, wide tracking, tabular numbers */
+.label {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
 }
 
 :focus-visible {
-  outline: 3px solid var(--brand-accent);
+  outline: 3px solid var(--accent);
   outline-offset: 3px;
-}
-
-.dark :focus-visible {
-  outline-color: var(--brand-accent);
-}
-
-html:not(.dark) :focus-visible {
-  outline-color: var(--brand-primary);
 }
 
 .skip-link {
   position: absolute;
   inset-inline-start: 1rem;
   top: -4rem;
-  z-index: 100;
+  z-index: 200;
   padding: 0.75rem 1rem;
   background: var(--cta-bg);
   color: var(--cta-text);
-  border-radius: var(--radius-btn);
 }
-
 .skip-link:focus {
   top: 1rem;
 }
 
-/* Subtle placeholder style for content the owner still has to provide */
-.placeholder-chip {
-  border-bottom: 1px dashed var(--brand-warm);
-  color: var(--brand-warm);
+/* Glass surfaces */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
-html:not(.dark) .placeholder-chip {
-  color: #8a4b00;
-  border-bottom-color: #8a4b00;
+/* Stepped motif: offset slab silhouette used on cards and panels */
+.stepped {
+  clip-path: polygon(0 0, 88% 0, 88% 12%, 100% 12%, 100% 100%, 12% 100%, 12% 88%, 0 88%);
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+  scroll-behavior: auto;
+}
+
+@keyframes pulse-line {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+}
+.scroll-cue {
+  animation: pulse-line 2s ease-in-out infinite;
 }
 
 .reduce-motion *,
@@ -141,23 +215,17 @@ html:not(.dark) .placeholder-chip {
   }
 }
 
-html.lenis,
-html.lenis body {
-  height: auto;
-  scroll-behavior: auto;
+/* Dev only: ?debug=content highlights fields still missing */
+.debug-missing {
+  outline: 2px dashed var(--brand-warm);
+  outline-offset: 4px;
 }
 
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-.marquee-track {
-  animation: marquee 40s linear infinite;
-}
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
-}
-.reduce-motion .marquee-track {
-  animation: none;
+/* Abstract floor-plan pattern used inside glass cards */
+.blueprint-lines {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px),
+    linear-gradient(135deg, transparent 48%, var(--accent) 49%, transparent 51%);
+  background-size: 24px 24px, 24px 24px, 100% 100%;
 }

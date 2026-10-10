@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { site } from "@/config/site";
+import { content, hasInstructors, hasStudentWork, shown } from "@/content/site";
 import { ReduceMotionToggle } from "./ReduceMotionToggle";
 
 const legal = [
@@ -9,60 +10,59 @@ const legal = [
 ];
 
 export function Footer() {
+  const linkedin = shown(content.social.linkedin);
+  const email = shown(content.contact.email);
+  const explore = [
+    ...site.menu.filter((m) => m.href !== "/contact"),
+    ...(hasInstructors() ? [{ href: "/instructors", label: "Instructors" }] : []),
+    ...(hasStudentWork() ? [{ href: "/student-work", label: "Student Work" }] : []),
+  ];
+
   return (
-    <footer className="border-t border-border bg-bg-elevated pb-24 pt-14 md:pb-14">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 md:grid-cols-4 md:px-6">
-        <div className="md:col-span-2">
-          <p className="font-heading text-xl font-bold">VDC Academy</p>
-          <p className="mt-3 max-w-md text-text-muted">
-            Hands-on BIM and VDC training from the team at{" "}
-            <a className="underline hover:text-text" href={site.parentUrl}>
-              {site.parent}
-            </a>
-            , {site.city}.
-          </p>
+    <footer className="relative overflow-hidden border-t border-border pb-10 pt-24 md:pt-36">
+      <div className="mx-auto max-w-[1600px] px-5 md:px-10">
+        <p className="display-lg max-w-4xl">Build it digitally before you build it for real.</p>
+        <div className="mt-16 grid gap-10 md:grid-cols-4">
+          <div>
+            <p className="label mb-4">Explore</p>
+            <ul className="space-y-2">
+              {explore.map((l) => (
+                <li key={l.href}><Link href={l.href} className="text-muted hover:text-text">{l.label}</Link></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="label mb-4">Contact</p>
+            <ul className="space-y-2 text-muted">
+              <li>{site.city}</li>
+              {email && <li><a href={`mailto:${email}`} className="hover:text-text">{email}</a></li>}
+              <li><Link href="/contact" className="hover:text-text">Talk to an advisor</Link></li>
+            </ul>
+          </div>
+          <div>
+            <p className="label mb-4">Bay BIM Designs</p>
+            <ul className="space-y-2 text-muted">
+              <li><a href={site.parentUrl} className="hover:text-text">baybimdesigns.com</a></li>
+              {linkedin && <li><a href={linkedin} className="hover:text-text">LinkedIn</a></li>}
+            </ul>
+          </div>
+          <div>
+            <p className="label mb-4">Legal</p>
+            <ul className="space-y-2">
+              {legal.map((l) => (
+                <li key={l.href}><Link href={l.href} className="text-muted hover:text-text">{l.label}</Link></li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <nav aria-label="Footer">
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">Explore</p>
-          <ul className="space-y-2">
-            {site.nav.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href} className="text-text-muted hover:text-text">
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div>
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">Company</p>
-          <ul className="space-y-2">
-            <li>
-              <a className="text-text-muted hover:text-text" href={site.parentUrl}>
-                {site.parent}
-              </a>
-            </li>
-            {site.linkedin && (
-              <li>
-                <a className="text-text-muted hover:text-text" href={site.linkedin}>
-                  LinkedIn
-                </a>
-              </li>
-            )}
-            {legal.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="text-text-muted hover:text-text">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <div className="mt-16 flex flex-wrap items-center justify-between gap-4 text-sm text-muted">
+          <p>© {new Date().getFullYear()} VDC Academy, a {site.parent} company</p>
+          <ReduceMotionToggle />
         </div>
       </div>
-      <div className="mx-auto mt-10 flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 text-sm text-text-muted md:px-6">
-        <p>© {new Date().getFullYear()} VDC Academy, a {site.parent} company</p>
-        <ReduceMotionToggle />
-      </div>
+      <p aria-hidden className="pointer-events-none mt-10 select-none whitespace-nowrap text-center font-display text-[16.5vw] leading-none tracking-tighter text-text/[0.05]">
+        VDC ACADEMY
+      </p>
     </footer>
   );
 }

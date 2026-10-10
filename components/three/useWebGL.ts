@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-// null = still checking, false = no WebGL (show the static fallback)
+// null = still checking, false = no WebGL (poster and buttons only)
 export function useWebGL() {
   const [ok, setOk] = useState<boolean | null>(null);
   useEffect(() => {
