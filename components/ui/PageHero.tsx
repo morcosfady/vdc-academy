@@ -1,11 +1,28 @@
-export function PageHero({ tag, title, subtitle, children }: { tag: string; title: string; subtitle?: string; children?: React.ReactNode }) {
+import { LogoMark } from "./Logo";
+import { RiseLines } from "./Slab";
+
+// Compact hero for inner pages: one headline, one line, optional actions. The stepped mark sits behind.
+export function PageHero({
+  eyebrow,
+  title,
+  subtitle,
+  children,
+}: {
+  eyebrow: string;
+  title: string[];
+  subtitle?: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <section className="blueprint-grid border-b border-border">
-      <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-24">
-        <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-text-muted">{tag}</p>
-        <h1 className="max-w-3xl text-3xl font-bold md:text-5xl">{title}</h1>
-        {subtitle && <p className="mt-5 max-w-2xl text-lg text-text-muted">{subtitle}</p>}
-        {children && <div className="mt-8 flex flex-wrap items-center gap-4">{children}</div>}
+    <section className="relative overflow-hidden pb-16 pt-36 md:pb-24 md:pt-48">
+      <LogoMark size={520} className="pointer-events-none absolute -end-24 top-8 hidden text-accent opacity-[0.07] md:block" />
+      <div className="relative z-10 mx-auto max-w-[1600px] px-5 md:px-10">
+        <p className="label mb-5">{eyebrow}</p>
+        <h1 className="display-lg max-w-[18ch]" aria-label={title.join(" ")}>
+          <RiseLines lines={title} />
+        </h1>
+        {subtitle && <p className="mt-6 max-w-xl text-lg text-muted">{subtitle}</p>}
+        {children && <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">{children}</div>}
       </div>
     </section>
   );

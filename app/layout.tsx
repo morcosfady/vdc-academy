@@ -8,6 +8,7 @@ import { FloatingOffer } from "@/components/layout/FloatingOffer";
 import { MobileApplyBar } from "@/components/layout/MobileApplyBar";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { SceneHostLoader } from "@/components/three/SceneHostLoader";
+import { UtmCapture } from "@/components/layout/UtmCapture";
 import "./globals.css";
 
 // Two families only. Michroma stands in for the licensed EurostileExtended used on baybimdesigns.com.
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </a>
           <SmoothScroll />
           <SceneHostLoader />
+          <UtmCapture />
           <Header />
           <main id="main">{children}</main>
           <Footer />

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
-import { ProgramsExplorer } from "@/components/programs/ProgramsExplorer";
+import { Finder } from "@/components/programs/Finder";
 
 export const metadata: Metadata = {
   title: "Programs",
@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 export default function ProgramsPage() {
   return (
     <>
-      <PageHero tag="E-501 · PROGRAMS" title="BIM & VDC programs" subtitle="From first model to coordination lead. Pick a single course or the full bootcamp." />
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-6">
-        <ProgramsExplorer />
+      <PageHero eyebrow="Programs" title={["Find your floor."]} subtitle="Browse by level of the career path, or filter by what you need." />
+      <section className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10">
+        <Finder />
       </section>
     </>
   );

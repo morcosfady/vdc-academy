@@ -3,61 +3,62 @@
 import { useState } from "react";
 import { programs } from "@/content/programs";
 import { discounts, earlyBird, type DiscountId } from "@/config/discounts";
-import { calcPrice, money } from "@/lib/pricing";
+import { calcPrice } from "@/lib/pricing";
+import { Roll } from "@/components/ui/Roll";
 import { cn } from "@/lib/utils";
 
 const statuses: (DiscountId | null)[] = [null, "freshGrad", "student", "group"];
 
-export function DiscountCalculator() {
+export function DiscountCalculator({ initial = "freshGrad" }: { initial?: DiscountId | null }) {
   const [slug, setSlug] = useState(programs[0].slug);
-  const [status, setStatus] = useState<DiscountId | null>("freshGrad");
+  const [status, setStatus] = useState<DiscountId | null>(initial);
   const [early, setEarly] = useState(false);
   const base = programs.find((p) => p.slug === slug)?.priceFull ?? null;
   const r = calcPrice(base, status, early);
 
   return (
-    <div className="rounded-card border border-border bg-bg-elevated p-6 md:p-8">
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-5">
-          <label className="block text-sm">
-            Program
-            <select value={slug} onChange={(e) => setSlug(e.target.value)} className="mt-2 w-full rounded-btn border border-border bg-bg px-3 py-3">
-              {programs.map((p) => (
-                <option key={p.slug} value={p.slug}>{p.title}</option>
-              ))}
-            </select>
-          </label>
-          <fieldset>
-            <legend className="mb-2 text-sm">Who are you?</legend>
-            <div className="flex flex-wrap gap-2">
-              {statuses.map((s) => (
-                <button
-                  key={s ?? "none"}
-                  type="button"
-                  aria-pressed={status === s}
-                  onClick={() => setStatus(s)}
-                  className={cn("rounded-btn border px-3 py-2 text-sm", status === s ? "border-brand-accent bg-surface" : "border-border text-text-muted")}
-                >
-                  {s ? `${discounts[s].emoji} ${discounts[s].label}` : "Standard"}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={early} onChange={(e) => setEarly(e.target.checked)} className="size-4 accent-[var(--brand-accent)]" />
-            {earlyBird.emoji} {earlyBird.who}
-          </label>
-        </div>
-        <div className="rounded-card bg-surface p-6" aria-live="polite">
-          <p className="font-mono text-xs uppercase tracking-widest text-text-muted">Estimate</p>
-          <p className="mt-3 font-heading text-4xl">
-            {r.final === null ? <span className="placeholder-chip">[PRICE]</span> : money(r.final)}
-          </p>
-          <p className="mt-3 text-2xl font-bold text-brand-warm">{r.percent > 0 ? `−${r.percent}%` : "No discount"}</p>
-          {r.saving !== null && r.saving > 0 && <p className="text-sm text-text-muted">You save {money(r.saving)}</p>}
-          {r.applied.length > 0 && <p className="mt-2 text-sm text-text-muted">{r.applied.join(" + ")}</p>}
-          <p className="mt-4 text-xs text-text-muted">Discounts stay pending until we verify your documents.</p>
-        </div>
+    <div className="glass grid gap-8 p-7 md:grid-cols-2 md:p-10">
+      <div className="space-y-6">
+        <label className="block">
+          <span className="label mb-2 block">Program</span>
+          <select value={slug} onChange={(e) => setSlug(e.target.value)} className="h-14 w-full border border-border bg-transparent px-4">
+            {programs.map((p) => (
+              <option key={p.slug} value={p.slug} className="bg-[#0a1d23] text-white">{p.title}</option>
+            ))}
+          </select>
+        </label>
+        <fieldset>
+          <legend className="label mb-2">Who are you?</legend>
+          <div className="flex flex-wrap gap-2">
+            {statuses.map((s) => (
+              <button
+                key={s ?? "none"}
+                type="button"
+                aria-pressed={status === s}
+                onClick={() => setStatus(s)}
+                className={cn("border px-3.5 py-2 text-xs uppercase tracking-[0.1em]", status === s ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+              >
+                {s ? `${discounts[s].emoji} ${discounts[s].label}` : "Standard"}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <label className="flex items-center gap-3 text-sm">
+          <input type="checkbox" checked={early} onChange={(e) => setEarly(e.target.checked)} className="size-4 accent-[var(--accent)]" />
+          {earlyBird.emoji} {earlyBird.who}
+        </label>
+      </div>
+      <div className="flex flex-col justify-center border-t border-border pt-8 md:border-s md:border-t-0 md:ps-10 md:pt-0" aria-live="polite">
+        <p className="label mb-3">Your estimate</p>
+        {r.final === null ? (
+          <p className="font-display text-2xl">Price on request</p>
+        ) : (
+          <p className="font-display text-5xl"><Roll value={r.final} prefix="$" /></p>
+        )}
+        <p className="mt-4 font-display text-3xl text-warm">{r.percent > 0 ? <>−<Roll value={r.percent} suffix="%" /></> : "No discount"}</p>
+        {r.saving !== null && r.saving > 0 && <p className="mt-1 text-sm text-muted">You save <Roll value={r.saving} prefix="$" /></p>}
+        {r.applied.length > 0 && <p className="mt-2 text-sm text-muted">{r.applied.join(" + ")}</p>}
+        <p className="mt-5 text-xs text-muted">Discounts stay pending until we check your documents.</p>
       </div>
     </div>
   );
