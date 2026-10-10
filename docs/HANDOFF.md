@@ -20,6 +20,21 @@ Folder: `F:\Projects\VDC Academy` (separate from the Pharaoh's Bites repo).
 - Lenis smooth scroll synced with GSAP. Footer "Reduce motion" toggle (also honors the OS setting): disables smooth scroll, auto-rotate, confetti, marquee; story gets stage buttons instead of scroll pinning.
 - Verified in the browser (desktop width): hero assembles, story stages 1 to 4 work, clash marker red then green, viewer toggles, pricing switch. `pnpm build` passes. Home first-load JS 245 kB; 3D code loads after.
 
+## Live site and deploy
+
+- Repo (public): https://github.com/morcosfady/vdc-academy
+- Live (GitHub Pages): https://morcosfady.github.io/vdc-academy/ . Every push to main redeploys via `.github/workflows/pages.yml`.
+- Pages build uses static export with basePath `/vdc-academy` (only when `GITHUB_PAGES=true`, see `next.config.ts`). Phase 4 (forms, server actions, admin) needs a real server, so it must move to Vercel; static export will not work for it.
+- Vercel MCP in the Claude session was refused (scope error), so Vercel must be connected by the owner in the Vercel dashboard.
+
+## Phase 3: Programs, pricing, discounts (done 2026-10-10)
+
+- `content/programs.ts`: 11 programs with draft syllabus (modules, outcomes, software, projects). Durations, format, schedule, prices, dates and seats are null and show `[PLACEHOLDER]` chips.
+- `config/discounts.ts` (fresh grad 40, student 25, group 15, early bird 10; early bird stacks only with fresh grad) and `lib/pricing.ts` (calcPrice). Prices show percent now and dollars once `priceFull` is set.
+- Pages: `/programs` (level filter + search), `/programs/[slug]` (outcomes, module accordion, software, projects, details, sticky price box with status picker, related), `/pricing` (plans, discount table, calculator, payment/refund placeholders), `/fresh-graduates` (count-up, 3 steps, calculator).
+- Apply buttons link to `/apply` (and `/apply?program=slug`), which arrives in Phase 4.
+- Currency assumed USD. Syllabus is a draft for the owner to review.
+
 ## Decisions and deviations
 
 - Programs preview is a CSS scroll-snap carousel with arrows, not a GSAP pinned horizontal scroll (simpler, works on touch).
