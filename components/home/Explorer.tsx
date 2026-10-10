@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import gsap from "gsap";
+import { loadGsap } from "@/lib/gsap";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { Slab } from "@/components/ui/Slab";
 import { Badge } from "@/components/ui/Badge";
@@ -16,7 +16,7 @@ const buttons: { id: Isolate; label: string }[] = [{ id: "all", label: "Whole mo
 
 export function Explorer() {
   const state = useRef(newState({ lod: 300 }));
-  const tl = useRef<gsap.core.Timeline | gsap.core.Tween | null>(null);
+  const tl = useRef<{ kill: () => void } | null>(null);
   const reduce = useReduceMotion();
   const [active, setActive] = useState<Isolate>("all");
   const [lod, setLod] = useState<number>(300);
@@ -26,12 +26,13 @@ export function Explorer() {
 
   useEffect(() => () => void tl.current?.kill(), []);
 
-  function select(id: Isolate) {
+  async function select(id: Isolate) {
     const s = state.current;
     tl.current?.kill();
     Object.assign(s, { isolate: id, clash: -1, sim: -1, focus: 0 });
     setActive(id);
     setResolved(false);
+    const { gsap } = await loadGsap();
     if (id === "clash") {
       if (reduce) {
         Object.assign(s, { clash: 0.2, focus: 1 });
@@ -102,7 +103,7 @@ export function Explorer() {
                 <div className="mt-4 flex flex-wrap gap-2">
                   {current.software.map((s) => <Badge key={s}>{s}</Badge>)}
                 </div>
-                <Link href={`/programs/${current.slug}`} className="mt-5 inline-block text-sm text-accent-text underline underline-offset-8">
+                <Link prefetch={false} href={`/programs/${current.slug}`} className="mt-5 inline-block text-sm text-accent-text underline underline-offset-8">
                   {current.program} <span aria-hidden>→</span>
                 </Link>
               </>

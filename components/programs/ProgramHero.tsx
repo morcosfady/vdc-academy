@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { SceneSlot } from "@/components/three/SceneSlot";
-import { RiseLines } from "@/components/ui/Slab";
+import { RiseLines } from "@/components/ui/RiseLines";
 import { Button } from "@/components/ui/Button";
 import { newState, type Isolate } from "@/lib/modelState";
 

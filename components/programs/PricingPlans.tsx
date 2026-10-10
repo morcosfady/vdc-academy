@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Button } from "@/components/ui/Button";
 import { Roll } from "@/components/ui/Roll";
 import { plans } from "@/content/plans";
@@ -27,14 +27,14 @@ export function PricingPlans() {
             <li key={p.id} className={cn("glass relative flex min-h-[460px] flex-col p-8", p.featured && "border-accent shadow-[0_0_50px_var(--glow)]")}>
               <AnimatePresence>
                 {grad && (
-                  <motion.span
+                  <m.span
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     className="absolute -top-3 end-6 bg-warm px-3 py-1 text-xs font-medium uppercase tracking-widest text-[#1a1208]"
                   >
                     −<Roll value={discounts.freshGrad.percent} suffix="%" />
-                  </motion.span>
+                  </m.span>
                 )}
               </AnimatePresence>
               <p className="label">{p.note}</p>

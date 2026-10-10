@@ -34,17 +34,17 @@ export function Header() {
       <header
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-[transform,background-color,backdrop-filter] duration-500",
-          scrolled ? "glass border-x-0 border-t-0 py-3" : "py-6",
+          scrolled ? "glass glass-blur border-x-0 border-t-0 py-3" : "py-6",
           hidden && !menu ? "-translate-y-full" : "translate-y-0",
         )}
       >
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 md:px-10">
-          <Link href="/" aria-label="VDC Academy by Bay BIM Designs, home">
+          <Link prefetch={false} href="/" aria-label="VDC Academy by Bay BIM Designs, home">
             <Logo />
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-9 lg:flex">
             {site.nav.map((item) => (
-              <Link key={item.href} href={item.href} className="label !text-[11px] transition-colors hover:!text-text">
+              <Link prefetch={false} key={item.href} href={item.href} className="label !text-[11px] transition-colors hover:!text-text">
                 {item.label}
               </Link>
             ))}

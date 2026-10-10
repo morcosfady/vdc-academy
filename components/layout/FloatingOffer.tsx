@@ -29,8 +29,8 @@ export function FloatingOffer() {
   if (gone || !show) return null;
 
   return (
-    <div className="glass fixed bottom-5 start-5 z-40 hidden items-center gap-3 py-2 ps-5 pe-2 text-sm sm:flex">
-      <Link href="/fresh-graduates" className="hover:text-accent-text">
+    <div className="glass glass-blur fixed bottom-5 start-5 z-40 hidden items-center gap-3 py-2 ps-5 pe-2 text-sm sm:flex">
+      <Link prefetch={false} href="/fresh-graduates" className="hover:text-accent-text">
         🎓 Fresh grads save {site.freshGradMaxDiscount}% <span aria-hidden>→</span>
       </Link>
       <button

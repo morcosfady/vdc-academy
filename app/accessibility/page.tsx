@@ -24,7 +24,7 @@ export default function Accessibility() {
       </section>
       <section>
         <h2>Tell us about a problem</h2>
-        <p>If something is hard to use, <Link href="/contact" className="underline">contact us</Link> and describe the page and what happened. We will fix it.</p>
+        <p>If something is hard to use, <Link prefetch={false} href="/contact" className="underline">contact us</Link> and describe the page and what happened. We will fix it.</p>
       </section>
     </LegalPage>
   );

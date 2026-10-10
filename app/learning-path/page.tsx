@@ -34,7 +34,7 @@ export default function LearningPathPage() {
                 {stepPrograms[i].map((slug) => {
                   const p = programs.find((x) => x.slug === slug);
                   return p ? (
-                    <li key={slug}><Link href={`/programs/${slug}`} className="hover:text-accent-text">{p.title} <span aria-hidden>→</span></Link></li>
+                    <li key={slug}><Link prefetch={false} href={`/programs/${slug}`} className="hover:text-accent-text">{p.title} <span aria-hidden>→</span></Link></li>
                   ) : null;
                 })}
               </ul>

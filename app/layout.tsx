@@ -9,11 +9,12 @@ import { MobileApplyBar } from "@/components/layout/MobileApplyBar";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { SceneHostLoader } from "@/components/three/SceneHostLoader";
 import { UtmCapture } from "@/components/layout/UtmCapture";
+import { MotionProvider } from "@/components/layout/MotionProvider";
 import "./globals.css";
 
 // Two families only. Michroma stands in for the licensed EurostileExtended used on baybimdesigns.com.
 const display = Michroma({ weight: "400", subsets: ["latin"], variable: "--font-display", display: "swap" });
-const body = Poppins({ weight: ["300", "400", "500", "600"], subsets: ["latin"], variable: "--font-body", display: "swap" });
+const body = Poppins({ weight: ["400", "500"], subsets: ["latin"], variable: "--font-body", display: "optional" });
 
 export const metadata: Metadata = {
   title: { default: `${site.name} by ${site.parent}`, template: `%s | ${site.name}` },
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <MotionProvider>
           <a href="#main" className="skip-link">
             Skip to content
           </a>
@@ -37,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <FloatingOffer />
           <MobileApplyBar />
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

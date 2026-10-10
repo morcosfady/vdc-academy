@@ -1,5 +1,5 @@
 import { LogoMark } from "./Logo";
-import { RiseLines } from "./Slab";
+import { RiseLines } from "./RiseLines";
 
 // Compact hero for inner pages: one headline, one line, optional actions. The stepped mark sits behind.
 export function PageHero({

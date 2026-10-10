@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { Field, SelectField } from "@/components/forms/Field";
 import { FileUpload } from "@/components/forms/FileUpload";
 import { Turnstile } from "@/components/forms/Turnstile";
@@ -209,7 +209,7 @@ export function ApplyFlow() {
 
         <form onSubmit={(ev) => { ev.preventDefault(); if (step === 4) submit(); else next(); }} noValidate>
           <AnimatePresence mode="wait">
-            <motion.div key={step} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="space-y-5">
+            <m.div key={step} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="space-y-5">
               {step === 0 && (
                 <>
                   <h1 className="display-md">Tell us about you.</h1>
@@ -243,9 +243,9 @@ export function ApplyFlow() {
                   </div>
                   <AnimatePresence>
                     {grad && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden" role="status">
+                      <m.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden" role="status">
                         <p className="border border-warm bg-warm/10 p-5 text-warm">🎓 You qualify for the fresh graduate discount ({discounts.freshGrad.percent}%), pending verification. Upload your proof below.</p>
-                      </motion.div>
+                      </m.div>
                     )}
                   </AnimatePresence>
                   <FileUpload label="Proof for your discount (certificate, transcript or student ID)" hint="PDF, JPG or PNG, up to 5 MB." accept=".pdf,.jpg,.jpeg,.png" types={PROOF_TYPES} file={proof} onFile={setProof} highlight={grad} />
@@ -345,7 +345,7 @@ export function ApplyFlow() {
                   {submitError && <p role="alert" className="text-[#ff8a80]">{submitError}</p>}
                 </>
               )}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
 
           <div className="mt-10 flex items-center justify-between gap-4">

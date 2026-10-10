@@ -9,7 +9,7 @@ import { ProgramGlyph } from "./ProgramGlyph";
 export function ProgramCard({ p, freshGrad = false }: { p: Program; freshGrad?: boolean }) {
   const r = calcPrice(p.priceFull, freshGrad ? "freshGrad" : null, false);
   return (
-    <Link
+    <Link prefetch={false}
       href={`/programs/${p.slug}`}
       className="glass group relative flex h-full flex-col p-6 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-accent hover:shadow-[0_0_40px_var(--glow)]"
     >

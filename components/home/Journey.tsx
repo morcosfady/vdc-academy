@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { loadGsap } from "@/lib/gsap";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { Slab } from "@/components/ui/Slab";
 import { Button } from "@/components/ui/Button";
@@ -38,31 +37,39 @@ export function Journey({ full = false }: { full?: boolean }) {
       state.current.sim = -1;
       return;
     }
-    gsap.registerPlugin(ScrollTrigger);
-    const mm = gsap.matchMedia();
-    mm.add("(min-width: 1024px)", () => {
-      const n = journey.length;
-      const s = state.current;
-      const st = ScrollTrigger.create({
-        trigger: section.current,
-        start: "top top",
-        end: `+=${n * 90}%`,
-        pin: true,
-        scrub: 0.6,
-        onUpdate: (self) => {
-          const p = self.progress;
-          s.sim = 1 / 6 + (5 / 6) * p;
-          s.yaw = p * 0.8;
-          if (track.current) track.current.style.transform = `translateX(${-p * (n - 1) * (100 / n)}%)`;
-          setActive(Math.min(n - 1, Math.round(p * (n - 1))));
-        },
+    let revert = () => {};
+    let cancelled = false;
+    loadGsap().then(({ gsap, ScrollTrigger }) => {
+      if (cancelled) return;
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 1024px)", () => {
+        const n = journey.length;
+        const s = state.current;
+        const st = ScrollTrigger.create({
+          trigger: section.current,
+          start: "top top",
+          end: `+=${n * 90}%`,
+          pin: true,
+          scrub: 0.6,
+          onUpdate: (self) => {
+            const p = self.progress;
+            s.sim = 1 / 6 + (5 / 6) * p;
+            s.yaw = p * 0.8;
+            if (track.current) track.current.style.transform = `translateX(${-p * (n - 1) * (100 / n)}%)`;
+            setActive(Math.min(n - 1, Math.round(p * (n - 1))));
+          },
+        });
+        return () => {
+          st.kill();
+          s.sim = -1;
+        };
       });
-      return () => {
-        st.kill();
-        s.sim = -1;
-      };
+      revert = () => mm.revert();
     });
-    return () => mm.revert();
+    return () => {
+      cancelled = true;
+      revert();
+    };
   }, [reduce]);
 
   const pinned = !reduce;

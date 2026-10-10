@@ -111,7 +111,7 @@ export default async function ProgramPage({ params }: Props) {
         <ul className="grid gap-5 md:grid-cols-3">
           {related.map((r) => <li key={r.slug}><ProgramCard p={r} /></li>)}
         </ul>
-        <p className="mt-10"><Link href="/programs" className="text-accent-text underline underline-offset-8">All programs</Link></p>
+        <p className="mt-10"><Link prefetch={false} href="/programs" className="text-accent-text underline underline-offset-8">All programs</Link></p>
       </section>
     </>
   );

@@ -68,7 +68,7 @@ test("explorer works without WebGL", async ({ browser }) => {
   const ctx = await browser.newContext({ baseURL: "http://localhost:4173/vdc-academy/" });
   await ctx.addInitScript(() => {
     const orig = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (type: string, ...a: unknown[]) {
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...a: unknown[]) {
       return /webgl/.test(type) ? null : (orig as (...x: unknown[]) => unknown).call(this, type, ...a);
     } as typeof orig;
   });

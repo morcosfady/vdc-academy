@@ -16,7 +16,7 @@ for (const w of widths) {
   const errs = [];
   page.on("console", (m) => m.type() === "error" && errs.push(m.text().slice(0, 160)));
   page.on("pageerror", (e) => errs.push("PAGEERROR " + e.message.slice(0, 160)));
-  await page.goto(base + path, { waitUntil: "load", timeout: 90000 });
+  await page.goto(base + path + (path.includes("?") ? "&" : "?") + "gl=force", { waitUntil: "load", timeout: 90000 });
   await page.waitForTimeout(9000);
   const ids = await page.evaluate(() => [...document.querySelectorAll("section[id^=ch-]")].map((s) => s.id));
   const name = (path.replace(/\W+/g, "-") || "home");

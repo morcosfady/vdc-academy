@@ -3,7 +3,7 @@ import { Finder } from "@/components/programs/Finder";
 
 export function FinderChapter() {
   return (
-    <section id="ch-4" aria-labelledby="finder-title" className="relative py-24 md:py-36">
+    <section id="ch-4" aria-labelledby="finder-title" className="cv-auto relative py-24 md:py-36">
       <div className="mx-auto max-w-[1600px] px-5 md:px-10">
         <Slab className="mb-14 max-w-3xl">
           <p className="label mb-5">04 · Programs</p>

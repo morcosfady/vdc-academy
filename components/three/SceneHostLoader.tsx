@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useWebGL } from "./useWebGL";
+import { markScenesReady, useScenesReady } from "@/lib/scenesReady";
+import { afterInteraction } from "@/lib/interaction";
+import { gpu } from "@/lib/gpu";
 
 const SceneHost = dynamic(() => import("./SceneHost"), { ssr: false });
 
-// Loads the 3D bundle only after the first paint and only when WebGL exists.
+// Starts the 3D bundle late: on idle for desktops, on first interaction (or ~8 s) for phones.
 export function SceneHostLoader() {
+  const ready = useScenesReady();
   const webgl = useWebGL();
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const go = () => setReady(true);
+    if (gpu.low) {
+      afterInteraction(8000).then(markScenesReady);
+      return;
+    }
+    const go = () => markScenesReady();
     if ("requestIdleCallback" in window) {
       const id = window.requestIdleCallback(go, { timeout: 1500 });
       return () => window.cancelIdleCallback(id);

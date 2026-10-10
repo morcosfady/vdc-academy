@@ -46,7 +46,7 @@ export function Closing() {
         </div>
       </section>
 
-      <section aria-labelledby="faq-title" className="mx-auto max-w-4xl px-5 pb-32 md:px-10">
+      <section aria-labelledby="faq-title" className="cv-auto mx-auto max-w-4xl px-5 pb-32 md:px-10">
         <p className="label mb-5">Questions</p>
         <h2 id="faq-title" className="display-md mb-10">Before you apply</h2>
         <Faq />

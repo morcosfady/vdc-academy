@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView, useScroll, useTransform } from "motion/react";
+import { m, useInView, useScroll, useTransform } from "motion/react";
 import { Slab } from "@/components/ui/Slab";
 import { Badge } from "@/components/ui/Badge";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
@@ -21,12 +21,12 @@ function Blueprint() {
   });
   return (
     <svg ref={ref} viewBox="0 0 320 220" className="h-full w-full" fill="none" stroke="var(--accent)" strokeWidth="1.2" aria-hidden>
-      <motion.rect x="20" y="20" width="280" height="180" {...draw(0)} />
-      <motion.path d="M20 90 H150 V20 M150 90 V200 M150 130 H300" {...draw(0.3)} />
-      <motion.path d="M60 20 v8 M100 20 v8 M200 20 v8 M240 20 v8 M20 60 h8 M20 130 h8 M20 170 h8" {...draw(0.6)} />
-      <motion.circle cx="85" cy="150" r="22" {...draw(0.8)} />
-      <motion.path d="M210 60 h60 v40 h-60 z" stroke="#ffbc7d" {...draw(1)} />
-      <motion.path d="M20 212 H300 M20 208 v8 M300 208 v8" stroke="var(--text-muted)" {...draw(1.2)} />
+      <m.rect x="20" y="20" width="280" height="180" {...draw(0)} />
+      <m.path d="M20 90 H150 V20 M150 90 V200 M150 130 H300" {...draw(0.3)} />
+      <m.path d="M60 20 v8 M100 20 v8 M200 20 v8 M240 20 v8 M20 60 h8 M20 130 h8 M20 170 h8" {...draw(0.6)} />
+      <m.circle cx="85" cy="150" r="22" {...draw(0.8)} />
+      <m.path d="M210 60 h60 v40 h-60 z" stroke="#ffbc7d" {...draw(1)} />
+      <m.path d="M20 212 H300 M20 208 v8 M300 208 v8" stroke="var(--text-muted)" {...draw(1.2)} />
     </svg>
   );
 }
@@ -42,9 +42,9 @@ function ParallaxStack() {
   const layer = "absolute glass h-3/5 w-3/5";
   return (
     <div ref={ref} className="relative h-full w-full" aria-hidden>
-      <motion.div style={{ y: y3 }} className={`${layer} start-0 top-[8%]`}><div className="blueprint-lines h-full w-full" /></motion.div>
-      <motion.div style={{ y: y1 }} className={`${layer} start-[22%] top-[22%]`}><div className="blueprint-lines h-full w-full opacity-70" /></motion.div>
-      <motion.div style={{ y: y2 }} className={`${layer} start-[40%] top-[36%] border-accent`}><div className="blueprint-lines h-full w-full opacity-50" /></motion.div>
+      <m.div style={{ y: y3 }} className={`${layer} start-0 top-[8%]`}><div className="blueprint-lines h-full w-full" /></m.div>
+      <m.div style={{ y: y1 }} className={`${layer} start-[22%] top-[22%]`}><div className="blueprint-lines h-full w-full opacity-70" /></m.div>
+      <m.div style={{ y: y2 }} className={`${layer} start-[40%] top-[36%] border-accent`}><div className="blueprint-lines h-full w-full opacity-50" /></m.div>
     </div>
   );
 }
@@ -58,7 +58,7 @@ function Fan() {
   return (
     <div ref={ref} className="relative h-full w-full" aria-hidden>
       {[-14, 0, 14].map((rot, i) => (
-        <motion.div
+        <m.div
           key={rot}
           className="glass absolute inset-x-[18%] top-[10%] h-[78%] origin-bottom p-4"
           initial={{ rotate: 0 }}
@@ -68,7 +68,7 @@ function Fan() {
           <div className="blueprint-lines h-3/5 w-full" />
           <div className="mt-3 h-2 w-3/4 bg-text/30" />
           <div className="mt-2 h-2 w-1/2 bg-text/15" />
-        </motion.div>
+        </m.div>
       ))}
     </div>
   );
@@ -82,7 +82,7 @@ const statements = [
 
 export function Why() {
   return (
-    <section id="ch-3" aria-labelledby="why-title" className="relative py-24 md:py-36">
+    <section id="ch-3" aria-labelledby="why-title" className="cv-auto relative py-24 md:py-36">
       <div className="mx-auto max-w-[1600px] px-5 md:px-10">
         <p className="label mb-5">03 · Why VDC Academy</p>
         <h2 id="why-title" className="sr-only">Why VDC Academy</h2>

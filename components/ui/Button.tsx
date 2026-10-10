@@ -36,7 +36,7 @@ export function Button({ href, variant = "primary", className, magnetic, childre
   const leave = () => ref.current && (ref.current.style.transform = "");
 
   return (
-    <Link
+    <Link prefetch={false}
       ref={ref}
       href={href}
       onPointerMove={move}

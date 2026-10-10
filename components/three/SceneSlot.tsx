@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import type { SteppedState } from "@/lib/modelState";
 import { SteppedPoster } from "./SteppedPoster";
 import { useWebGL } from "./useWebGL";
+import { useScenesReady } from "@/lib/scenesReady";
 
 const SteppedView = dynamic(() => import("./SteppedView"), { ssr: false });
 
@@ -29,12 +30,13 @@ export function SceneSlot({
 }) {
   const [ready, setReady] = useState(false);
   const webgl = useWebGL();
+  const scenesReady = useScenesReady();
   return (
     <div className={cn("relative", className)} role="img" aria-label={label}>
       <SteppedPoster
         className={cn("absolute inset-0 h-full w-full transition-opacity duration-1000", ready ? "opacity-0" : "opacity-100")}
       />
-      {webgl && (
+      {webgl && scenesReady && (
         <SteppedView
           stateRef={stateRef}
           className="absolute inset-0"

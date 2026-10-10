@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { programs, type Program } from "@/content/programs";
 import { floors, programMeta } from "@/content/floors";
@@ -137,7 +137,7 @@ export function Finder({ compact = false }: { compact?: boolean }) {
             <p className="label mb-2">Floor {floor + 1}</p>
             <h3 className="display-md mb-8">{f.title}</h3>
             <AnimatePresence mode="wait">
-              <motion.ul
+              <m.ul
                 key={floor}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -148,7 +148,7 @@ export function Finder({ compact = false }: { compact?: boolean }) {
                 {f.slugs.map((s) => (
                   <li key={s}><ProgramCard p={bySlug(s)} freshGrad={grad} /></li>
                 ))}
-              </motion.ul>
+              </m.ul>
             </AnimatePresence>
             <p className="mt-6 text-sm text-muted">🎓 Fresh grads save up to {discounts.freshGrad.percent}% on every program.</p>
           </div>
@@ -165,15 +165,15 @@ export function Finder({ compact = false }: { compact?: boolean }) {
             </div>
           </div>
           <p className="sr-only" aria-live="polite">{results.length} programs match</p>
-          <motion.ul layout className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <m.ul layout className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence>
               {results.map((p) => (
-                <motion.li key={p.slug} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.4 }}>
+                <m.li key={p.slug} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.4 }}>
                   <ProgramCard p={p} freshGrad={grad} />
-                </motion.li>
+                </m.li>
               ))}
             </AnimatePresence>
-          </motion.ul>
+          </m.ul>
           {results.length === 0 && <p className="mt-10 text-muted">No program matches all filters. Clear one to see more.</p>}
         </div>
       )}

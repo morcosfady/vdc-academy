@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { loadGsap } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
-import { RiseLines } from "@/components/ui/Slab";
+import { RiseLines } from "@/components/ui/RiseLines";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { newState } from "@/lib/modelState";
 import { content, shown } from "@/content/site";
@@ -22,19 +21,27 @@ export function Hero() {
   // Scroll hands the building off to the next chapter: it turns and the floors start to separate.
   useEffect(() => {
     if (reduce) return;
-    gsap.registerPlugin(ScrollTrigger);
     const s = state.current;
-    const st = ScrollTrigger.create({
-      trigger: section.current,
-      start: "top top",
-      end: "bottom top",
-      scrub: 0.6,
-      onUpdate: (self) => {
-        s.yaw = self.progress * 0.55;
-        s.explode = self.progress * 0.5;
-      },
+    let kill = () => {};
+    let cancelled = false;
+    loadGsap().then(({ ScrollTrigger }) => {
+      if (cancelled) return;
+      const st = ScrollTrigger.create({
+        trigger: section.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: 0.6,
+        onUpdate: (self) => {
+          s.yaw = self.progress * 0.55;
+          s.explode = self.progress * 0.5;
+        },
+      });
+      kill = () => st.kill();
     });
-    return () => st.kill();
+    return () => {
+      cancelled = true;
+      kill();
+    };
   }, [reduce]);
 
   return (

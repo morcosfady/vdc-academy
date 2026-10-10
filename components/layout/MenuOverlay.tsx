@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { X } from "lucide-react";
 import { site } from "@/config/site";
 import { content, shown } from "@/content/site";
@@ -44,7 +44,7 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           ref={panel}
           role="dialog"
           aria-modal="true"
@@ -65,18 +65,18 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
 
             <ul className="my-auto py-12">
               {site.menu.map((l, i) => (
-                <motion.li
+                <m.li
                   key={l.href}
                   initial={{ opacity: 0, x: -40 + i * 6 }}
                   animate={{ opacity: 1, x: i * 14 }}
                   transition={{ delay: 0.25 + i * 0.05, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                   className="border-b border-border"
                 >
-                  <Link href={l.href} onClick={onClose} className="group flex items-baseline gap-6 py-3 md:py-4">
+                  <Link prefetch={false} href={l.href} onClick={onClose} className="group flex items-baseline gap-6 py-3 md:py-4">
                     <span className="label w-8">{String(i + 1).padStart(2, "0")}</span>
                     <span className="display-md transition-colors group-hover:text-accent-text">{l.label}</span>
                   </Link>
-                </motion.li>
+                </m.li>
               ))}
             </ul>
 
@@ -89,7 +89,7 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
               <LogoMark size={72} className="text-accent opacity-60" />
             </div>
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

@@ -1,65 +1,56 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useInView } from "motion/react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
+import { cn } from "@/lib/utils";
+
+type State = "idle" | "hidden" | "shown";
 
 // Stepped-panel reveal: the block rises out of a mask, offset by `index` like floors stacking.
+// Content already on screen is never hidden. Only blocks below the fold wait, then animate in with CSS.
 export function Slab({
   children,
   index = 0,
   className,
-  as = "div",
+  as: Tag = "div",
 }: {
   children: React.ReactNode;
   index?: number;
   className?: string;
   as?: "div" | "li" | "section";
 }) {
+  const ref = useRef<HTMLElement>(null);
   const reduce = useReduceMotion();
-  const Tag = motion[as];
-  if (reduce) {
-    const Plain = as;
-    return <Plain className={className}>{children}</Plain>;
-  }
+  const [state, setState] = useState<State>("idle");
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduce || el.getBoundingClientRect().top < window.innerHeight * 0.92) {
+      setState("shown");
+      return;
+    }
+    setState("hidden");
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setState("shown");
+          io.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [reduce]);
+
   return (
     <Tag
-      className={className}
-      initial={{ clipPath: "inset(0 0 100% 0)", y: 40, opacity: 0 }}
-      whileInView={{ clipPath: "inset(0 0 0% 0)", y: 0, opacity: 1 }}
-      viewport={{ once: true, margin: "-8% 0px" }}
-      transition={{ duration: 1, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+      ref={ref as never}
+      className={cn(state === "hidden" && "slab-hidden", state === "shown" && "slab-shown", className)}
+      style={{ transitionDelay: state === "shown" ? `${index * 100}ms` : undefined }}
     >
       {children}
     </Tag>
-  );
-}
-
-// Lines of text rising from a mask. Pass an array of lines.
-export function RiseLines({ lines, className }: { lines: string[]; className?: string }) {
-  const reduce = useReduceMotion();
-  const ref = useRef<HTMLSpanElement>(null);
-  // Observe the wrapper, not the masked lines (a clipped element never counts as visible).
-  const inView = useInView(ref, { once: true, margin: "0px 0px -5% 0px" });
-  return (
-    <span ref={ref} className={className}>
-      {lines.map((l, i) => (
-        <span key={i} className="block overflow-hidden pb-[0.08em]">
-          {i > 0 && " "}
-          {reduce ? (
-            <span className="block">{l}</span>
-          ) : (
-            <motion.span
-              className="block"
-              initial={{ y: "110%" }}
-              animate={{ y: inView ? 0 : "110%" }}
-              transition={{ duration: 1.1, delay: 0.1 + i * 0.09, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {l}
-            </motion.span>
-          )}
-        </span>
-      ))}
-    </span>
   );
 }

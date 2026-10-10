@@ -107,7 +107,7 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
 
 export function FreshGradChapter() {
   return (
-    <section id="ch-5" aria-labelledby="grad-title" className="relative overflow-hidden py-28 md:py-44">
+    <section id="ch-5" aria-labelledby="grad-title" className="cv-auto relative overflow-hidden py-28 md:py-44">
       {/* sunrise behind the skyline */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[80%] bg-[radial-gradient(ellipse_at_50%_100%,rgba(255,188,125,0.28),rgba(111,214,205,0.12)_45%,transparent_70%)]" />
       <div className="relative z-10 mx-auto max-w-[1600px] px-5 md:px-10">

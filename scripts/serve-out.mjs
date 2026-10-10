@@ -2,6 +2,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 
 const port = Number(process.argv[2] ?? 4173);
 const root = path.resolve("out");
@@ -21,7 +22,10 @@ http
       res.writeHead(404, { "Content-Type": "text/html" });
       return res.end(fs.readFileSync(path.join(root, "404.html")));
     }
-    res.writeHead(200, { "Content-Type": types[path.extname(file)] ?? "application/octet-stream" });
-    fs.createReadStream(file).pipe(res);
+    const type = types[path.extname(file)] ?? "application/octet-stream";
+    const gz = /html|javascript|css|json|svg|text/.test(type) && /gzip/.test(String(req.headers["accept-encoding"]));
+    res.writeHead(200, { "Content-Type": type, ...(gz ? { "Content-Encoding": "gzip" } : {}) });
+    const stream = fs.createReadStream(file);
+    (gz ? stream.pipe(zlib.createGzip()) : stream).pipe(res);
   })
   .listen(port, () => console.log(`serving out/ at http://localhost:${port}${base}/`));

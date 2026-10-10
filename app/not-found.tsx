@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
+import { loadGsap } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { newState } from "@/lib/modelState";
@@ -16,9 +16,18 @@ export default function NotFound() {
       s.clash = 0.25;
       return;
     }
-    const t = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
-    t.fromTo(s, { clash: 0 }, { clash: 0.5, duration: 1.6, ease: "none" }).to(s, { clash: 1, duration: 1.4 }).to({}, { duration: 1.4 });
-    return () => void t.kill();
+    let kill = () => {};
+    let cancelled = false;
+    loadGsap().then(({ gsap }) => {
+      if (cancelled) return;
+      const t = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
+      t.fromTo(s, { clash: 0 }, { clash: 0.5, duration: 1.6, ease: "none" }).to(s, { clash: 1, duration: 1.4 }).to({}, { duration: 1.4 });
+      kill = () => void t.kill();
+    });
+    return () => {
+      cancelled = true;
+      kill();
+    };
   }, []);
 
   return (
