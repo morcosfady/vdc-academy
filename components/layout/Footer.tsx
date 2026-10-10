@@ -60,7 +60,7 @@ export function Footer() {
           <ReduceMotionToggle />
         </div>
       </div>
-      <p aria-hidden className="pointer-events-none mt-10 select-none whitespace-nowrap text-center font-display text-[16.5vw] leading-none tracking-tighter text-text/[0.05]">
+      <p aria-hidden className="pointer-events-none mt-10 select-none whitespace-nowrap text-center font-display text-[11.2vw] leading-none tracking-tight text-text/[0.05]">
         VDC ACADEMY
       </p>
     </footer>
