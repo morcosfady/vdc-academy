@@ -1,66 +1,42 @@
 # VDC Academy handoff
 
-Project: VDC Academy website (Bay BIM Designs training academy). Spec: `VDC-Academy-Claude-Code-Prompt.md`.
-Folder: `F:\Projects\VDC Academy` (separate from the Pharaoh's Bites repo).
+Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, redeploys on every push to main)
+Repo (public): https://github.com/morcosfady/vdc-academy
+Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
-## Phase 1: Foundation (done 2026-10-10)
+## State (v2 redesign, 2026-10-10)
 
-- Scaffolded Next.js 15 (App Router, TypeScript, Tailwind v4, pnpm). Installed motion, gsap, lenis, three + R3F + drei, react-hook-form, zod, next-intl, next-themes, lucide-react.
-- Brand extracted from baybimdesigns.com into `docs/brand-reference.md`: primary `#365B62`, ink `#0A1D23`, deepest `#000E12`, muted `#83969A`, light `#A3BEC7`, pale `#DEEFFD`; fonts EurostileExtended (headings) + Poppins (body).
-- Tokens in `app/globals.css` (dark first, light mode supported, WCAG-minded pairs).
-- Layout: skip link, dismissible announcement bar, sticky glass header, mobile menu, sticky mobile Apply bar, footer, theme toggle.
-- Base components: Button, Badge, SectionHeader. Placeholder home page.
-- `.env.example`, `content/TODO-content.md`.
+Everything below is built, tested locally against the static export, and pushed.
 
-## Phase 2: Home page (done 2026-10-10)
+- **Audit and reference**: `docs/audit/v1-audit.md` (+ screenshots, Lighthouse), `docs/reference/likova-notes.md`. Likova frames are local only (gitignored). v2 screenshots in `docs/audit/v2/`.
+- **Design system**: tokens in `app/globals.css` (Bay BIM palette, dark first, light theme, film grain tile, faint grid), fonts Michroma (stand-in for licensed EurostileExtended) + Poppins (2 families), display scale, `.label` technical labels, `.glass`, stepped-slab reveals (`Slab`, CSS only), `RiseLines` (CSS only), header hides on scroll, full-screen menu, floating fresh-grad pill, chapter indicator, giant footer wordmark.
+- **Signature 3D object**: `components/three/SteppedBuilding.tsx`, 6 offset glass floors with edges, structure, ducts, pipes, trays and hangers visible inside, clash story (red to green), 4D growth, LOD 100 to 500, isolation by discipline. One shared WebGL canvas (`SceneHost`) with drei `View` per page region (`SceneSlot` > `SteppedView`). SVG poster (`SteppedPoster`) shows first and when 3D is unavailable.
+- **Home**: 6 chapters: hero, explorer (rotate, isolate, clash, 4D scrubber, LOD), why (3 statements + benefits + software chips), finder (floors + filters), fresh grads (40% as real text + qualify quiz), journey (5 unique steps, building gains floors, pinned on desktop) + closing CTA + FAQ.
+- **Inner pages**: programs (finder), program detail (3D with discipline isolated, outcomes, modules sheet index, price box), pricing, fresh-graduates, learning-path, for-companies, about, contact, faq, privacy, terms, accessibility, instructors and student-work ("coming soon", noindex, hidden from nav), 404 (clash), apply, apply/success.
+- **Placeholders**: none visible. `content/site.ts` holds every owner value with `approved` flag; components render nothing when missing. Playwright test fails if any `[BRACKET]` text appears on any page.
+- **Apply flow**: 5 steps, react-hook-form + zod, autosave + resume, fresh-grad detection banner, file upload (5 MB, type check), live estimate (shows "Price will be sent with your acceptance" when prices unknown), building gains a floor per step. Submission is isolated in `lib/submit.ts` (Supabase REST, insert only). Without Supabase keys the page shows "Applications open soon" + email capture (`?preview=1` shows the full form).
+- **Supabase** (not connected yet): `supabase/migrations/0001_init.sql` (tables, RLS insert-only for public, admin policies, private bucket), `supabase/functions/notify/index.ts` (Turnstile check + Resend emails). Needs keys, see below.
+- **Tests**: `pnpm exec playwright test` (35 tests: no placeholders, no em dashes, H1 text, 40% without JS and with reduced motion, apply validation and fresh-grad banner, no-WebGL fallback, reduced motion, axe serious/critical = 0 on 8 pages). Build first: `GITHUB_PAGES=true pnpm build`; the tests serve `out/` via `scripts/serve-out.mjs`.
 
-- Procedural 3D building (`components/three/Building.tsx`): instanced boxes, no model files. Assembles on load (structure, then ducts/pipes/cable trays, then glass), wireframe turns solid. Shared mutable state in `lib/modelState.ts`.
-- Scenes: `HeroScene` (hero and final CTA, auto-rotate, mouse tilt, drag orbit), `StoryScene`, `PathScene`, `ViewerScene`. All lazy-loaded with `next/dynamic` and mounted only when near the viewport (`WhenVisible`), frameloop stops off screen, DPR drops via PerformanceMonitor, aspect-aware camera (`FitCamera`), SVG fallback when WebGL is missing.
-- Home sections in `components/home/`: Hero, Stats, ScrollStory (pinned GSAP scrub: model, exploded view, clash turns green, 4D floor-by-floor, LOD slider 100 to 500), Features (TiltCard), software marquee, programs carousel, learning path (3D road, camera follows scroll), fresh grad spotlight (count-up, confetti), gallery with interactive viewer (discipline toggles + section slider), instructors flip cards, testimonial, pricing teaser with fresh grad switch, FAQ preview, final CTA.
-- Lenis smooth scroll synced with GSAP. Footer "Reduce motion" toggle (also honors the OS setting): disables smooth scroll, auto-rotate, confetti, marquee; story gets stage buttons instead of scroll pinning.
-- Verified in the browser (desktop width): hero assembles, story stages 1 to 4 work, clash marker red then green, viewer toggles, pricing switch. `pnpm build` passes. Home first-load JS 245 kB; 3D code loads after.
+## Performance (Lighthouse mobile, local static build with gzip)
 
-## Live site and deploy
+Home 87, programs 87, program detail 86, pricing 86, apply 86, fresh grads 86, privacy 90. Accessibility 98 to 100, Best Practices 100, SEO 100 on all.
+What made the difference: 3D bundle (about 900 KB) loads late (idle on desktop, first interaction or 8 s on phones) and not at all on software renderers (`useWebGL`, bypass with `?gl=force`), GSAP/Lenis/motion features load on first interaction (`lib/interaction.ts`), CSS-only reveals and headline, small pre-rendered grain PNG instead of an SVG filter, `font-display: optional` for body font, no link prefetch, `content-visibility` on below-fold chapters.
 
-- Repo (public): https://github.com/morcosfady/vdc-academy
-- Live (GitHub Pages): https://morcosfady.github.io/vdc-academy/ . Every push to main redeploys via `.github/workflows/pages.yml`.
-- Pages build uses static export with basePath `/vdc-academy` (only when `GITHUB_PAGES=true`, see `next.config.ts`). Phase 4 (forms, server actions, admin) needs a real server, so it must move to Vercel; static export will not work for it.
-- Vercel MCP in the Claude session was refused (scope error), so Vercel must be connected by the owner in the Vercel dashboard.
+## Not done / needs the owner
 
-## Phase 3: Programs, pricing, discounts (done 2026-10-10)
-
-- `content/programs.ts`: 11 programs with draft syllabus (modules, outcomes, software, projects). Durations, format, schedule, prices, dates and seats are null and show `[PLACEHOLDER]` chips.
-- `config/discounts.ts` (fresh grad 40, student 25, group 15, early bird 10; early bird stacks only with fresh grad) and `lib/pricing.ts` (calcPrice). Prices show percent now and dollars once `priceFull` is set.
-- Pages: `/programs` (level filter + search), `/programs/[slug]` (outcomes, module accordion, software, projects, details, sticky price box with status picker, related), `/pricing` (plans, discount table, calculator, payment/refund placeholders), `/fresh-graduates` (count-up, 3 steps, calculator).
-- Apply buttons link to `/apply` (and `/apply?program=slug`), which arrives in Phase 4.
-- Currency assumed USD. Syllabus is a draft for the owner to review.
-
-## Decisions and deviations
-
-- Programs preview is a CSS scroll-snap carousel with arrows, not a GSAP pinned horizontal scroll (simpler, works on touch).
-- No bloom post-processing (skipped for performance).
-- Preloader (logo drawing) not built yet.
-- Cursor follower and magnetic button not built yet.
-- Testimonial uses a Bay BIM client quote from baybimdesigns.com, shown with an "[approval pending]" chip.
-- Stats show `[XX]` placeholders (a `Counter` component is ready for real numbers).
-- Software names are plain text badges, not logos (confirm trademark use first).
-
-## Not done / not tested
-
-- Not checked on a real phone or in Safari. Lighthouse not run (Phase 7).
-- Announcement bar countdown not built (date is a `[DATE]` placeholder).
-- next-intl not wired into routing yet (strings still inline).
-- Playwright, Vitest, axe not set up yet (Phase 7).
-- Light mode visuals of the 3D scenes not reviewed.
-- Linked pages (`/programs`, `/apply`, etc.) do not exist yet and 404 until later phases.
+- **Supabase, Resend, Turnstile keys.** Steps: create Supabase project, run the SQL, add yourself to `admin_emails`, create Database Webhooks (INSERT on applications, leads, contact_messages) calling the `notify` Edge Function, set function secrets (RESEND_API_KEY, EMAIL_FROM, ADMIN_NOTIFY_EMAIL, TURNSTILE_SECRET_KEY, WEBHOOK_SECRET, SITE_URL), then add GitHub repo variables `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (Settings > Secrets and variables > Actions > Variables) and push. Until then the apply page shows the honest fallback.
+- **Admin dashboard** (`/admin`) is not built. RLS policies for admins exist. Needs Supabase Auth magic link in the browser; build after keys exist.
+- Real content: see `content/TODO-content.md` (prices, durations, formats, dates, contact email/phone, instructors, student work, testimonial approval, domain, licensed font).
+- No rendered hero poster WebP: an SVG poster is used instead (theme aware, tiny). A real render can replace `SteppedPoster` later.
+- Blog/MDX, next-intl wiring, JSON-LD and dynamic OG images (SEO extras) not built yet. Metadata, sitemap and robots are partly missing: add `app/sitemap.ts` and `app/robots.ts` next.
+- Not tested on a real iPhone Safari or Android device. Desktop and 390 px emulation only. Light theme 3D scenes not reviewed visually.
+- Vercel MCP in the Claude session was refused (scope). If hosting moves to Vercel, replace `lib/submit.ts` with server actions.
 
 ## Gotchas
 
-- EurostileExtended is a licensed font. Michroma is a stand-in in `app/layout.tsx`.
-- pnpm 12 prints "Ignored build scripts" after install; harmless so far (`pnpm approve-builds` if something breaks).
-- First 3D load in `pnpm dev` takes several seconds (dev compile). Production is much faster.
-- Hot reload can briefly show a stale "X is not defined" error right after multi-file edits; reload fixes it.
-
-## Placeholders still needed
-
-See `content/TODO-content.md`.
+- GitHub Pages basePath is `/vdc-academy` (only when `GITHUB_PAGES=true`).
+- 3D scenes use `drei View` (one canvas). Any element above a scene needs `z-index` above 5 and must not be inside an `isolate` ancestor.
+- Do not import values (arrays) from a `"use client"` file into a server page: keep shared data in `content/*.ts`.
+- `pnpm` prints "Ignored build scripts" after install: harmless.
+- Quick local run: `pnpm dev` (3D needs a GPU browser, or add `?gl=force`).

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
 import { Faq } from "@/components/home/Closing";
 import { faqs } from "@/content/faqs";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = { title: "FAQ", description: "Answers about VDC Academy programs, discounts and applying." };
 
@@ -16,6 +17,7 @@ const more = [
 export default function FaqPage() {
   return (
     <>
+      <JsonLd data={{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: [...faqs, ...more].map((x) => ({ "@type": "Question", name: x.q, acceptedAnswer: { "@type": "Answer", text: x.a } })) }} />
       <PageHero eyebrow="FAQ" title={["Questions,", "answered."]} />
       <section className="mx-auto max-w-4xl px-5 pb-32 md:px-10">
         <Faq items={[...faqs, ...more]} />

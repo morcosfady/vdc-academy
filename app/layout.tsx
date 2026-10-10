@@ -9,6 +9,7 @@ import { MobileApplyBar } from "@/components/layout/MobileApplyBar";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { SceneHostLoader } from "@/components/three/SceneHostLoader";
 import { UtmCapture } from "@/components/layout/UtmCapture";
+import { JsonLd, orgLd } from "@/components/seo/JsonLd";
 import { MotionProvider } from "@/components/layout/MotionProvider";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
       <body>
+        <JsonLd data={orgLd} />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <MotionProvider>
           <a href="#main" className="skip-link">

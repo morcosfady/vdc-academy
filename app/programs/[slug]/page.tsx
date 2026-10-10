@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Slab } from "@/components/ui/Slab";
 import { PriceBox } from "@/components/programs/PriceBox";
 import { ProgramCard } from "@/components/programs/ProgramCard";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { ProgramHero } from "@/components/programs/ProgramHero";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -39,6 +40,16 @@ export default async function ProgramPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Course",
+          name: p.title,
+          description: p.summary,
+          provider: { "@type": "EducationalOrganization", name: "VDC Academy", sameAs: "https://baybimdesigns.com/" },
+          ...(p.priceFull !== null ? { offers: { "@type": "Offer", price: p.priceFull, priceCurrency: "USD" } } : {}),
+        }}
+      />
       <ProgramHero slug={p.slug} level={p.level} title={p.title} summary={p.summary} />
 
       <div className="mx-auto grid max-w-[1600px] gap-12 px-5 py-20 md:px-10 lg:grid-cols-3 lg:py-32">
