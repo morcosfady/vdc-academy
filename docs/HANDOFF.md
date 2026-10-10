@@ -4,12 +4,29 @@ Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, re
 Repo (public): https://github.com/morcosfady/vdc-academy
 Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
+## v3 visual overhaul (2026-10-10), supersedes the v2 look
+
+Owner feedback: "basic, blank background, nasty green, not professional". Done:
+
+- **Brand re-check** (`docs/brand-reference.md`, `scripts/brand-probe.mjs`): ink #0A1D23, deep #000E12, slate #365B62, pale #DEEFFD, Poppins + Eurostile Extended. `#216FF3` (and the pink) are the Readabler accessibility plugin, NOT brand, so they are not used.
+- **Color system**: dark ink theme, steel blue accent (#7DB3E8 on dark, #1F5C99 on light), button #2F6FB0 with white text (5.2:1), brass #C9A36A in tiny doses (40%, clash resolved, tags). No green anywhere: `tests/no-green.spec.ts` scans all source for green/teal hues and fails the build. Tokens in `app/globals.css`. `.theme-light` and `.theme-dark` classes flip a whole chapter regardless of the site theme.
+- **Type**: headlines Poppins SemiBold (max 84px), small uppercase labels in Michroma (stand-in for Eurostile Extended), body Poppins. Headline and body fonts use `display: optional` for speed (first-ever visit may show the system font).
+- **Depth everywhere**: graded architectural photos (duotone ink to steel blue, `scripts/make-images.mjs`, credits in `docs/image-credits.md`), SVG blueprint layer (column bubbles, dimensions, section marker, stepped elevation) in `components/ui/BlueprintLayer.tsx`, soft blue glow behind the model, grain tile, Ken Burns on the hero photo.
+- **Hero**: photo + lit 3D building (clear glass, systems visible) on the right, callout tags with leader lines (LOD 350, MEP Ducts, Clash resolved), headline "Train on real BIM projects. Build a real career." in 3 lines, two 52px buttons, trust facts row, trust strip.
+- **Rhythm**: hero dark, explorer dark, why LIGHT with 3 tall photo panels, programs dark, fresh grads LIGHT with crane photo and brass underline, path dark, closing dark with photo, footer deep.
+- **Cards**: ink surface, steel hairline, 16px radius, inner highlight. Program cards have a photo cover per program (own crop and focus), glyph, level tag, software chips, "View program".
+- **Header** 72px, 15px links, hides on scroll. Buttons 52px, 10px radius. Inputs, chips 8 to 10px.
+- **Lighthouse mobile (local static build)**: home 90, programs 94, program detail 91, fresh grads 89, pricing 85, apply 87 (CLS fixed). A11y 98 to 100, Best Practices 100, SEO 100. 36 tests pass (adds the no-green test).
+- Before/after screenshots: `docs/audit/v3-before/` and `docs/audit/v3-after/`.
+
+Still open from v3: no photography of people (no free-licensed match, see image-credits), no MEP ceiling photo (own 3D renders used). Supabase keys and the admin dashboard are still pending (see below).
+
 ## State (v2 redesign, 2026-10-10)
 
 Everything below is built, tested locally against the static export, and pushed.
 
 - **Audit and reference**: `docs/audit/v1-audit.md` (+ screenshots, Lighthouse), `docs/reference/likova-notes.md`. Likova frames are local only (gitignored). v2 screenshots in `docs/audit/v2/`.
-- **Design system**: tokens in `app/globals.css` (Bay BIM palette, dark first, light theme, film grain tile, faint grid), fonts Michroma (stand-in for licensed EurostileExtended) + Poppins (2 families), display scale, `.label` technical labels, `.glass`, stepped-slab reveals (`Slab`, CSS only), `RiseLines` (CSS only), header hides on scroll, full-screen menu, floating fresh-grad pill, chapter indicator, giant footer wordmark.
+- **Design system** (see v3 above for the current palette and type), display scale, `.label` technical labels, `.glass`, stepped-slab reveals (`Slab`, CSS only), `RiseLines` (CSS only), header hides on scroll, full-screen menu, floating fresh-grad pill, chapter indicator, giant footer wordmark.
 - **Signature 3D object**: `components/three/SteppedBuilding.tsx`, 6 offset glass floors with edges, structure, ducts, pipes, trays and hangers visible inside, clash story (red to green), 4D growth, LOD 100 to 500, isolation by discipline. One shared WebGL canvas (`SceneHost`) with drei `View` per page region (`SceneSlot` > `SteppedView`). SVG poster (`SteppedPoster`) shows first and when 3D is unavailable.
 - **Home**: 6 chapters: hero, explorer (rotate, isolate, clash, 4D scrubber, LOD), why (3 statements + benefits + software chips), finder (floors + filters), fresh grads (40% as real text + qualify quiz), journey (5 unique steps, building gains floors, pinned on desktop) + closing CTA + FAQ.
 - **Inner pages**: programs (finder), program detail (3D with discipline isolated, outcomes, modules sheet index, price box), pricing, fresh-graduates, learning-path, for-companies, about, contact, faq, privacy, terms, accessibility, instructors and student-work ("coming soon", noindex, hidden from nav), 404 (clash), apply, apply/success.
