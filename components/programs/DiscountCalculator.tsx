@@ -20,7 +20,7 @@ export function DiscountCalculator({ initial = "freshGrad" }: { initial?: Discou
     <div className="glass grid gap-8 p-7 md:grid-cols-2 md:p-10">
       <div className="space-y-6">
         <label className="block">
-          <span className="label mb-2 block">Program</span>
+          <span className="meta mb-2 block">Program</span>
           <select value={slug} onChange={(e) => setSlug(e.target.value)} className="h-14 w-full border border-border bg-transparent px-4">
             {programs.map((p) => (
               <option key={p.slug} value={p.slug} className="bg-[#0a1d23] text-white">{p.title}</option>
@@ -28,7 +28,7 @@ export function DiscountCalculator({ initial = "freshGrad" }: { initial?: Discou
           </select>
         </label>
         <fieldset>
-          <legend className="label mb-2">Who are you?</legend>
+          <legend className="meta mb-2">Who are you?</legend>
           <div className="flex flex-wrap gap-2">
             {statuses.map((s) => (
               <button
@@ -36,7 +36,7 @@ export function DiscountCalculator({ initial = "freshGrad" }: { initial?: Discou
                 type="button"
                 aria-pressed={status === s}
                 onClick={() => setStatus(s)}
-                className={cn("rounded-lg border px-3.5 py-2 text-[13px] font-medium", status === s ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+                className={cn("min-h-11 rounded-lg border px-4 py-2 text-[14px] font-medium", status === s ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
               >
                 {s ? `${discounts[s].emoji} ${discounts[s].label}` : "Standard"}
               </button>
@@ -49,16 +49,16 @@ export function DiscountCalculator({ initial = "freshGrad" }: { initial?: Discou
         </label>
       </div>
       <div className="flex flex-col justify-center border-t border-border pt-8 md:border-s md:border-t-0 md:ps-10 md:pt-0" aria-live="polite">
-        <p className="label mb-3">Your estimate</p>
+        <p className="meta mb-3">Your estimate</p>
         {r.final === null ? (
-          <p className="font-display text-2xl">Price on request</p>
+          <p className="font-semibold text-2xl">Price on request</p>
         ) : (
-          <p className="font-display text-5xl"><Roll value={r.final} prefix="$" /></p>
+          <p className="font-semibold text-5xl"><Roll value={r.final} prefix="$" /></p>
         )}
-        <p className="mt-4 font-display text-3xl text-warm">{r.percent > 0 ? <>−<Roll value={r.percent} suffix="%" /></> : "No discount"}</p>
+        <p className="mt-4 font-semibold text-3xl text-warm">{r.percent > 0 ? <>−<Roll value={r.percent} suffix="%" /></> : "No discount"}</p>
         {r.saving !== null && r.saving > 0 && <p className="mt-1 text-sm text-muted">You save <Roll value={r.saving} prefix="$" /></p>}
         {r.applied.length > 0 && <p className="mt-2 text-sm text-muted">{r.applied.join(" + ")}</p>}
-        <p className="mt-5 text-xs text-muted">Discounts stay pending until we check your documents.</p>
+        <p className="mt-5 text-sm text-muted">Discounts stay pending until we check your documents.</p>
       </div>
     </div>
   );

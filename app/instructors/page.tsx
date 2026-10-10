@@ -23,7 +23,7 @@ export default function InstructorsPage() {
           <li key={i.name} className="glass p-6">
             {i.photo && <Image src={i.photo} alt="" width={400} height={400} className="mb-5 aspect-square w-full object-cover" />}
             <p className="display-md !text-xl">{i.name}</p>
-            <p className="label mt-2">{i.role}{i.years ? ` · ${i.years} years` : ""}</p>
+            <p className="meta mt-2">{i.role}{i.years ? ` · ${i.years} years` : ""}</p>
             {i.bio && <p className="mt-4 text-muted">{i.bio}</p>}
             {i.linkedin && <p className="mt-4"><a href={i.linkedin} className="text-accent-text underline underline-offset-4">LinkedIn</a></p>}
           </li>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./motion.css";
 
 /* Bay BIM Designs palette (docs/brand-reference.md): ink #0A1D23, deep #000E12, slate #365B62, pale blue #DEEFFD.
    Accent is a steel blue derived from the pale blue. Brass is used in tiny doses. There is no green anywhere. */
@@ -9,8 +10,9 @@
   --pale: #deeffd;
 
   /* Light theme */
-  --bg: #f3f8fc;
-  --bg-2: #e6f0f8;
+  --bg: #eef5fb;
+  --bg-2: #e3edf6;
+  --text-dim: #52666d;
   --surface: rgba(255, 255, 255, 0.82);
   --surface-solid: #ffffff;
   --text: #0a1d23;
@@ -22,7 +24,7 @@
   --glow: rgba(31, 92, 153, 0.3);
   --cta-bg: #1f5c99;
   --cta-hover: #194e82;
-  --cta-text: #ffffff;
+  --cta-text: #f4f8fc;
   --grain: 0.05;
   --radius-sm: 8px;
   --radius: 10px;
@@ -31,11 +33,12 @@
 
 .dark {
   --bg: #0a1d23;
-  --bg-2: #000e12;
+  --bg-2: #06141a;
   --surface: rgba(16, 39, 47, 0.78);
   --surface-solid: #10272f;
-  --text: #f2f7fb;
-  --text-muted: #a9bcc4;
+  --text: #eaf2f7;
+  --text-muted: #b4c6ce;
+  --text-dim: #8ba2ab;
   --border: rgba(54, 91, 98, 0.6);
   --accent: #7db3e8;
   --accent-text: #7db3e8;
@@ -43,14 +46,15 @@
   --glow: rgba(90, 160, 225, 0.4);
   --cta-bg: #2f6fb0;
   --cta-hover: #2860a0;
-  --cta-text: #ffffff;
+  --cta-text: #f4f8fc;
   --grain: 0.035;
 }
 
 /* A light chapter inside the dark page (and a dark one inside the light page) */
 .theme-light {
-  --bg: #deeffd;
-  --bg-2: #f3f8fc;
+  --bg: #eef5fb;
+  --bg-2: #e3edf6;
+  --text-dim: #52666d;
   --surface: rgba(255, 255, 255, 0.85);
   --surface-solid: #ffffff;
   --text: #0a1d23;
@@ -62,17 +66,18 @@
   --glow: rgba(31, 92, 153, 0.3);
   --cta-bg: #1f5c99;
   --cta-hover: #194e82;
-  --cta-text: #ffffff;
+  --cta-text: #f4f8fc;
   background: linear-gradient(180deg, var(--bg), var(--bg-2));
   color: var(--text);
 }
 .theme-dark {
   --bg: #0a1d23;
-  --bg-2: #000e12;
+  --bg-2: #06141a;
   --surface: rgba(16, 39, 47, 0.78);
   --surface-solid: #10272f;
-  --text: #f2f7fb;
-  --text-muted: #a9bcc4;
+  --text: #eaf2f7;
+  --text-muted: #b4c6ce;
+  --text-dim: #8ba2ab;
   --border: rgba(54, 91, 98, 0.6);
   --accent: #7db3e8;
   --accent-text: #7db3e8;
@@ -80,7 +85,7 @@
   --glow: rgba(90, 160, 225, 0.4);
   --cta-bg: #2f6fb0;
   --cta-hover: #2860a0;
-  --cta-text: #ffffff;
+  --cta-text: #f4f8fc;
   background: linear-gradient(180deg, var(--bg), var(--bg-2));
   color: var(--text);
 }
@@ -108,6 +113,7 @@
   --color-brand-warm: var(--warm);
   --color-brand-primary: var(--accent);
   --font-heading: var(--font-head);
+  --color-dim: var(--text-dim);
 }
 
 html {
@@ -118,8 +124,8 @@ body {
   background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%) fixed;
   color: var(--text);
   font-family: var(--font-body), system-ui, sans-serif;
-  font-size: clamp(1rem, 0.96rem + 0.18vw, 1.125rem);
-  line-height: 1.6;
+  font-size: clamp(1rem, 0.97rem + 0.15vw, 1.125rem);
+  line-height: 1.65;
   overflow-x: clip;
 }
 
@@ -166,11 +172,29 @@ h3 {
 /* Eurostile-style title block label: small, uppercase, wide tracking (Michroma stands in for Eurostile Extended) */
 .label {
   font-family: var(--font-display), var(--font-body), sans-serif;
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
+  color: var(--text-dim);
+}
+
+/* Secondary small text: Poppins, 14px, readable */
+.meta {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p,
+li {
+  text-wrap: pretty;
 }
 
 :focus-visible {
@@ -324,4 +348,38 @@ html.lenis body {
 .debug-missing {
   outline: 2px dashed var(--warm);
   outline-offset: 4px;
+}
+
+/* Smooth bands between dark and light chapters, so there is never a flash */
+.band-both {
+  background: linear-gradient(
+    to bottom,
+    #0a1d23 0,
+    #1b3448 60px,
+    #7d99ad 130px,
+    #dbe7f1 190px,
+    #eef5fb 230px,
+    #e3edf6 calc(100% - 230px),
+    #cddbe8 calc(100% - 190px),
+    #7d99ad calc(100% - 130px),
+    #1b3448 calc(100% - 60px),
+    #0a1d23 100%
+  );
+}
+
+/* Comfort mode: calm static version (no grain, glows, parallax or smooth motion), slightly larger text */
+html.comfort {
+  font-size: 112.5%;
+}
+html.comfort body::before,
+html.comfort .glow-layer {
+  display: none;
+}
+html.comfort *,
+html.comfort *::before,
+html.comfort *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }

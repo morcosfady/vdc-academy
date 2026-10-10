@@ -25,10 +25,10 @@ export function ProgramGlyph({ slug, className }: { slug: string; className?: st
       body = (<><rect x="10" y="26" width="26" height="26" fill="currentColor" opacity=".7" /><rect x="28" y="12" width="26" height="26" fill="var(--accent)" opacity=".9" /></>);
       break;
     case "navisworks-clash-detection":
-      body = (<><rect x="8" y="22" width="32" height="26" fill="currentColor" opacity=".55" /><rect x="24" y="30" width="32" height="22" fill="#8cc0f0" opacity=".8" /><circle cx="32" cy="38" r="5" fill="#e5484d" /></>);
+      body = (<><rect x="8" y="22" width="32" height="26" fill="currentColor" opacity=".55" /><rect x="24" y="30" width="32" height="22" fill="#8cc0f0" opacity=".8" /><circle className="anim-clash-dot" cx="32" cy="38" r="5" fill="#e5484d" /><path className="anim-check" pathLength={1} d="M28 38 L31 41 L37 34" fill="none" stroke="#06141a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>);
       break;
     case "4d-5d-simulation":
-      body = (<><Slab x={8} y={50} w={48} /><Slab x={16} y={38} w={40} o={0.8} /><Slab x={24} y={26} w={32} o={0.6} /><Slab x={32} y={14} w={24} accent /></>);
+      body = (<><rect className="anim-gantt" x="8" y="14" width="30" height="7" fill="var(--accent)" style={{ animationDelay: "0s" }} /><rect className="anim-gantt" x="18" y="27" width="34" height="7" fill="currentColor" opacity=".75" style={{ animationDelay: "0.35s" }} /><rect className="anim-gantt" x="28" y="40" width="28" height="7" fill="#c9a36a" style={{ animationDelay: "0.7s" }} /></>);
       break;
     case "dynamo-for-revit":
       body = (<><path d="M14 40 L32 20 L50 36 L32 52 Z" fill="none" stroke="currentColor" strokeWidth="1.5" opacity=".6" />{[[14, 40], [32, 20], [50, 36], [32, 52]].map(([cx, cy], i) => <circle key={i} cx={cx} cy={cy} r="5" fill={i === 1 ? "var(--accent)" : "currentColor"} />)}</>);

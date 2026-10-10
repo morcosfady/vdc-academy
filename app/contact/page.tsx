@@ -16,16 +16,16 @@ export default function ContactPage() {
       <section className="mx-auto grid max-w-[1280px] gap-16 px-5 pb-32 md:px-10 lg:grid-cols-12">
         <div className="lg:col-span-7"><ContactForm /></div>
         <aside className="lg:col-span-4 lg:col-start-9">
-          <p className="label mb-4">Where</p>
+          <p className="meta mb-2">Where</p>
           <p>{address ?? site.city}</p>
           {(email || phone) && (
             <>
-              <p className="label mb-4 mt-10">Direct</p>
+              <p className="meta mb-2 mt-10">Direct</p>
               {email && <p><a href={`mailto:${email}`} className="underline underline-offset-4">{email}</a></p>}
               {phone && <p>{phone}</p>}
             </>
           )}
-          <p className="label mb-4 mt-10">Part of</p>
+          <p className="meta mb-2 mt-10">Part of</p>
           <p><a href={site.parentUrl} className="underline underline-offset-4">{site.parent}</a></p>
         </aside>
       </section>

@@ -75,7 +75,7 @@ export function Explorer() {
   return (
     <section id="ch-2" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden py-20 md:py-32">
       <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#7db3e8] opacity-[0.07]" />
-      <div aria-hidden className="pointer-events-none absolute end-[-10%] top-1/2 size-[760px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(90,160,225,0.22),transparent_65%)]" />
+      <div aria-hidden className="glow-layer pointer-events-none absolute end-[-10%] top-1/2 size-[760px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(90,160,225,0.22),transparent_65%)]" />
       <div className="relative z-10 mx-auto grid max-w-[1280px] gap-10 px-5 md:px-8 lg:grid-cols-12">
         <div className="relative z-10 lg:col-span-4">
           <Slab>
@@ -84,24 +84,24 @@ export function Explorer() {
             <p className="mt-6 max-w-sm text-muted">Pick a discipline to isolate it. Drag the building to turn it.</p>
           </Slab>
 
-          <div role="group" aria-label="Isolate a discipline" className="mt-8 flex flex-wrap gap-2">
+          <div role="group" aria-label="Isolate a discipline" className="fade-edges -mx-5 mt-8 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:[mask-image:none]">
             {buttons.map((b) => (
               <button
                 key={b.id}
                 type="button"
                 aria-pressed={active === b.id}
                 onClick={() => select(b.id)}
-                className={cn("rounded-lg border px-4 py-2.5 text-[13px] font-medium transition-colors", active === b.id ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:border-text hover:text-text")}
+                className={cn("min-h-11 rounded-lg border px-4 py-2.5 text-[14px] font-medium transition-colors", active === b.id ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:border-text hover:text-text")}
               >
                 {b.label}
               </button>
             ))}
           </div>
 
-          <div className="glass mt-8 min-h-[190px] p-6" aria-live="polite">
+          <div key={active} className="glass slide-in mt-8 min-h-[190px] p-6" aria-live="polite">
             {current ? (
               <>
-                <p className="label mb-3">{current.label}</p>
+                <p className="meta mb-3">{current.label}</p>
                 <p>{current.sentence}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {current.software.map((s) => <Badge key={s}>{s}</Badge>)}
@@ -112,7 +112,7 @@ export function Explorer() {
               </>
             ) : (
               <>
-                <p className="label mb-3">Whole model</p>
+                <p className="meta mb-3">Whole model</p>
                 <p>Structure, ducts, pipes and cable trays, all in one coordinated model. This is what BIM looks like inside.</p>
               </>
             )}
@@ -129,20 +129,20 @@ export function Explorer() {
           />
 
           {active === "clash" && (
-            <p className="label glass absolute start-4 top-4 z-10 px-4 py-3 !text-[11px]" role="status">
+            <p className="glass absolute start-4 top-4 z-10 rounded-lg px-4 py-2.5 text-[14px] text-text" role="status">
               CLASH #0147 · DUCT vs BEAM · 120mm
-              <span className={cn("ms-3 font-medium", resolved ? "text-[#d9b06a]" : "text-[#ff6b60]")}>{resolved ? "RESOLVED" : "OPEN"}</span>
+              <span className={cn("ms-3 font-medium", resolved ? "text-[#d9b06a]" : "text-[#ff6b60]")}>{resolved ? "✓ RESOLVED" : "OPEN"}</span>
             </p>
           )}
           {active === "clash" && reduce && (
-            <button type="button" onClick={() => { state.current.clash = resolved ? 0.2 : 1; setResolved(!resolved); }} className="glass absolute end-4 top-4 z-10 px-4 py-2 text-xs uppercase tracking-widest">
+            <button type="button" onClick={() => { state.current.clash = resolved ? 0.2 : 1; setResolved(!resolved); }} className="glass absolute end-4 top-4 z-10 px-4 py-2 text-sm uppercase tracking-widest">
               {resolved ? "Show clash" : "Fix clash"}
             </button>
           )}
 
           {active === "4d" && (
             <div className="glass absolute inset-x-4 bottom-4 z-10 px-5 py-4">
-              <label className="label flex justify-between" htmlFor="week">
+              <label className="meta flex justify-between" htmlFor="week">
                 <span>Construction schedule</span>
                 <span>Week {week} / {WEEKS}</span>
               </label>
@@ -151,7 +151,7 @@ export function Explorer() {
           )}
 
           <div className="relative z-10 mt-6 flex flex-wrap items-center gap-x-8 gap-y-3">
-            <span className="label">Level of development</span>
+            <span className="meta">Level of development</span>
             <div role="group" aria-label="Level of development" className="flex">
               {LODS.map((l) => (
                 <button
@@ -159,7 +159,7 @@ export function Explorer() {
                   type="button"
                   aria-pressed={lod === l}
                   onClick={() => changeLod(l)}
-                  className={cn("border border-e-0 px-3.5 py-2 text-xs tabular-nums first:rounded-s-lg last:rounded-e-lg last:border-e", lod === l ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+                  className={cn("min-h-11 border border-e-0 px-4 py-2 text-sm tabular-nums first:rounded-s-lg last:rounded-e-lg last:border-e", lod === l ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
                 >
                   {l}
                 </button>

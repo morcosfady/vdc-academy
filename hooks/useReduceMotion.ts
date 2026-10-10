@@ -22,7 +22,7 @@ export function initReduceMotion() {
 }
 
 // One shared subscription for the whole page (dozens of components read this).
-const read = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("reduce-motion");
+const read = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("reduce-motion") || document.documentElement.classList.contains("comfort");
 
 let mq: MediaQueryList | null = null;
 const listeners = new Set<() => void>();

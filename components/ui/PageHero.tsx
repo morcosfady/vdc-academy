@@ -25,10 +25,10 @@ export function PageHero({
       <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#7db3e8] opacity-[0.08]" />
       <div className="relative z-10 mx-auto max-w-[1280px] px-5 md:px-8">
         <p className="label mb-5">{eyebrow}</p>
-        <h1 className="display-lg max-w-[18ch] text-[#f2f7fb]" aria-label={title.join(" ")}>
+        <h1 className="display-lg max-w-[18ch] text-[#eaf2f7]" aria-label={title.join(" ")}>
           <RiseLines lines={title} />
         </h1>
-        {subtitle && <p className="mt-6 max-w-xl text-lg text-[#a9bcc4]">{subtitle}</p>}
+        {subtitle && <p className="mt-6 max-w-xl text-lg text-[#b4c6ce]">{subtitle}</p>}
         {children && <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">{children}</div>}
       </div>
     </section>

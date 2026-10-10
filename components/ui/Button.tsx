@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 type Variant = "primary" | "glow" | "outline" | "secondary" | "ghost" | "link";
 
 const base = "inline-flex items-center justify-center gap-2 text-[15px] font-medium transition-[transform,box-shadow,color,border-color,background-color] duration-300";
-const sized = "h-[52px] rounded-[10px] px-7";
+const sized = "h-[52px] rounded-[10px] px-7 hover:-translate-y-0.5 active:scale-[0.98]";
 
 const styles: Record<Variant, string> = {
   primary: `${sized} bg-cta text-cta-text hover:bg-cta-hover hover:shadow-[0_10px_30px_-8px_var(--glow)]`,
@@ -15,7 +15,7 @@ const styles: Record<Variant, string> = {
   outline: `${sized} border border-text/35 text-text hover:border-accent hover:text-accent-text`,
   secondary: `${sized} border border-border text-text hover:border-accent hover:text-accent-text`,
   ghost: `${sized} text-text hover:bg-surface`,
-  link: "h-auto px-0 text-text underline decoration-text/30 underline-offset-8 hover:text-accent-text hover:decoration-accent",
+  link: "ul-draw h-auto px-0 pb-1 text-text hover:text-accent-text",
 };
 
 type Props = {

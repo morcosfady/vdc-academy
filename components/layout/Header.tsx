@@ -44,7 +44,7 @@ export function Header() {
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-9 lg:flex">
             {site.nav.map((item) => (
-              <Link prefetch={false} key={item.href} href={item.href} className="text-[15px] font-medium text-text/80 transition-colors hover:text-text">
+              <Link prefetch={false} key={item.href} href={item.href} className="ul-draw pb-1 text-[15px] font-medium text-text/80 transition-colors hover:text-text">
                 {item.label}
               </Link>
             ))}
@@ -56,7 +56,7 @@ export function Header() {
               onClick={() => setMenu(true)}
               aria-haspopup="dialog"
               aria-expanded={menu}
-              className="hidden h-11 items-center gap-3 rounded-[10px] px-3 text-[15px] font-medium text-text/80 hover:text-text sm:inline-flex"
+              className="inline-flex h-11 items-center gap-3 rounded-[10px] px-3 text-[15px] font-medium text-text/80 hover:text-text lg:hidden"
             >
               Menu <span aria-hidden className="inline-block w-5 border-t-[1.5px] border-current shadow-[0_5px_0_currentColor]" />
             </button>

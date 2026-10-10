@@ -2,9 +2,9 @@
 
 import { useRef, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, PerspectiveCamera, View } from "@react-three/drei";
+import { ContactShadows, Environment, Grid, Lightformer, PerspectiveCamera, View } from "@react-three/drei";
 import { Vector3, type Group } from "three";
-import { SteppedBuilding, clashWorld } from "./SteppedBuilding";
+import { SteppedBuilding, TOTAL_H, clashWorld } from "./SteppedBuilding";
 import type { SteppedState } from "@/lib/modelState";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
 
@@ -53,8 +53,8 @@ function Scene({ stateRef, drag, autoBuild, autoRotate, reduce, buildSeconds, on
 
   return (
     <>
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[6, 10, 6]} intensity={1.0} />
+      <ambientLight intensity={0.22} />
+      <directionalLight position={[6, 10, 6]} intensity={0.8} />
       <pointLight position={[-8, 3, -6]} color="#6fb1ee" intensity={60} />
       <Environment resolution={256} frames={1}>
         <Lightformer form="rect" intensity={2.6} position={[0, 8, -6]} scale={[24, 5, 1]} />
@@ -62,6 +62,9 @@ function Scene({ stateRef, drag, autoBuild, autoRotate, reduce, buildSeconds, on
         <Lightformer form="rect" intensity={1.2} position={[10, 3, 3]} rotation-y={-Math.PI / 2} scale={[14, 6, 1]} color="#ffffff" />
         <Lightformer form="ring" intensity={2} position={[0, -4, 8]} scale={8} color="#c9a36a" />
       </Environment>
+      {/* ground: soft contact shadow and a faint grid that fades out */}
+      <ContactShadows position={[0, -TOTAL_H / 2 - 0.06, 0]} opacity={0.45} scale={20} blur={2.8} far={5} color="#020a0e" />
+      <Grid position={[0, -TOTAL_H / 2 - 0.08, 0]} args={[40, 40]} cellColor="#365b62" sectionColor="#4a7396" cellThickness={0.5} sectionThickness={0.8} fadeDistance={16} fadeStrength={2} infiniteGrid />
       <group ref={g}>
         <SteppedBuilding stateRef={stateRef} autoBuild={autoBuild} buildSeconds={buildSeconds} />
       </group>

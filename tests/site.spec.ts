@@ -46,6 +46,8 @@ test("fresh grad number shows 40% with reduced motion", async ({ browser }) => {
 
 test("apply: validation, fresh grad detection", async ({ page }) => {
   await page.goto("apply/?preview=1");
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(1500); // let the page hydrate before the first click
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText("Please enter your full name.")).toBeVisible();
   await page.getByLabel(/Full name/).fill("Test Student");

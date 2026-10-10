@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { AnimatePresence, m } from "motion/react";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { programs, type Program } from "@/content/programs";
 import { floors, programMeta } from "@/content/floors";
@@ -31,7 +30,7 @@ function Toggle({ on, onChange, children }: { on: boolean; onChange: (v: boolean
 function Chips<T extends string>({ label, options, value, onChange }: { label: string; options: readonly T[]; value: T | null; onChange: (v: T | null) => void }) {
   return (
     <div>
-      <p className="label mb-3">{label}</p>
+      <p className="meta mb-3">{label}</p>
       <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
         {options.map((o) => (
           <button
@@ -39,7 +38,7 @@ function Chips<T extends string>({ label, options, value, onChange }: { label: s
             type="button"
             aria-pressed={value === o}
             onClick={() => onChange(value === o ? null : o)}
-            className={cn("rounded-lg border px-3.5 py-2 text-[13px] font-medium transition-colors", value === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+            className={cn("min-h-11 rounded-lg border px-4 py-2 text-[14px] font-medium transition-colors", value === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
           >
             {o}
           </button>
@@ -125,7 +124,7 @@ export function Finder({ compact = false }: { compact?: boolean }) {
                         <span className="label block">Floor {i + 1}</span>
                         <span className="mt-1 block">{fl.title}</span>
                       </span>
-                      <span className="label hidden sm:block">{fl.note}</span>
+                      <span className="meta hidden sm:block">{fl.note}</span>
                     </button>
                   </li>
                 ))}
@@ -136,20 +135,11 @@ export function Finder({ compact = false }: { compact?: boolean }) {
           <div className="lg:col-span-7">
             <p className="label mb-2">Floor {floor + 1}</p>
             <h3 className="display-md mb-8">{f.title}</h3>
-            <AnimatePresence mode="wait">
-              <m.ul
-                key={floor}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                className="grid gap-5 sm:grid-cols-2"
-              >
-                {f.slugs.map((s) => (
-                  <li key={s}><ProgramCard p={bySlug(s)} freshGrad={grad} /></li>
-                ))}
-              </m.ul>
-            </AnimatePresence>
+            <ul key={floor} className="grid gap-5 sm:grid-cols-2">
+              {f.slugs.map((s, n) => (
+                <li key={s} className="fan-in" style={{ "--i": n } as React.CSSProperties}><ProgramCard p={bySlug(s)} freshGrad={grad} /></li>
+              ))}
+            </ul>
             <p className="mt-6 text-sm text-muted">🎓 Fresh grads save up to {discounts.freshGrad.percent}% on every program.</p>
           </div>
         </div>
@@ -160,20 +150,18 @@ export function Finder({ compact = false }: { compact?: boolean }) {
             <Chips label="Discipline" options={allDisciplines} value={disc} onChange={setDisc} />
             <Chips label="Software" options={allSoftware} value={soft} onChange={setSoft} />
             <div>
-              <p className="label mb-3">Price</p>
+              <p className="meta mb-3">Price</p>
               <Toggle on={grad} onChange={setGrad}>🎓 Fresh grad price</Toggle>
             </div>
           </div>
           <p className="sr-only" aria-live="polite">{results.length} programs match</p>
-          <m.ul layout className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence>
-              {results.map((p) => (
-                <m.li key={p.slug} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.4 }}>
-                  <ProgramCard p={p} freshGrad={grad} />
-                </m.li>
-              ))}
-            </AnimatePresence>
-          </m.ul>
+          <ul key={[level, disc, soft, grad].join("|")} className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {results.map((p, n) => (
+              <li key={p.slug} className="fan-in" style={{ "--i": n } as React.CSSProperties}>
+                <ProgramCard p={p} freshGrad={grad} />
+              </li>
+            ))}
+          </ul>
           {results.length === 0 && <p className="mt-10 text-muted">No program matches all filters. Clear one to see more.</p>}
         </div>
       )}

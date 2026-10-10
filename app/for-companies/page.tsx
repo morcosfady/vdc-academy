@@ -34,7 +34,7 @@ export default function CompaniesPage() {
           {quotes.map((q) => (
             <figure key={q.who}>
               <blockquote className="display-md !text-[clamp(1.2rem,2.2vw,1.8rem)] !leading-snug">&ldquo;{q.quote}&rdquo;</blockquote>
-              <figcaption className="label mt-5">{q.who} · From Bay BIM Designs clients</figcaption>
+              <figcaption className="meta mt-5">{q.who} · From Bay BIM Designs clients</figcaption>
             </figure>
           ))}
         </section>

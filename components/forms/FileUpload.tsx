@@ -36,7 +36,7 @@ export function FileUpload({
 
   return (
     <div>
-      <p className="label mb-2">{label}</p>
+      <p className="meta mb-2">{label}</p>
       <div
         onDragOver={(e) => { e.preventDefault(); setOver(true); }}
         onDragLeave={() => setOver(false)}
@@ -46,12 +46,12 @@ export function FileUpload({
         {file ? (
           <p className="flex flex-wrap items-center gap-4 text-sm">
             <span>{file.name} <span className="text-muted">({(file.size / 1024).toFixed(0)} KB)</span></span>
-            <button type="button" onClick={() => onFile(null)} className="label hover:!text-text">Remove</button>
+            <button type="button" onClick={() => onFile(null)} className="meta underline hover:!text-text">Remove</button>
           </p>
         ) : (
           <>
             <button type="button" onClick={() => input.current?.click()} className="text-sm underline underline-offset-4">Choose a file</button>
-            <p className="text-xs text-muted">or drop it here. {hint}</p>
+            <p className="text-sm text-muted">or drop it here. {hint}</p>
           </>
         )}
         <input ref={input} type="file" accept={accept} className="sr-only" tabIndex={-1} onChange={(e) => take(e.target.files?.[0])} aria-label={label} />

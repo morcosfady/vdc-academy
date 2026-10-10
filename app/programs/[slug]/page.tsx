@@ -76,7 +76,7 @@ export default async function ProgramPage({ params }: Props) {
                       <span className="label !text-accent-text">M-{String(i + 1).padStart(2, "0")}</span>
                       <span className="text-lg">{m.title}</span>
                     </span>
-                    <span aria-hidden className="text-2xl font-light transition-transform duration-300 group-open:rotate-45">+</span>
+                    <span aria-hidden className="pm" />
                   </summary>
                   <ul className="mt-4 space-y-2 ps-[3.2rem] text-muted">
                     {m.lessons.map((l) => <li key={l}>{l}</li>)}
@@ -88,22 +88,22 @@ export default async function ProgramPage({ params }: Props) {
 
           <Slab as="section" className="grid gap-12 sm:grid-cols-2">
             <div>
-              <h2 className="label mb-4">Software</h2>
+              <h2 className="mb-4 text-base font-medium">Software</h2>
               <ul className="flex flex-wrap gap-2">{p.software.map((s) => <li key={s}><Badge className="px-4 py-2">{s}</Badge></li>)}</ul>
             </div>
             <div>
-              <h2 className="label mb-4">You will build</h2>
+              <h2 className="mb-4 text-base font-medium">You will build</h2>
               <ul className="space-y-2 text-muted">{p.projects.map((x) => <li key={x}>{x}</li>)}</ul>
             </div>
           </Slab>
 
           {known.length > 0 && (
             <Slab as="section">
-              <h2 className="label mb-4">Details</h2>
+              <h2 className="mb-4 text-base font-medium">Details</h2>
               <dl className="grid gap-px border border-border bg-border sm:grid-cols-2">
                 {known.map(([k, v]) => (
                   <div key={k} className="bg-bg p-5">
-                    <dt className="label mb-1">{k}</dt>
+                    <dt className="meta mb-1">{k}</dt>
                     <dd>{v}</dd>
                   </div>
                 ))}

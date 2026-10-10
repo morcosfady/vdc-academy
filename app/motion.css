@@ -1,0 +1,409 @@
+/* ===== Motion language (see lib/motion.ts). Only transform, opacity and clip-path are animated. ===== */
+:root {
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  interpolate-size: allow-keywords;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-up {
+  animation: fade-up 0.8s var(--ease) var(--d, 0s) both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 1.2s ease-out var(--d, 0s) both;
+}
+
+/* Hero photo settles from 1.08 to 1.0 over 12s */
+@keyframes settle {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.settle {
+  animation: settle 12s ease-out both;
+}
+
+/* Blueprint lines draw themselves (900ms) */
+@keyframes bp-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.bp-draw path,
+.bp-draw circle {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: bp-draw 0.9s ease-out 0.15s forwards;
+}
+.bp-draw text {
+  animation: fade-in 0.8s ease-out 0.7s both;
+}
+
+/* Hero callout tags: dot, leader line draws from the tag to the model, then the pill pops */
+@keyframes tag-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes tag-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tag-dot {
+  animation: tag-pop 0.4s var(--ease) var(--d, 0s) both;
+}
+.tag-line {
+  transform-origin: var(--o, left);
+  animation: tag-line 0.5s var(--ease) calc(var(--d, 0s) + 0.1s) both;
+}
+.tag-pill {
+  animation: tag-pop 0.5s var(--ease) calc(var(--d, 0s) + 0.4s) both;
+}
+
+/* Scroll cue: a thin line with a dot travelling down */
+@keyframes cue-dot {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+.cue-dot {
+  animation: cue-dot 2.2s ease-in-out infinite;
+}
+
+/* Repeat visits skip the intro (class set by an inline script, see app/layout.tsx) */
+html.intro-seen .fade-up,
+html.intro-seen .fade-in,
+html.intro-seen .rise,
+html.intro-seen .settle,
+html.intro-seen .bp-draw path,
+html.intro-seen .bp-draw circle,
+html.intro-seen .bp-draw text,
+html.intro-seen .tag-dot,
+html.intro-seen .tag-line,
+html.intro-seen .tag-pill {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0s !important;
+}
+
+/* Links: underline draws left to right */
+.ul-draw {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size 0.3s var(--ease), color 0.2s;
+}
+.ul-draw:hover,
+.ul-draw:focus-visible {
+  background-size: 100% 1px;
+}
+
+/* Cards: a thin accent line draws around the border on hover */
+.draw-border {
+  background-image: linear-gradient(var(--accent), var(--accent)), linear-gradient(var(--accent), var(--accent)), linear-gradient(var(--accent), var(--accent)), linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+  background-size: 0 1px, 1px 0, 0 1px, 1px 0;
+  transition: background-size 0.3s var(--ease), transform 0.5s var(--ease), box-shadow 0.5s var(--ease), border-color 0.3s;
+}
+.draw-border:hover {
+  background-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
+}
+
+/* Program cards fan in along a gentle curve */
+@keyframes fan-in {
+  from {
+    opacity: 0;
+    transform: translateY(32px) rotate(-1.6deg) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fan-in {
+  animation: fan-in 0.8s var(--ease) calc(var(--i, 0) * 75ms) both;
+}
+
+/* Panels slide in from the side when a new selection opens */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.slide-in {
+  animation: slide-in 0.45s var(--ease) both;
+}
+
+/* Parallax inside image frames (scroll-driven animation: Chromium and Safari 26+, static elsewhere) */
+@keyframes parallax {
+  from {
+    transform: translateY(-7%) scale(1.16);
+  }
+  to {
+    transform: translateY(7%) scale(1.16);
+  }
+}
+@supports (animation-timeline: view()) {
+  .parallax-img {
+    animation: parallax linear both;
+    animation-timeline: view();
+    animation-range: cover;
+  }
+}
+
+/* Icons draw once when revealed and again on hover */
+@keyframes icon-draw {
+  from {
+    stroke-dashoffset: 130;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes icon-draw-b {
+  from {
+    stroke-dashoffset: 130;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.icon-draw svg * {
+  stroke-dasharray: 130;
+}
+.slab-shown .icon-draw svg * {
+  animation: icon-draw 1s var(--ease) both;
+}
+.icon-hover:hover .icon-draw svg * {
+  animation: icon-draw-b 1s var(--ease) both;
+}
+
+/* Brass underline under the 40% draws once; a light sweep crosses the chapter once */
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.draw-x {
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.slab-shown .draw-x,
+.draw-x.on {
+  animation: grow-x 0.9s var(--ease) 0.35s both;
+}
+@keyframes sweep {
+  from {
+    transform: translateX(-60%) skewX(-18deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(260%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+.sweep-once {
+  animation: sweep 2.4s ease-in-out 0.4s both;
+}
+
+/* A single gentle glow pulse on the final Apply button */
+@keyframes pulse-once {
+  0%,
+  100% {
+    box-shadow: 0 8px 26px -10px var(--glow);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(90, 160, 225, 0.18), 0 12px 40px -6px var(--glow);
+  }
+}
+.pulse-once {
+  animation: pulse-once 1.6s ease-in-out 1;
+}
+
+/* Looping mini icons pause while off screen (see components/ui/InView.tsx) */
+.loop-paused * {
+  animation-play-state: paused !important;
+}
+@keyframes clash-dot {
+  0%,
+  35% {
+    fill: #e5484d;
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+  65%,
+  100% {
+    fill: #c9a36a;
+    transform: scale(1);
+  }
+}
+@keyframes check-in {
+  0%,
+  55% {
+    stroke-dashoffset: 1;
+  }
+  75%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes gantt {
+  0% {
+    transform: scaleX(0);
+  }
+  35%,
+  80% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+.anim-clash-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: clash-dot 3.2s ease-in-out infinite;
+}
+.anim-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: check-in 3.2s ease-in-out infinite;
+}
+.anim-gantt {
+  transform-box: fill-box;
+  transform-origin: left;
+  animation: gantt 3.6s var(--ease) infinite;
+}
+
+/* Accordion: smooth height, plus icon turns into a minus */
+details::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition: block-size 0.35s var(--ease), content-visibility 0.35s allow-discrete;
+}
+details[open]::details-content {
+  block-size: auto;
+}
+.pm {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.pm::before,
+.pm::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 2px;
+  margin-top: -1px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 0.3s var(--ease);
+}
+.pm::after {
+  transform: rotate(90deg);
+}
+details[open] .pm::after {
+  transform: rotate(0);
+}
+
+/* Odometer strikethrough on the old price */
+@keyframes strike {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.strike-draw {
+  position: relative;
+}
+.strike-draw::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 2px;
+  background: currentColor;
+  transform-origin: left;
+  animation: strike 0.5s var(--ease) both;
+}
+
+/* Page transition: three bars sweep across (about 450ms) */
+@keyframes bar-sweep {
+  0% {
+    transform: translateX(-101%);
+  }
+  45%,
+  55% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(101%);
+  }
+}
+.bar-sweep {
+  animation: bar-sweep 0.55s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+/* Inputs: valid state gets a quiet accent border */
+input:user-valid,
+select:user-valid,
+textarea:user-valid {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* Horizontal chip rows on phones fade at the edges */
+.fade-edges {
+  mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}

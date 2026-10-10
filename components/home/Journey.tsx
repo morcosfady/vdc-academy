@@ -18,9 +18,9 @@ function StepCard({ i, className }: { i: number; className?: string }) {
       <p className="label mb-4">Step {i + 1} of {journey.length}</p>
       <h3 className="display-md max-w-[16ch] !text-[clamp(1.5rem,2.8vw,2.4rem)]">{s.title}</h3>
       <p className="mt-5 max-w-md text-muted">{s.text}</p>
-      <ul className="mt-5 flex flex-wrap gap-2">{s.skills.map((k) => <li key={k} className="rounded-lg border border-border px-2.5 py-1 text-xs">{k}</li>)}</ul>
+      <ul className="mt-5 flex flex-wrap gap-2">{s.skills.map((k) => <li key={k} className="rounded-lg border border-border px-2.5 py-1 text-sm">{k}</li>)}</ul>
       <p className="mt-6 border-t border-border pt-4 text-sm">
-        <span className="label me-3">You become</span>
+        <span className="meta me-3">You become</span>
         {s.role}
       </p>
     </div>
@@ -33,6 +33,7 @@ export function Journey({ full = false }: { full?: boolean }) {
   const state = useRef(newState({ lod: 300, sim: 1 / 6 }));
   const reduce = useReduceMotion();
   const [active, setActive] = useState(0);
+  const [prog, setProg] = useState(0);
 
   useEffect(() => {
     if (reduce) {
@@ -59,6 +60,7 @@ export function Journey({ full = false }: { full?: boolean }) {
             s.yaw = p * 0.8;
             if (track.current) track.current.style.transform = `translateX(${-p * (n - 1) * (100 / n)}%)`;
             setActive(Math.min(n - 1, Math.round(p * (n - 1))));
+            setProg(p);
           },
         });
         return () => {
@@ -94,13 +96,14 @@ export function Journey({ full = false }: { full?: boolean }) {
                 ))}
               </div>
             </div>
-            <ol className="relative z-10 mt-8 flex gap-2" aria-label="Progress">
+            <div className="relative z-10 mt-10" role="progressbar" aria-label="Learning path progress" aria-valuemin={1} aria-valuemax={journey.length} aria-valuenow={active + 1} aria-valuetext={journey[active].title}>
+              <div className="h-px w-full bg-border" />
+              <div className="absolute inset-y-0 start-0 h-px bg-accent" style={{ width: `${prog * 100}%` }} />
               {journey.map((j, i) => (
-                <li key={j.title} aria-current={active === i ? "step" : undefined} className={cn("h-2 flex-1 transition-colors", i <= active ? "bg-accent" : "bg-border")} style={{ marginInlineStart: `${i * 4}px` }}>
-                  <span className="sr-only">{j.title}</span>
-                </li>
+                <span key={j.title} aria-hidden className={cn("absolute top-1/2 size-2 -translate-y-1/2 rounded-full border border-border bg-bg", i <= active && "border-accent bg-accent")} style={{ insetInlineStart: `calc(${(i / (journey.length - 1)) * 100}% - 4px)` }} />
               ))}
-            </ol>
+              <span aria-hidden className="absolute top-1/2 size-4 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_18px_var(--accent)]" style={{ insetInlineStart: `calc(${prog * 100}% - 8px)` }} />
+            </div>
           </div>
           <div className="lg:col-span-6">
             <SceneSlot stateRef={state} autoRotate={false} label="Building that gains one floor with each step of the learning path" className="h-[72svh]" />

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { photos } from "@/assets/images";
 import { BlueprintLayer } from "@/components/ui/BlueprintLayer";
 import { Photo } from "@/components/ui/Photo";
+import { SweepOnce } from "@/components/ui/SweepOnce";
 import { Button } from "@/components/ui/Button";
 import { CountUp } from "@/components/ui/CountUp";
 import { Slab } from "@/components/ui/Slab";
@@ -58,13 +59,13 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
         <div className="p-7 md:p-9">
           <div className="mb-6 flex items-start justify-between gap-4">
             <h2 id={`${id}-title`} className="display-md !text-2xl">Do you qualify?</h2>
-            <button type="button" onClick={close} aria-label="Close" className="label hover:!text-text">Close</button>
+            <button type="button" onClick={close} aria-label="Close" className="meta hover:!text-text">Close</button>
           </div>
 
           {result === null ? (
             <form onSubmit={check} className="space-y-5">
               <label className="block text-sm">
-                <span className="label mb-2 block">When did you graduate?</span>
+                <span className="meta mb-2 block">When did you graduate?</span>
                 <select required value={gradYear} onChange={(e) => setGradYear(e.target.value ? Number(e.target.value) : "")} className="h-12 w-full border border-border bg-bg px-3">
                   <option value="">Select a year</option>
                   {Array.from({ length: 8 }, (_, i) => year + 1 - i).map((y) => (
@@ -73,7 +74,7 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
                 </select>
               </label>
               <label className="block text-sm">
-                <span className="label mb-2 block">Your degree</span>
+                <span className="meta mb-2 block">Your degree</span>
                 <select required value={degree} onChange={(e) => setDegree(e.target.value)} className="h-12 w-full border border-border bg-bg px-3">
                   <option value="">Select a degree</option>
                   {degrees.map((d) => <option key={d}>{d}</option>)}
@@ -99,7 +100,7 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
                   <Button href="/apply" variant="glow" className="mt-6 w-full">Apply anyway</Button>
                 </>
               )}
-              <button type="button" onClick={() => setResult(null)} className={cn("label mt-5 hover:!text-text")}>Check again</button>
+              <button type="button" onClick={() => setResult(null)} className={cn("meta mt-5 hover:!text-text")}>Check again</button>
             </div>
           )}
         </div>
@@ -110,16 +111,17 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
 
 export function FreshGradChapter() {
   return (
-    <section id="ch-5" aria-labelledby="grad-title" className="theme-light relative overflow-hidden py-20 md:py-32">
+    <section id="ch-5" aria-labelledby="grad-title" className="theme-light band-both relative overflow-hidden py-52">
       <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#1f5c99] opacity-[0.06]" />
+      <SweepOnce />
       <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-12 px-5 md:px-8 lg:grid-cols-12">
         <div className="lg:col-span-6">
           <p className="label mb-6">05 · Fresh graduates</p>
           <p className="font-semibold leading-[0.9] tracking-tighter text-text" style={{ fontFamily: "var(--font-head), sans-serif", fontSize: "clamp(5.5rem, 13vw, 11rem)" }}>
             <CountUp to={discounts.freshGrad.percent} suffix="%" />
           </p>
-          <div className="mt-2 h-1 w-40 bg-warm" aria-hidden />
-          <p className="label mt-4">off, our biggest discount</p>
+          <Slab><div className="draw-x mt-2 h-1 w-40 bg-warm" aria-hidden /></Slab>
+          <p className="meta mt-4">off, our biggest discount</p>
           <Slab className="mt-10">
             <h2 id="grad-title" className="display-md max-w-[18ch]">Just graduated? Your first job starts here.</h2>
             <ul className="mt-8 grid gap-4 text-muted sm:grid-cols-3">
@@ -136,7 +138,7 @@ export function FreshGradChapter() {
         <Slab index={1} className="lg:col-span-6">
           <figure className="relative overflow-hidden rounded-2xl shadow-[0_30px_70px_-30px_rgba(10,29,35,0.55)]">
             <Photo photo={photos.crane} alt="Steel frame of a building under construction with tower cranes" className="aspect-[14/11]" />
-            <figcaption className="absolute bottom-5 start-5 rounded-lg bg-[#0a1d23]/85 px-4 py-2.5 text-sm text-[#f2f7fb]">
+            <figcaption className="absolute bottom-5 start-5 rounded-lg bg-[#0a1d23]/85 px-4 py-2.5 text-sm text-[#eaf2f7]">
               Your first model could be on a site like this.
             </figcaption>
           </figure>

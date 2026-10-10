@@ -2,6 +2,7 @@ import Link from "next/link";
 import { site } from "@/config/site";
 import { content, hasInstructors, hasStudentWork, shown } from "@/content/site";
 import { ReduceMotionToggle } from "./ReduceMotionToggle";
+import { ComfortToggle } from "./ComfortToggle";
 
 const legal = [
   { href: "/privacy", label: "Privacy" },
@@ -19,7 +20,7 @@ export function Footer() {
   ];
 
   return (
-    <footer className="theme-dark relative overflow-hidden bg-[#000e12] border-t border-border pb-10 pt-24 md:pt-36">
+    <footer className="theme-dark relative overflow-hidden bg-[#06141a] border-t border-border pb-10 pt-24 md:pt-36">
       <div className="mx-auto max-w-[1280px] px-5 md:px-8">
         <p className="display-lg max-w-4xl">Build it digitally before you build it for real.</p>
         <div className="mt-16 grid gap-10 md:grid-cols-4">
@@ -27,7 +28,7 @@ export function Footer() {
             <p className="label mb-4">Explore</p>
             <ul className="space-y-2">
               {explore.map((l) => (
-                <li key={l.href}><Link prefetch={false} href={l.href} className="text-muted hover:text-text">{l.label}</Link></li>
+                <li key={l.href}><Link prefetch={false} href={l.href} className="ul-draw pb-0.5 text-muted hover:text-text">{l.label}</Link></li>
               ))}
             </ul>
           </div>
@@ -50,14 +51,14 @@ export function Footer() {
             <p className="label mb-4">Legal</p>
             <ul className="space-y-2">
               {legal.map((l) => (
-                <li key={l.href}><Link prefetch={false} href={l.href} className="text-muted hover:text-text">{l.label}</Link></li>
+                <li key={l.href}><Link prefetch={false} href={l.href} className="ul-draw pb-0.5 text-muted hover:text-text">{l.label}</Link></li>
               ))}
             </ul>
           </div>
         </div>
         <div className="mt-16 flex flex-wrap items-center justify-between gap-4 text-sm text-muted">
           <p>© {new Date().getFullYear()} VDC Academy, a {site.parent} company</p>
-          <ReduceMotionToggle />
+          <span className="flex flex-wrap items-center gap-6"><ReduceMotionToggle /><ComfortToggle /></span>
         </div>
       </div>
       <p aria-hidden className="pointer-events-none mt-10 select-none whitespace-nowrap text-center font-display text-[11.2vw] leading-none tracking-tight text-text/[0.05]">

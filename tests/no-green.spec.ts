@@ -4,7 +4,7 @@ import path from "node:path";
 
 // The brand is ink, slate and pale blue with a steel blue accent. No green, mint or teal-green anywhere.
 // Brand colors that sit in the cyan range are allowed explicitly.
-const ALLOWED = new Set(["#365b62", "#0a1d23", "#000e12", "#deeffd", "#a9bcc4", "#3d5359", "#10272f", "#050f14", "#07181d", "#102a31", "#0d2329", "#f3f8fc", "#e6f0f8", "#f2f7fb", "#cfe3f5"]);
+const ALLOWED = new Set(["#365b62", "#0a1d23", "#000e12", "#deeffd", "#a9bcc4", "#3d5359", "#10272f", "#050f14", "#07181d", "#102a31", "#0d2329", "#f3f8fc", "#e6f0f8", "#f2f7fb", "#cfe3f5", "#b4c6ce", "#8ba2ab", "#06141a", "#eaf2f7", "#eef5fb", "#e3edf6", "#52666d", "#f4f8fc"]);
 const ROOTS = ["app", "components", "lib", "content", "config", "scripts/make-images.mjs"];
 const EXT = /\.(tsx?|css|mjs|svg)$/;
 

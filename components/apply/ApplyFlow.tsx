@@ -194,7 +194,7 @@ export function ApplyFlow() {
           {STEPS.map((s, i) => (
             <li key={s} aria-current={i === step ? "step" : undefined}>
               <span className={cn("block h-2 transition-colors duration-500", i <= step ? "bg-accent" : "bg-border")} style={{ marginInlineStart: `${i * 3}px` }} />
-              <span className={cn("label mt-2 block !text-[10px]", i === step && "!text-text")}>{s}</span>
+              <span className={cn("meta mt-2 block", i === step && "!text-text")}>{s}</span>
             </li>
           ))}
         </ol>
@@ -261,7 +261,7 @@ export function ApplyFlow() {
                     <Field label="Company (optional)" {...register("company")} />
                   </div>
                   <fieldset>
-                    <legend className="label mb-3">Your skill level in each tool</legend>
+                    <legend className="meta mb-3">Your skill level in each tool</legend>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {SKILLS.map((s) => (
                         <label key={s} className="flex items-center justify-between gap-4 border border-border px-4 py-3 text-sm">
@@ -284,12 +284,12 @@ export function ApplyFlow() {
                 <>
                   <h1 className="display-md">Choose your program.</h1>
                   <fieldset>
-                    <legend className="label mb-3">Programs you are interested in *</legend>
+                    <legend className="meta mb-3">Programs you are interested in *</legend>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {programs.map((p) => (
                         <label key={p.slug} className={cn("flex cursor-pointer items-start gap-3 border p-4 text-sm transition-colors", v.programs.includes(p.slug) ? "border-accent bg-accent/10" : "border-border hover:border-text/40")}>
                           <input type="checkbox" value={p.slug} className="mt-1 size-4 accent-[var(--accent)]" {...register("programs")} />
-                          <span>{p.title}<span className="label mt-1 block !text-[10px]">{p.level}</span></span>
+                          <span>{p.title}<span className="meta mt-1 block">{p.level}</span></span>
                         </label>
                       ))}
                     </div>
@@ -301,15 +301,15 @@ export function ApplyFlow() {
                     <SelectField label="Preferred start" required options={options.start} error={e("start")} {...register("start")} />
                     <SelectField label="Laptop that can run Revit?" required options={options.laptop} error={e("laptop")} {...register("laptop")} />
                   </div>
-                  <p className="text-xs text-muted">Not sure about your laptop? Revit needs a recent multi-core processor, 16 GB of RAM and a dedicated graphics card. We will help you check it.</p>
+                  <p className="text-sm text-muted">Not sure about your laptop? Revit needs a recent multi-core processor, 16 GB of RAM and a dedicated graphics card. We will help you check it.</p>
                   <SelectField label="How did you hear about us?" options={options.source} {...register("source")} />
 
                   <div className="glass p-6" aria-live="polite">
-                    <p className="label mb-3">Your estimate</p>
+                    <p className="meta mb-3">Your estimate</p>
                     {chosen.length === 0 ? <p className="text-muted">Choose a program to see your estimate.</p> : (
                       <>
                         <ul className="space-y-1 text-sm">{chosen.map((p) => <li key={p.slug}>{p.title}</li>)}</ul>
-                        <p className="mt-4 font-display text-2xl">{price.final !== null ? money(price.final) : "Price will be sent with your acceptance"}</p>
+                        <p className="mt-4 font-semibold text-2xl">{price.final !== null ? money(price.final) : "Price will be sent with your acceptance"}</p>
                         {price.percent > 0 && <p className="mt-1 text-warm">Discount: {price.percent}% ({price.applied.join(", ")}), pending verification</p>}
                       </>
                     )}
@@ -327,9 +327,9 @@ export function ApplyFlow() {
                     { n: 3, t: "Program", rows: [["Programs", chosen.map((p) => p.title).join(", ")], ["Format", v.format], ["Schedule", v.schedule], ["Start", v.start]] },
                   ].map((s) => (
                     <section key={s.t} className="border border-border p-5">
-                      <div className="mb-3 flex items-center justify-between"><h2 className="label">{s.t}</h2><button type="button" onClick={() => setStep(s.n)} className="label underline hover:!text-text">Edit</button></div>
+                      <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-medium text-text">{s.t}</h2><button type="button" onClick={() => setStep(s.n)} className="label underline hover:!text-text">Edit</button></div>
                       <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-                        {s.rows.map(([k, val]) => <div key={k}><dt className="label !text-[10px]">{k}</dt><dd>{val || "-"}</dd></div>)}
+                        {s.rows.map(([k, val]) => <div key={k}><dt className="meta">{k}</dt><dd>{val || "-"}</dd></div>)}
                       </dl>
                     </section>
                   ))}
@@ -360,7 +360,7 @@ export function ApplyFlow() {
       <aside className="relative hidden lg:col-span-5 lg:block" aria-hidden>
         <div className="sticky top-28">
           <SceneSlot stateRef={state} autoRotate label="Building that gains one floor for each completed step" className="pointer-events-none h-[72svh]" />
-          <p className="label mt-2 text-center">{step + 1} / 5 floors built</p>
+          <p className="meta mt-2 text-center">{step + 1} / 5 floors built</p>
         </div>
       </aside>
     </div>

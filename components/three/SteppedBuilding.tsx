@@ -4,12 +4,17 @@ import { useLayoutEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   BoxGeometry,
+  BufferGeometry,
   Color,
   EdgesGeometry,
   LineBasicMaterial,
+  Line,
+  LineDashedMaterial,
   Matrix4,
+  MeshBasicMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
+  QuadraticBezierCurve3,
   Quaternion,
   Vector3,
   type Group,
@@ -75,17 +80,18 @@ type Sys = "structure" | "slab" | "ducts" | "pipes" | "trays" | "hangers";
 const SYS: Sys[] = ["structure", "slab", "ducts", "pipes", "trays", "hangers"];
 
 const DIM = new Color("#0d2329");
+const plan0 = layout(SIZE[CLASH_FLOOR][0], SIZE[CLASH_FLOOR][1]);
 
 export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 }: { stateRef: MutableRefObject<SteppedState>; autoBuild?: boolean; buildSeconds?: number }) {
   const mats = useMemo(() => {
     const sys = (color: string) => ({ base: new Color(color), mat: new MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.2, emissive: color, emissiveIntensity: 0.35 }) });
     return {
-      structure: sys("#c9ddf0"),
+      structure: sys("#93aabd"),
       slab: sys("#2c4a63"),
       ducts: sys("#8cc0f0"),
       pipes: sys("#c9a36a"),
       trays: sys("#6fb1ee"),
-      hangers: sys("#c9ddf0"),
+      hangers: sys("#93aabd"),
       clash: sys("#e5484d"),
       marker: sys("#e5484d"),
     };
@@ -94,21 +100,21 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
   const glass = useMemo(
     () =>
       new MeshPhysicalMaterial({
-        color: "#d3e6f8",
-        roughness: 0.05,
+        color: "#9fbbd6",
+        roughness: 0.08,
         metalness: 0,
         transmission: 1,
         thickness: 0.5,
         ior: 1.4,
         dispersion: 0.35,
-        attenuationColor: new Color("#b4d4f2"),
-        attenuationDistance: 9,
-        envMapIntensity: 0.8,
+        attenuationColor: new Color("#8fb2d8"),
+        attenuationDistance: 6,
+        envMapIntensity: 0.42,
       }),
     [],
   );
   const glassLow = useMemo(() => new MeshStandardMaterial({ color: "#9cc4ee", transparent: true, opacity: 0.18, roughness: 0.1, depthWrite: false }), []);
-  const edge = useMemo(() => new LineBasicMaterial({ color: "#6fb1ee", transparent: true, opacity: 0.9 }), []);
+  const edge = useMemo(() => new LineBasicMaterial({ color: "#6fb1ee", transparent: true, opacity: 0.8 }), []);
   const edgeHi = useMemo(() => new LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 1 }), []);
 
   const plan = useMemo(() => SIZE.map(([W, D]) => ({ ...layout(W, D), W, D })), []);
@@ -123,8 +129,25 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
   const red = useMemo(() => new Color("#e5484d"), []);
   const green = useMemo(() => new Color("#d9b06a"), []);
   const duct = useMemo(() => new Color("#8cc0f0"), []);
+  // Smooth ghosting, a one-time pulse on the selected system, 4D floor flash, clash ring and dashed reroute path
+  const dimState = useRef<Record<Sys, number>>({ structure: 0, slab: 0, ducts: 0, pipes: 0, trays: 0, hangers: 0 });
+  const prevIso = useRef(stateRef.current.isolate);
+  const pulseAt = useRef(-10);
+  const lastCount = useRef(FLOORS);
+  const flash = useRef({ floor: -1, at: -10 });
+  const ring = useRef<Mesh>(null);
+  const ringMat = useMemo(() => new MeshBasicMaterial({ color: "#e5484d", transparent: true, opacity: 0, depthTest: false }), []);
+  const pathLine = useMemo(() => {
+    const [x, z] = [plan0.xs[2], plan0.dz / 2];
+    const curve = new QuadraticBezierCurve3(new Vector3(x, H - 0.3, z), new Vector3(x, H - 0.45, z + 1.1), new Vector3(x, H - 0.56, z));
+    const geo = new BufferGeometry().setFromPoints(curve.getPoints(28));
+    const line = new Line(geo, new LineDashedMaterial({ color: "#c9a36a", dashSize: 0.1, gapSize: 0.07, transparent: true }));
+    line.computeLineDistances();
+    line.visible = false;
+    return line;
+  }, []);
 
-  useFrame(({ clock }, dt) => {
+  useFrame(({ clock, camera }, dt) => {
     const s = stateRef.current;
     if (autoBuild && s.build < 1) s.build = Math.min(1, s.build + dt / buildSeconds);
 
@@ -148,17 +171,29 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
       trays: s.lod >= 400,
     };
     // Materials: emphasized systems glow, others fade to a dark tone (kept opaque so they show through the glass)
+    if (prevIso.current !== iso) {
+      prevIso.current = iso;
+      pulseAt.current = clock.elapsedTime;
+    }
+    const pulse = Math.max(0, 1 - (clock.elapsedTime - pulseAt.current) / 0.9);
     (SYS as Sys[]).forEach((k) => {
       const m = mats[k];
-      m.mat.color.copy(on[k] ? m.base : DIM).lerp(DIM, on[k] ? 0 : 0.0);
-      m.mat.emissive.copy(on[k] ? m.base : DIM);
-      m.mat.emissiveIntensity = on[k] ? 0.35 + (s.build < 1 ? 0.5 * Math.sin(s.build * Math.PI) : 0) : 0.02;
+      const target = on[k] ? 0 : 1;
+      const dm = (dimState.current[k] += (target - dimState.current[k]) * Math.min(1, dt * 7));
+      m.mat.color.copy(m.base).lerp(DIM, dm);
+      m.mat.emissive.copy(m.base).lerp(DIM, dm);
+      const base = 0.2 * (1 - dm) + 0.02 * dm + (s.build < 1 ? 0.3 * Math.sin(s.build * Math.PI) * (1 - dm) : 0);
+      m.mat.emissiveIntensity = base + (on[k] && iso !== "all" ? pulse * 0.7 : 0);
     });
     const showGlass = iso === "all" || iso === "architecture" || iso === "4d";
     glass.visible = true;
     const gm = low ? glassLow : glass;
     glassLow.opacity = iso === "architecture" ? 0.42 : 0.18;
-    edge.opacity = iso === "all" || iso === "architecture" || iso === "4d" ? 0.9 : 0.22;
+    edge.opacity += ((iso === "all" || iso === "architecture" || iso === "4d" ? 0.8 : 0.22) - edge.opacity) * Math.min(1, dt * 7);
+
+    const count = s.sim >= 0 ? Math.ceil(s.sim * FLOORS - 1e-6) : FLOORS;
+    if (s.sim >= 0 && count > lastCount.current) flash.current = { floor: count - 1, at: clock.elapsedTime };
+    lastCount.current = s.sim >= 0 ? count : FLOORS;
 
     for (let i = 0; i < FLOORS; i++) {
       const f = floors.current[i];
@@ -176,7 +211,7 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
         gmesh.visible = showGlass;
       }
       const line = edgeLines.current[i];
-      if (line) line.material = s.highlight === i ? edgeHi : edge;
+      if (line) line.material = s.highlight === i || (flash.current.floor === i && clock.elapsedTime - flash.current.at < 0.5) ? edgeHi : edge;
 
       // Systems light up in sequence after the floors land
       const t: Record<Sys, number> = {
@@ -200,6 +235,8 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
     const r = s.clash < 0 ? 1 : clamp((s.clash - 0.5) / 0.5);
     if (clashDuct.current) {
       clashDuct.current.position.y = H - 0.3 + (H - 0.56 - (H - 0.3)) * ease(r);
+      // the duct travels along the dashed reroute path
+      clashDuct.current.position.z = plan0.dz / 2 + 0.5 * Math.sin(Math.PI * ease(r)) * (s.clash >= 0 ? 1 : 0);
       mats.clash.mat.color.copy(red).lerp(duct, ease(r));
       mats.clash.mat.emissive.copy(mats.clash.mat.color);
       mats.clash.mat.emissiveIntensity = s.clash >= 0 && r < 1 ? 0.8 : 0.35;
@@ -209,9 +246,23 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
       mats.marker.mat.color.copy(red).lerp(green, ease(r));
       mats.marker.mat.emissive.copy(mats.marker.mat.color);
       mats.marker.mat.emissiveIntensity = 1;
-      const pulse = r < 0.5 ? 1 + 0.3 * Math.sin(clock.elapsedTime * 7) : 1;
-      marker.current.scale.setScalar(pulse * (1 - 0.25 * r));
+      const clashPulse = r < 0.5 ? 1 + 0.3 * Math.sin(clock.elapsedTime * 7) : 1;
+      marker.current.scale.setScalar(clashPulse * (1 - 0.25 * r));
     }
+    // red ring pulses outward while the clash is open
+    if (ring.current) {
+      const open = s.clash >= 0 && s.sim < 0 && s.lod >= 300 && r < 0.5;
+      ring.current.visible = open;
+      if (open) {
+        const ph = (clock.elapsedTime * 0.9) % 1;
+        ring.current.scale.setScalar(1 + ph * 1.4);
+        ringMat.opacity = (1 - ph) * 0.9;
+        ring.current.lookAt(camera.position);
+      }
+    }
+    // dashed reroute path draws while the duct moves
+    pathLine.visible = s.clash >= 0.5 && s.sim < 0 && s.lod >= 300;
+    if (pathLine.visible) pathLine.geometry.setDrawRange(0, Math.max(2, Math.floor(clamp((s.clash - 0.5) / 0.4) * 29)));
   });
 
   const refSys = (k: Sys, i: number) => (el: Group | null) => {
@@ -248,6 +299,10 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
                 <mesh ref={marker} position={[p.xs[2], H - 0.3, p.dz / 2]} material={mats.marker.mat}>
                   <sphereGeometry args={[0.42, 24, 24]} />
                 </mesh>
+                <mesh ref={ring} position={[p.xs[2], H - 0.3, p.dz / 2]} material={ringMat} renderOrder={5}>
+                  <ringGeometry args={[0.55, 0.62, 48]} />
+                </mesh>
+                <primitive object={pathLine} />
               </>
             )}
           </group>

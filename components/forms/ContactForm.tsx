@@ -43,7 +43,7 @@ export function ContactForm() {
     );
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4">
+    <form onSubmit={submit} noValidate className="space-y-6">
       <Field label="Name" name="name" required autoComplete="name" error={errors.name} />
       <Field label="Email" name="email" type="email" required autoComplete="email" error={errors.email} />
       <div className="relative">
@@ -57,8 +57,8 @@ export function ContactForm() {
           aria-describedby={errors.message ? "f-message-err" : undefined}
           className="peer w-full border border-border bg-transparent px-4 pb-3 pt-7 text-base outline-none placeholder-transparent focus:border-accent aria-[invalid=true]:border-[#ff6b60]"
         />
-        <label htmlFor="f-message" className="pointer-events-none absolute start-4 top-2 text-[10px] uppercase tracking-[0.14em] text-muted">Message *</label>
-        {errors.message && <p id="f-message-err" role="alert" className="mt-1.5 text-sm text-[#ff8a80]">{errors.message}</p>}
+        <label htmlFor="f-message" className="pointer-events-none absolute start-4 top-2 text-[14px] uppercase tracking-[0.14em] text-muted">Message *</label>
+        {errors.message && <p id="f-message-err" role="alert" className="absolute start-1 top-full mt-0.5 text-[13px] leading-5 text-[#ff8a80]">{errors.message}</p>}
       </div>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -start-[9999px] h-0 w-0 opacity-0" />
       <Turnstile onToken={setToken} />

@@ -31,21 +31,21 @@ export function PricingPlans() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute -top-3 end-6 bg-warm px-3 py-1 text-xs font-medium uppercase tracking-widest text-[#1a1208]"
+                    className="absolute -top-3 end-6 bg-warm px-3 py-1 text-sm font-medium uppercase tracking-widest text-[#1a1208]"
                   >
                     −<Roll value={discounts.freshGrad.percent} suffix="%" />
                   </m.span>
                 )}
               </AnimatePresence>
-              <p className="label">{p.note}</p>
+              <p className="meta">{p.note}</p>
               <h3 className="display-md mt-3 !text-[1.6rem]">{p.name}</h3>
               <div className="mt-8 min-h-[72px]" aria-live="polite">
                 {p.price === null ? (
-                  <p className="font-display text-xl">Price on request</p>
+                  <p className="font-semibold text-xl">Price on request</p>
                 ) : (
                   <>
-                    {grad && <p className="text-sm text-muted line-through">${p.price.toLocaleString("en-US")}</p>}
-                    <p className="font-display text-4xl"><Roll value={r.final ?? p.price} prefix="$" /></p>
+                    {grad && <p className="text-sm text-muted strike-draw">${p.price.toLocaleString("en-US")}</p>}
+                    <p className="font-semibold text-4xl"><Roll value={r.final ?? p.price} prefix="$" /></p>
                   </>
                 )}
                 {grad && <p className="mt-2 text-sm text-warm">Fresh graduate discount, pending check</p>}

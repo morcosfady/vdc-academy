@@ -5,6 +5,7 @@ import { Photo } from "@/components/ui/Photo";
 import { calcPrice, money } from "@/lib/pricing";
 import { discounts } from "@/config/discounts";
 import type { Program } from "@/content/programs";
+import { InView } from "@/components/ui/InView";
 import { ProgramGlyph } from "./ProgramGlyph";
 
 // Each program gets its own cover: a graded photo crop (steel frame, glass tower or facade) at its own focus point.
@@ -30,13 +31,13 @@ export function ProgramCard({ p, freshGrad = false }: { p: Program; freshGrad?: 
     <Link
       prefetch={false}
       href={`/programs/${p.slug}`}
-      className="glass group relative flex h-full flex-col overflow-hidden transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-accent hover:shadow-[0_18px_44px_-14px_var(--glow)]"
+      className="glass draw-border group relative flex h-full flex-col overflow-hidden hover:-translate-y-1 hover:shadow-[0_18px_44px_-14px_var(--glow)]"
     >
-      <div className="relative h-36 overflow-hidden bg-[#0a1d23]">
-        <Photo photo={cover.photo} className="scale-105 transition-transform duration-700 group-hover:scale-110" style={{ objectPosition: cover.pos }} />
+      <div className="relative aspect-[16/10] overflow-hidden bg-[#0a1d23]">
+        <Photo photo={cover.photo} className="transition-transform duration-700 group-hover:scale-[1.04]" style={{ objectPosition: cover.pos }} />
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#0a1d23] via-[#0a1d23]/40 to-transparent" />
-        <ProgramGlyph slug={p.slug} className="absolute bottom-3 start-4 size-11 text-[#f2f7fb] group-hover:text-[#7db3e8]" />
-        <span className="label absolute end-4 top-4 rounded-md border border-[#365b62] bg-[#0a1d23]/75 px-2.5 py-1 !text-[9px] !text-[#f2f7fb]">{p.level}</span>
+        {["navisworks-clash-detection", "4d-5d-simulation"].includes(p.slug) ? <InView><ProgramGlyph slug={p.slug} className="absolute bottom-3 start-4 size-12 text-[#eaf2f7] transition-transform duration-500 group-hover:-rotate-6 group-hover:text-[#7db3e8]" /></InView> : <ProgramGlyph slug={p.slug} className="absolute bottom-3 start-4 size-12 text-[#eaf2f7] transition-transform duration-500 group-hover:-rotate-6 group-hover:text-[#7db3e8]" />}
+        <span className="absolute end-4 top-4 rounded-lg border border-[#365b62] bg-[#0a1d23]/80 px-3 py-1 text-[13px] font-medium text-[#eaf2f7] backdrop-blur-sm">{p.level}</span>
       </div>
       <div className="flex flex-1 flex-col p-6">
         <h3 className="text-[1.1rem] leading-snug">{p.title}</h3>

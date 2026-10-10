@@ -38,7 +38,7 @@ export default function PricingPage() {
             <caption className="sr-only">Available discounts</caption>
             <thead>
               <tr className="border-b border-border">
-                {["Discount", "Who", "Off", "Proof"].map((h) => <th key={h} scope="col" className="label py-3 pe-4 text-start font-normal">{h}</th>)}
+                {["Discount", "Who", "Off", "Proof"].map((h) => <th key={h} scope="col" className="meta py-3 pe-4 text-start">{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -46,7 +46,7 @@ export default function PricingPage() {
                 <tr key={d.key} className={`border-b border-border ${d.key === "freshGrad" ? "bg-accent/10" : ""}`}>
                   <th scope="row" className="py-4 pe-4 text-start font-medium">{d.emoji} {d.label}</th>
                   <td className="py-4 pe-4 text-muted">{d.who}</td>
-                  <td className="py-4 pe-4 font-display text-warm">{d.percent}%</td>
+                  <td className="py-4 pe-4 font-semibold text-warm">{d.percent}%</td>
                   <td className="py-4 text-muted">{d.proof}</td>
                 </tr>
               ))}

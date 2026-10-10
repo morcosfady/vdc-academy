@@ -11,11 +11,12 @@ import { SceneHostLoader } from "@/components/three/SceneHostLoader";
 import { UtmCapture } from "@/components/layout/UtmCapture";
 import { JsonLd, orgLd } from "@/components/seo/JsonLd";
 import { MotionProvider } from "@/components/layout/MotionProvider";
+import { PageTransition } from "@/components/layout/PageTransition";
 import "./globals.css";
 
 // Two families: Poppins (body and headlines) and Michroma for small uppercase labels. Michroma stands in for the
 // licensed Eurostile Extended used on baybimdesigns.com.
-const display = Michroma({ weight: "400", subsets: ["latin"], variable: "--font-display", display: "swap" });
+const display = Michroma({ weight: "400", subsets: ["latin"], variable: "--font-semibold", display: "swap" });
 const head = Poppins({ weight: ["600"], subsets: ["latin"], variable: "--font-head", display: "optional" });
 const body = Poppins({ weight: ["400", "500"], subsets: ["latin"], variable: "--font-body", display: "optional" });
 
@@ -30,7 +31,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning className={`${display.variable} ${head.variable} ${body.variable}`}>
       <body>
         <JsonLd data={orgLd} />
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('vdc-intro'))document.documentElement.classList.add('intro-seen')}catch(e){}" }} />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <MotionProvider>
           <a href="#main" className="skip-link">
             Skip to content
@@ -43,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
           <FloatingOffer />
           <MobileApplyBar />
+          <PageTransition />
           </MotionProvider>
         </ThemeProvider>
       </body>

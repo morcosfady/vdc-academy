@@ -16,7 +16,7 @@ export function PriceBox({ slug, priceFull, className }: { slug: string; priceFu
 
   return (
     <aside className={cn("glass p-7", className)} aria-label="Price">
-      <p className="label mb-4">Who are you?</p>
+      <p className="meta mb-4">Who are you?</p>
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Who are you?">
         {options.map((o) => (
           <button
@@ -25,7 +25,7 @@ export function PriceBox({ slug, priceFull, className }: { slug: string; priceFu
             role="radio"
             aria-checked={status === o}
             onClick={() => setStatus(o)}
-            className={cn("rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors", status === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+            className={cn("min-h-11 rounded-lg border px-4 py-2 text-[14px] font-medium transition-colors", status === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
           >
             {o ? `${discounts[o].emoji} ${discounts[o].label}` : "Standard"}
           </button>
@@ -35,16 +35,16 @@ export function PriceBox({ slug, priceFull, className }: { slug: string; priceFu
       <div className="mt-7 min-h-[88px]" aria-live="polite">
         {priceFull === null ? (
           <>
-            <p className="font-display text-2xl">Price on request</p>
+            <p className="font-semibold text-2xl">Price on request</p>
             {r.percent > 0 && <p className="mt-2 text-warm">You save <Roll value={r.percent} suffix="%" /></p>}
           </>
         ) : (
           <>
-            <p className="font-display text-4xl"><Roll value={r.final ?? priceFull} prefix="$" /></p>
+            <p className="font-semibold text-4xl"><Roll value={r.final ?? priceFull} prefix="$" /></p>
             {r.percent > 0 && <p className="mt-2 text-warm">−{r.percent}% · you save <Roll value={r.saving ?? 0} prefix="$" /></p>}
           </>
         )}
-        {status && <p className="mt-3 text-xs text-muted">Pending check of: {discounts[status].proof.toLowerCase()}</p>}
+        {status && <p className="mt-3 text-sm text-muted">Pending check of: {discounts[status].proof.toLowerCase()}</p>}
       </div>
 
       <Button href={`/apply?program=${slug}${status === "freshGrad" ? "&status=freshGrad" : ""}`} variant="glow" className="mt-6 w-full">

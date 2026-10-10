@@ -36,13 +36,13 @@ export function Field({
       />
       <label
         htmlFor={id}
-        className="pointer-events-none absolute start-4 top-2 text-[10px] uppercase tracking-[0.14em] text-muted transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-focus:top-2 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-[0.14em]"
+        className="pointer-events-none absolute start-4 top-2 text-[14px] uppercase tracking-[0.14em] text-muted transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-[14px] peer-focus:uppercase peer-focus:tracking-[0.14em]"
       >
         {label}
         {required && " *"}
       </label>
       {error && (
-        <p id={`${id}-err`} role="alert" className="mt-1.5 text-sm text-[#ff8a80]">
+        <p id={`${id}-err`} role="alert" className="absolute start-1 top-full mt-0.5 text-[13px] leading-5 text-[#ff8a80]">
           {error}
         </p>
       )}
@@ -67,7 +67,7 @@ export function SelectField({
   const id = `f-${name}`;
   return (
     <div className="relative">
-      <label htmlFor={id} className="pointer-events-none absolute start-4 top-2 text-[10px] uppercase tracking-[0.14em] text-muted">
+      <label htmlFor={id} className="pointer-events-none absolute start-4 top-2 text-[14px] uppercase tracking-[0.14em] text-muted">
         {label}
         {required && " *"}
       </label>
@@ -89,7 +89,7 @@ export function SelectField({
       </select>
       <span aria-hidden className="pointer-events-none absolute end-4 top-5 text-muted">▾</span>
       {error && (
-        <p id={`${id}-err`} role="alert" className="mt-1.5 text-sm text-[#ff8a80]">
+        <p id={`${id}-err`} role="alert" className="absolute start-1 top-full mt-0.5 text-[13px] leading-5 text-[#ff8a80]">
           {error}
         </p>
       )}
