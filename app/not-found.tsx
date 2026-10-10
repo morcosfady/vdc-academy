@@ -31,7 +31,7 @@ export default function NotFound() {
   }, []);
 
   return (
-    <section className="mx-auto grid min-h-[100svh] max-w-[1600px] items-center gap-6 px-5 pb-16 pt-32 md:px-10 lg:grid-cols-2">
+    <section className="mx-auto grid min-h-[100svh] max-w-[1280px] items-center gap-6 px-5 pb-16 pt-32 md:px-10 lg:grid-cols-2">
       <div className="relative z-10">
         <p className="label mb-5">Error 404 · Clash #0404</p>
         <h1 className="display-lg max-w-[14ch]">This page has a clash.</h1>

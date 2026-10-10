@@ -5,6 +5,7 @@ import Link from "next/link";
 import { loadGsap } from "@/lib/gsap";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { Slab } from "@/components/ui/Slab";
+import { BlueprintLayer } from "@/components/ui/BlueprintLayer";
 import { Badge } from "@/components/ui/Badge";
 import { LODS, lodNotes, newState, type Isolate } from "@/lib/modelState";
 import { disciplines } from "@/content/floors";
@@ -72,8 +73,10 @@ export function Explorer() {
   }
 
   return (
-    <section id="ch-2" aria-labelledby="explorer-title" className="relative py-24 md:py-36">
-      <div className="mx-auto grid max-w-[1600px] gap-10 px-5 md:px-10 lg:grid-cols-12">
+    <section id="ch-2" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden py-24 md:py-36">
+      <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#7db3e8] opacity-[0.07]" />
+      <div aria-hidden className="pointer-events-none absolute end-[-10%] top-1/2 size-[760px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(90,160,225,0.22),transparent_65%)]" />
+      <div className="relative z-10 mx-auto grid max-w-[1280px] gap-10 px-5 md:px-8 lg:grid-cols-12">
         <div className="relative z-10 lg:col-span-4">
           <Slab>
             <p className="label mb-5">02 · The model</p>
@@ -88,7 +91,7 @@ export function Explorer() {
                 type="button"
                 aria-pressed={active === b.id}
                 onClick={() => select(b.id)}
-                className={cn("border px-4 py-2.5 text-[12px] uppercase tracking-[0.12em] transition-colors", active === b.id ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:border-text hover:text-text")}
+                className={cn("rounded-lg border px-4 py-2.5 text-[13px] font-medium transition-colors", active === b.id ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:border-text hover:text-text")}
               >
                 {b.label}
               </button>
@@ -128,7 +131,7 @@ export function Explorer() {
           {active === "clash" && (
             <p className="label glass absolute start-4 top-4 z-10 px-4 py-3 !text-[11px]" role="status">
               CLASH #0147 · DUCT vs BEAM · 120mm
-              <span className={cn("ms-3 font-medium", resolved ? "text-[#34c759]" : "text-[#ff6b60]")}>{resolved ? "RESOLVED" : "OPEN"}</span>
+              <span className={cn("ms-3 font-medium", resolved ? "text-[#d9b06a]" : "text-[#ff6b60]")}>{resolved ? "RESOLVED" : "OPEN"}</span>
             </p>
           )}
           {active === "clash" && reduce && (
@@ -156,7 +159,7 @@ export function Explorer() {
                   type="button"
                   aria-pressed={lod === l}
                   onClick={() => changeLod(l)}
-                  className={cn("border border-e-0 px-3.5 py-2 text-xs tabular-nums last:border-e", lod === l ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+                  className={cn("border border-e-0 px-3.5 py-2 text-xs tabular-nums first:rounded-s-lg last:rounded-e-lg last:border-e", lod === l ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
                 >
                   {l}
                 </button>

@@ -20,7 +20,7 @@ export default function PricingPage() {
     <>
       <PageHero eyebrow="Pricing" title={["Simple plans.", "Big savings for fresh grads."]} subtitle="Pick a plan, then see what you save." />
 
-      <section className="mx-auto max-w-[1600px] px-5 pb-24 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-24 md:px-10">
         <PricingPlans />
         {!pricesKnown() && (
           <div className="glass mt-10 p-7 md:p-10">
@@ -31,7 +31,7 @@ export default function PricingPage() {
         )}
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-5 pb-24 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-24 md:px-10">
         <h2 className="display-md mb-8">Discounts</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] text-sm">
@@ -58,7 +58,7 @@ export default function PricingPage() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10">
         <h2 className="display-md mb-8">Discount calculator</h2>
         <DiscountCalculator />
       </section>

@@ -36,7 +36,7 @@ export function DiscountCalculator({ initial = "freshGrad" }: { initial?: Discou
                 type="button"
                 aria-pressed={status === s}
                 onClick={() => setStatus(s)}
-                className={cn("border px-3.5 py-2 text-xs uppercase tracking-[0.1em]", status === s ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+                className={cn("rounded-lg border px-3.5 py-2 text-[13px] font-medium", status === s ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
               >
                 {s ? `${discounts[s].emoji} ${discounts[s].label}` : "Standard"}
               </button>

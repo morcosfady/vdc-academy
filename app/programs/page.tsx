@@ -11,7 +11,7 @@ export default function ProgramsPage() {
   return (
     <>
       <PageHero eyebrow="Programs" title={["Find your floor."]} subtitle="Browse by level of the career path, or filter by what you need." />
-      <section className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10">
         <Finder />
       </section>
     </>

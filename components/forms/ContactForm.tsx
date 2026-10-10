@@ -62,7 +62,7 @@ export function ContactForm() {
       </div>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -start-[9999px] h-0 w-0 opacity-0" />
       <Turnstile onToken={setToken} />
-      <button type="submit" disabled={state === "sending"} className="bg-cta px-8 py-4 text-[13px] font-medium uppercase tracking-[0.14em] text-cta-text disabled:opacity-60">
+      <button type="submit" disabled={state === "sending"} className="h-[52px] rounded-[10px] bg-cta px-8 text-[15px] font-medium text-cta-text hover:bg-cta-hover disabled:opacity-60">
         {state === "sending" ? "Sending" : "Send message"}
       </button>
       {state === "failed" && <p role="alert" className="text-sm text-[#ff8a80]">We could not send that. Please try again.</p>}

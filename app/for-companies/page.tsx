@@ -17,7 +17,7 @@ export default function CompaniesPage() {
   return (
     <>
       <PageHero eyebrow="For companies" title={["Train your team", "on real BIM."]} subtitle="Group training from the team behind Bay BIM Designs. Groups of 3 or more save 15%." />
-      <section className="mx-auto max-w-[1600px] px-5 pb-24 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-24 md:px-10">
         <ul className="grid gap-px border border-border bg-border md:grid-cols-3">
           {offers.map((o, i) => (
             <li key={o.t} className="bg-bg p-8">
@@ -40,7 +40,7 @@ export default function CompaniesPage() {
         </section>
       )}
 
-      <section className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10">
         <div className="glass p-7 md:p-10">
           <h2 className="display-md !text-2xl">Tell us about your team.</h2>
           <p className="mb-6 mt-3 max-w-xl text-muted">Leave your details and we will propose a plan.</p>

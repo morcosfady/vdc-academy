@@ -15,7 +15,7 @@ export function Logo() {
       <LogoMark className="text-accent" />
       <span className="leading-none">
         <span className="block font-display text-[15px] tracking-tight">VDC Academy</span>
-        <span className="label mt-1 block !text-[9px]">by Bay BIM Designs</span>
+        <span className="label mt-1 block whitespace-nowrap !text-[8px] !tracking-[0.16em]">by Bay BIM Designs</span>
       </span>
     </span>
   );

@@ -22,9 +22,9 @@ for (const r of routes) {
 test("hero heading reads correctly with spaces", async ({ page }) => {
   await page.goto("");
   const h1 = page.locator("h1").first();
-  await expect(h1).toHaveAttribute("aria-label", "Build it digitally. Then build your career.");
+  await expect(h1).toHaveAttribute("aria-label", "Train on real BIM projects. Build a real career.");
   const text = (await h1.textContent()) ?? "";
-  expect(text).toContain("digitally. Then build your career.");
+  expect(text).toContain("Train on real BIM projects. Build a real career.");
 });
 
 test("fresh grad number is real text (no JS needed)", async ({ browser }) => {

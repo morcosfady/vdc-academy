@@ -13,7 +13,7 @@ export default function ContactPage() {
   return (
     <>
       <PageHero eyebrow="Contact" title={["Talk to an advisor."]} subtitle="Questions about programs, discounts or fit? Send a message." />
-      <section className="mx-auto grid max-w-[1600px] gap-16 px-5 pb-32 md:px-10 lg:grid-cols-12">
+      <section className="mx-auto grid max-w-[1280px] gap-16 px-5 pb-32 md:px-10 lg:grid-cols-12">
         <div className="lg:col-span-7"><ContactForm /></div>
         <aside className="lg:col-span-4 lg:col-start-9">
           <p className="label mb-4">Where</p>

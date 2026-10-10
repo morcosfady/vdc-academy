@@ -1,47 +1,88 @@
 @import "tailwindcss";
 
-/* Bay BIM Designs palette (docs/brand-reference.md): teal #365B62, ink #0A1D23, deepest #000E12,
-   muted #83969A, light #A3BEC7, pale #DEEFFD. Accent glow is a lightened tint of the brand teal. */
+/* Bay BIM Designs palette (docs/brand-reference.md): ink #0A1D23, deep #000E12, slate #365B62, pale blue #DEEFFD.
+   Accent is a steel blue derived from the pale blue. Brass is used in tiny doses. There is no green anywhere. */
 :root {
-  --brand-primary: #365b62;
-  --brand-ink: #0a1d23;
-  --brand-deep: #000e12;
-  --brand-muted: #83969a;
-  --brand-light: #a3bec7;
-  --brand-pale: #deeffd;
-  --brand-warm: #ffbc7d;
+  --ink: #0a1d23;
+  --deep: #000e12;
+  --slate: #365b62;
+  --pale: #deeffd;
 
-  --bg: #eef4f6;
-  --bg-2: #e2edf0;
-  --surface: rgba(255, 255, 255, 0.78);
+  /* Light theme */
+  --bg: #f3f8fc;
+  --bg-2: #e6f0f8;
+  --surface: rgba(255, 255, 255, 0.82);
   --surface-solid: #ffffff;
   --text: #0a1d23;
   --text-muted: #3d5359;
-  --border: rgba(10, 29, 35, 0.16);
-  --accent: #1f6f78;
-  --accent-text: #1a5d65;
-  --glow: rgba(31, 111, 120, 0.35);
-  --cta-bg: #0a1d23;
+  --border: rgba(54, 91, 98, 0.28);
+  --accent: #1f5c99;
+  --accent-text: #1f5c99;
+  --warm: #7a5a22;
+  --glow: rgba(31, 92, 153, 0.3);
+  --cta-bg: #1f5c99;
+  --cta-hover: #194e82;
   --cta-text: #ffffff;
-  --grid-line: rgba(10, 29, 35, 0.06);
   --grain: 0.05;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 16px;
 }
 
 .dark {
-  --bg: #030e12;
-  --bg-2: #07181d;
-  --surface: rgba(12, 34, 40, 0.78);
-  --surface-solid: #0a1d23;
-  --text: #eef5f7;
-  --text-muted: rgba(238, 245, 247, 0.68);
-  --border: rgba(163, 190, 199, 0.18);
-  --accent: #6fd6cd;
-  --accent-text: #6fd6cd;
-  --glow: rgba(111, 214, 205, 0.4);
-  --cta-bg: #6fd6cd;
-  --cta-text: #021013;
-  --grid-line: rgba(163, 190, 199, 0.05);
+  --bg: #0a1d23;
+  --bg-2: #000e12;
+  --surface: rgba(16, 39, 47, 0.78);
+  --surface-solid: #10272f;
+  --text: #f2f7fb;
+  --text-muted: #a9bcc4;
+  --border: rgba(54, 91, 98, 0.6);
+  --accent: #7db3e8;
+  --accent-text: #7db3e8;
+  --warm: #c9a36a;
+  --glow: rgba(90, 160, 225, 0.4);
+  --cta-bg: #2f6fb0;
+  --cta-hover: #2860a0;
+  --cta-text: #ffffff;
   --grain: 0.035;
+}
+
+/* A light chapter inside the dark page (and a dark one inside the light page) */
+.theme-light {
+  --bg: #deeffd;
+  --bg-2: #f3f8fc;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-solid: #ffffff;
+  --text: #0a1d23;
+  --text-muted: #3d5359;
+  --border: rgba(54, 91, 98, 0.3);
+  --accent: #1f5c99;
+  --accent-text: #1f5c99;
+  --warm: #7a5a22;
+  --glow: rgba(31, 92, 153, 0.3);
+  --cta-bg: #1f5c99;
+  --cta-hover: #194e82;
+  --cta-text: #ffffff;
+  background: linear-gradient(180deg, var(--bg), var(--bg-2));
+  color: var(--text);
+}
+.theme-dark {
+  --bg: #0a1d23;
+  --bg-2: #000e12;
+  --surface: rgba(16, 39, 47, 0.78);
+  --surface-solid: #10272f;
+  --text: #f2f7fb;
+  --text-muted: #a9bcc4;
+  --border: rgba(54, 91, 98, 0.6);
+  --accent: #7db3e8;
+  --accent-text: #7db3e8;
+  --warm: #c9a36a;
+  --glow: rgba(90, 160, 225, 0.4);
+  --cta-bg: #2f6fb0;
+  --cta-hover: #2860a0;
+  --cta-text: #ffffff;
+  background: linear-gradient(180deg, var(--bg), var(--bg-2));
+  color: var(--text);
 }
 
 @theme inline {
@@ -55,23 +96,22 @@
   --color-accent: var(--accent);
   --color-accent-text: var(--accent-text);
   --color-cta: var(--cta-bg);
+  --color-cta-hover: var(--cta-hover);
   --color-cta-text: var(--cta-text);
-  --color-warm: var(--brand-warm);
+  --color-warm: var(--warm);
   --font-display: var(--font-display);
   --font-sans: var(--font-body);
-  /* Aliases so older pages keep working until they are redesigned */
+  /* Aliases for older class names */
   --color-text-muted: var(--text-muted);
   --color-bg-elevated: var(--surface-solid);
   --color-brand-accent: var(--accent);
-  --color-brand-warm: var(--brand-warm);
-  --color-brand-primary: var(--brand-primary);
-  --font-heading: var(--font-display);
-  --radius-btn: 2px;
-  --radius-card: 2px;
+  --color-brand-warm: var(--warm);
+  --color-brand-primary: var(--accent);
+  --font-heading: var(--font-head);
 }
 
 html {
-  background: var(--bg);
+  background: var(--bg-2);
 }
 
 body {
@@ -79,11 +119,11 @@ body {
   color: var(--text);
   font-family: var(--font-body), system-ui, sans-serif;
   font-size: clamp(1rem, 0.96rem + 0.18vw, 1.125rem);
-  line-height: 1.65;
+  line-height: 1.6;
   overflow-x: clip;
 }
 
-/* Film grain + faint blueprint grid */
+/* Film grain (a small pre-rendered tile, cheap to paint) */
 body::before {
   content: "";
   position: fixed;
@@ -94,49 +134,40 @@ body::before {
   background-image: url("./grain.png");
   background-size: 96px 96px;
 }
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 64px 64px;
-}
 
+/* Headlines: Poppins SemiBold, sentence case, tight. The wide technical font is only for small labels. */
 h1,
 h2,
 h3 {
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1.04;
+  font-family: var(--font-head), var(--font-body), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
 }
 
-/* Editorial display sizes */
 .display-xl,
 .display-lg,
 .display-md {
-  font-family: var(--font-display), system-ui, sans-serif;
-  letter-spacing: -0.03em;
-  line-height: 1.06;
+  font-family: var(--font-head), var(--font-body), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
 }
 .display-xl {
-  font-size: clamp(2.6rem, 8.4vw, 8rem);
+  font-size: clamp(2.5rem, 5.5vw, 5.25rem);
 }
 .display-lg {
-  font-size: clamp(2.2rem, 6vw, 5.5rem);
+  font-size: clamp(2.1rem, 4.6vw, 4rem);
 }
 .display-md {
-  font-size: clamp(1.8rem, 4vw, 3.4rem);
+  font-size: clamp(1.6rem, 3vw, 2.75rem);
 }
 
-/* Small technical label: uppercase, wide tracking, tabular numbers */
+/* Eurostile-style title block label: small, uppercase, wide tracking (Michroma stands in for Eurostile Extended) */
 .label {
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
@@ -155,15 +186,22 @@ h3 {
   padding: 0.75rem 1rem;
   background: var(--cta-bg);
   color: var(--cta-text);
+  border-radius: var(--radius);
 }
 .skip-link:focus {
   top: 1rem;
 }
 
-/* Glass surfaces */
+/* Cards: ink surface, steel hairline border, inner top highlight, soft lift on hover */
 .glass {
   background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.theme-light .glass,
+:root:not(.dark) .glass {
+  box-shadow: 0 1px 2px rgba(10, 29, 35, 0.06), 0 12px 32px -16px rgba(10, 29, 35, 0.25);
 }
 /* Blur is expensive: only for surfaces that float over moving content */
 .glass-blur {
@@ -171,9 +209,10 @@ h3 {
   -webkit-backdrop-filter: blur(14px);
 }
 
-/* Stepped motif: offset slab silhouette used on cards and panels */
-.stepped {
-  clip-path: polygon(0 0, 88% 0, 88% 12%, 100% 12%, 100% 100%, 12% 100%, 12% 88%, 0 88%);
+input,
+select,
+textarea {
+  border-radius: var(--radius);
 }
 
 html.lenis,
@@ -195,6 +234,74 @@ html.lenis body {
 }
 .scroll-cue {
   animation: pulse-line 2s ease-in-out infinite;
+}
+
+@keyframes kenburns {
+  from {
+    transform: scale(1.04);
+  }
+  to {
+    transform: scale(1.14);
+  }
+}
+.kenburns {
+  animation: kenburns 28s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-24px, -16px, 0);
+  }
+}
+.drift {
+  animation: drift 40s ease-in-out infinite alternate;
+}
+
+/* Headline rise (CSS only, see RiseLines) */
+@keyframes rise {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.rise {
+  animation: rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Slab reveal (see components/ui/Slab.tsx): CSS only */
+.slab-hidden {
+  clip-path: inset(0 0 100% 0);
+  transform: translateY(24px);
+  opacity: 0;
+}
+.slab-shown {
+  clip-path: inset(0 0 0 0);
+  transform: none;
+  opacity: 1;
+  transition:
+    clip-path 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.7s ease-out;
+}
+
+/* Skip layout and paint of off-screen chapters until they are near the viewport */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+/* Abstract floor-plan pattern used inside cards */
+.blueprint-lines {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px),
+    linear-gradient(135deg, transparent 48%, var(--accent) 49%, transparent 51%);
+  background-size: 24px 24px, 24px 24px, 100% 100%;
 }
 
 .reduce-motion *,
@@ -221,50 +328,6 @@ html.lenis body {
 
 /* Dev only: ?debug=content highlights fields still missing */
 .debug-missing {
-  outline: 2px dashed var(--brand-warm);
+  outline: 2px dashed var(--warm);
   outline-offset: 4px;
-}
-
-/* Abstract floor-plan pattern used inside glass cards */
-.blueprint-lines {
-  background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px),
-    linear-gradient(135deg, transparent 48%, var(--accent) 49%, transparent 51%);
-  background-size: 24px 24px, 24px 24px, 100% 100%;
-}
-
-/* Headline rise (CSS only, see RiseLines) */
-@keyframes rise {
-  from {
-    transform: translateY(110%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-.rise {
-  animation: rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* Slab reveal (see components/ui/Slab.tsx): CSS only */
-.slab-hidden {
-  clip-path: inset(0 0 100% 0);
-  transform: translateY(40px);
-  opacity: 0;
-}
-.slab-shown {
-  clip-path: inset(0 0 0 0);
-  transform: none;
-  opacity: 1;
-  transition:
-    clip-path 1s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 1s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.8s ease-out;
-}
-
-/* Skip layout and paint of off-screen chapters until they are near the viewport */
-.cv-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 900px;
 }

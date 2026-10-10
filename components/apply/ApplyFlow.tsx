@@ -187,7 +187,7 @@ export function ApplyFlow() {
   const e = (k: keyof ApplyValues) => (errors[k]?.message as string | undefined);
 
   return (
-    <div className="mx-auto grid max-w-[1600px] gap-10 px-5 pb-32 pt-32 md:px-10 lg:grid-cols-12">
+    <div className="mx-auto grid max-w-[1280px] gap-10 px-5 pb-32 pt-32 md:px-10 lg:grid-cols-12">
       <div className="lg:col-span-7">
         <p className="label mb-4">Apply · Step {step + 1} of 5</p>
         <ol className="mb-10 grid grid-cols-5 gap-1.5" aria-label="Progress">
@@ -350,7 +350,7 @@ export function ApplyFlow() {
 
           <div className="mt-10 flex items-center justify-between gap-4">
             <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="label px-2 py-3 hover:!text-text disabled:opacity-30">← Back</button>
-            <button type="submit" disabled={sending} className="bg-cta px-9 py-4 text-[13px] font-medium uppercase tracking-[0.14em] text-cta-text shadow-[0_0_30px_var(--glow)] disabled:opacity-60">
+            <button type="submit" disabled={sending} className="h-[52px] rounded-[10px] bg-cta px-8 text-[15px] font-medium text-cta-text hover:bg-cta-hover disabled:opacity-60">
               {step === 4 ? (sending ? "Sending" : "Submit application") : "Continue"}
             </button>
           </div>

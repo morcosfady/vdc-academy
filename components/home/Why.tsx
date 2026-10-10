@@ -1,122 +1,72 @@
-"use client";
-
-import { useRef } from "react";
-import { m, useInView, useScroll, useTransform } from "motion/react";
-import { Slab } from "@/components/ui/Slab";
+import { Award, FolderOpen, Handshake, Layers, Presentation, Wrench } from "lucide-react";
+import { photos } from "@/assets/images";
 import { Badge } from "@/components/ui/Badge";
-import { useReduceMotion } from "@/hooks/useReduceMotion";
+import { BlueprintLayer } from "@/components/ui/BlueprintLayer";
+import { Photo } from "@/components/ui/Photo";
+import { Slab } from "@/components/ui/Slab";
 
-const benefits = ["Live training", "Real project files", "Job-ready tools", "Portfolio", "Career support", "Certificate"];
-const software = ["Revit", "Navisworks", "AutoCAD", "Autodesk Construction Cloud", "Dynamo", "Enscape", "Bluebeam", "Primavera P6"];
-
-// Visual 1: a blueprint that draws itself
-function Blueprint() {
-  const ref = useRef<SVGSVGElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-15%" });
-  const reduce = useReduceMotion();
-  const draw = (delay: number) => ({
-    initial: { pathLength: reduce ? 1 : 0 },
-    animate: { pathLength: inView || reduce ? 1 : 0 },
-    transition: { duration: 1.8, delay, ease: [0.16, 1, 0.3, 1] as const },
-  });
-  return (
-    <svg ref={ref} viewBox="0 0 320 220" className="h-full w-full" fill="none" stroke="var(--accent)" strokeWidth="1.2" aria-hidden>
-      <m.rect x="20" y="20" width="280" height="180" {...draw(0)} />
-      <m.path d="M20 90 H150 V20 M150 90 V200 M150 130 H300" {...draw(0.3)} />
-      <m.path d="M60 20 v8 M100 20 v8 M200 20 v8 M240 20 v8 M20 60 h8 M20 130 h8 M20 170 h8" {...draw(0.6)} />
-      <m.circle cx="85" cy="150" r="22" {...draw(0.8)} />
-      <m.path d="M210 60 h60 v40 h-60 z" stroke="#ffbc7d" {...draw(1)} />
-      <m.path d="M20 212 H300 M20 208 v8 M300 208 v8" stroke="var(--text-muted)" {...draw(1.2)} />
-    </svg>
-  );
-}
-
-// Visual 2: three layers moving at different speeds while you scroll past
-function ParallaxStack() {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReduceMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y1 = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [50, -50]);
-  const y2 = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [110, -110]);
-  const y3 = useTransform(scrollYProgress, [0, 1], reduce ? [0, 0] : [20, -20]);
-  const layer = "absolute glass h-3/5 w-3/5";
-  return (
-    <div ref={ref} className="relative h-full w-full" aria-hidden>
-      <m.div style={{ y: y3 }} className={`${layer} start-0 top-[8%]`}><div className="blueprint-lines h-full w-full" /></m.div>
-      <m.div style={{ y: y1 }} className={`${layer} start-[22%] top-[22%]`}><div className="blueprint-lines h-full w-full opacity-70" /></m.div>
-      <m.div style={{ y: y2 }} className={`${layer} start-[40%] top-[36%] border-accent`}><div className="blueprint-lines h-full w-full opacity-50" /></m.div>
-    </div>
-  );
-}
-
-// Visual 3: portfolio cards that fan out
-function Fan() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-20%" });
-  const reduce = useReduceMotion();
-  const open = inView || reduce;
-  return (
-    <div ref={ref} className="relative h-full w-full" aria-hidden>
-      {[-14, 0, 14].map((rot, i) => (
-        <m.div
-          key={rot}
-          className="glass absolute inset-x-[18%] top-[10%] h-[78%] origin-bottom p-4"
-          initial={{ rotate: 0 }}
-          animate={{ rotate: open ? rot : 0, x: open ? rot * 4 : 0 }}
-          transition={{ duration: 1.1, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <div className="blueprint-lines h-3/5 w-full" />
-          <div className="mt-3 h-2 w-3/4 bg-text/30" />
-          <div className="mt-2 h-2 w-1/2 bg-text/15" />
-        </m.div>
-      ))}
-    </div>
-  );
-}
-
-const statements = [
-  { n: "01", text: "Taught by people who coordinate real projects.", visual: <Blueprint /> },
-  { n: "02", text: "Practice on real-world project files.", visual: <ParallaxStack /> },
-  { n: "03", text: "Leave with a portfolio, not just a certificate.", visual: <Fan /> },
+const panels = [
+  { n: "01", text: "Taught by people who coordinate real projects.", photo: photos.steel, pos: "50% 60%" },
+  { n: "02", text: "Practice on real-world project files.", photo: photos.glass, pos: "50% 50%" },
+  { n: "03", text: "Leave with a portfolio, not just a certificate.", photo: photos.facade, pos: "40% 50%" },
 ];
+
+const benefits = [
+  { icon: Presentation, t: "Live training", d: "Learn with an instructor, not a video." },
+  { icon: FolderOpen, t: "Real project files", d: "Models like the ones teams build." },
+  { icon: Wrench, t: "Job-ready tools", d: "The software firms actually use." },
+  { icon: Layers, t: "A portfolio", d: "Work you can show an employer." },
+  { icon: Handshake, t: "Career support", d: "CV review, interviews, LinkedIn." },
+  { icon: Award, t: "A certificate", d: "From VDC Academy by Bay BIM Designs." },
+];
+
+const software = ["Revit", "Navisworks", "AutoCAD", "Autodesk Construction Cloud", "Dynamo", "Enscape", "Bluebeam", "Primavera P6"];
 
 export function Why() {
   return (
-    <section id="ch-3" aria-labelledby="why-title" className="cv-auto relative py-24 md:py-36">
-      <div className="mx-auto max-w-[1600px] px-5 md:px-10">
-        <p className="label mb-5">03 · Why VDC Academy</p>
-        <h2 id="why-title" className="sr-only">Why VDC Academy</h2>
-        <ul className="space-y-24 md:space-y-40">
-          {statements.map((s, i) => (
-            <li key={s.n} className={`grid items-center gap-8 md:grid-cols-2 md:gap-16 ${i % 2 ? "md:[&>*:first-child]:order-2" : ""}`}>
-              <Slab>
-                <p className="label mb-4">{s.n}</p>
-                <p className="display-md max-w-[16ch]">{s.text}</p>
-              </Slab>
-              <Slab index={1} className="relative z-10 aspect-[4/3] w-full">
-                {s.visual}
-              </Slab>
-            </li>
+    <section id="ch-3" aria-labelledby="why-title" className="theme-light cv-auto relative overflow-hidden py-24 md:py-36">
+      <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#1f5c99] opacity-[0.07]" />
+      <div className="relative z-10 mx-auto max-w-[1280px] px-5 md:px-8">
+        <Slab className="max-w-3xl">
+          <p className="label mb-5">03 · Why VDC Academy</p>
+          <h2 id="why-title" className="display-lg">Training built around real projects.</h2>
+        </Slab>
+
+        <ul className="mt-14 grid gap-6 md:grid-cols-3">
+          {panels.map((p, i) => (
+            <Slab as="li" key={p.n} index={i} className={i === 1 ? "md:mt-12" : i === 2 ? "md:mt-24" : ""}>
+              <figure className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#0a1d23] shadow-[0_24px_60px_-28px_rgba(10,29,35,0.6)]">
+                <Photo photo={p.photo} className="transition-transform duration-[1200ms] group-hover:scale-105" style={{ objectPosition: p.pos }} />
+                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-[#000e12] via-[#0a1d23]/45 to-transparent" />
+                <figcaption className="absolute inset-x-0 bottom-0 p-7">
+                  <p className="label mb-3 !text-[#c9a36a]">{p.n}</p>
+                  <p className="text-[1.45rem] font-semibold leading-snug tracking-tight text-[#f2f7fb]">{p.text}</p>
+                </figcaption>
+              </figure>
+            </Slab>
           ))}
         </ul>
 
-        <Slab className="mt-28 md:mt-40">
-          <ul className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-6">
-            {benefits.map((b, i) => (
-              <li key={b} className="bg-bg p-5">
-                <span className="label !text-accent-text">{String(i + 1).padStart(2, "0")}</span>
-                <p className="mt-2 text-sm">{b}</p>
+        <Slab className="mt-28 md:mt-44">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {benefits.map((b) => (
+              <li key={b.t} className="glass flex gap-4 p-5">
+                <b.icon className="mt-0.5 shrink-0 text-accent" size={26} strokeWidth={1.5} aria-hidden />
+                <div>
+                  <p className="font-medium">{b.t}</p>
+                  <p className="mt-1 text-sm text-muted">{b.d}</p>
+                </div>
               </li>
             ))}
           </ul>
         </Slab>
 
-        <Slab className="mt-16">
+        <Slab className="mt-14">
           <p className="label mb-4">Software you will use</p>
           <ul className="flex flex-wrap gap-2">
             {software.map((s) => (
               <li key={s}>
-                <Badge className="px-4 py-2 transition-shadow hover:border-accent hover:shadow-[0_0_20px_var(--glow)]">{s}</Badge>
+                <Badge className="bg-white/60 px-4 py-2 text-[0.8rem] transition-colors hover:border-accent hover:text-accent-text">{s}</Badge>
               </li>
             ))}
           </ul>

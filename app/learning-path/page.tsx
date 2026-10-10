@@ -20,7 +20,7 @@ export default function LearningPathPage() {
     <>
       <PageHero eyebrow="Learning path" title={["From first model", "to VDC manager."]} subtitle="Five steps. Each one adds a floor." />
       <Journey full />
-      <section className="mx-auto max-w-[1600px] px-5 py-24 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 py-24 md:px-10">
         <h2 className="display-md mb-10">Programs on each step</h2>
         <ol className="divide-y divide-border border-y border-border">
           {journey.map((s, i) => (

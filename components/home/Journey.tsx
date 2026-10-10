@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { loadGsap } from "@/lib/gsap";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { Slab } from "@/components/ui/Slab";
+import { BlueprintLayer } from "@/components/ui/BlueprintLayer";
 import { Button } from "@/components/ui/Button";
 import { newState } from "@/lib/modelState";
 import { journey } from "@/content/journey";
@@ -17,6 +18,7 @@ function StepCard({ i, className }: { i: number; className?: string }) {
       <p className="label mb-4">Step {i + 1} of {journey.length}</p>
       <h3 className="display-md max-w-[16ch] !text-[clamp(1.5rem,2.8vw,2.4rem)]">{s.title}</h3>
       <p className="mt-5 max-w-md text-muted">{s.text}</p>
+      <ul className="mt-5 flex flex-wrap gap-2">{s.skills.map((k) => <li key={k} className="rounded-lg border border-border px-2.5 py-1 text-xs">{k}</li>)}</ul>
       <p className="mt-6 border-t border-border pt-4 text-sm">
         <span className="label me-3">You become</span>
         {s.role}
@@ -75,10 +77,11 @@ export function Journey({ full = false }: { full?: boolean }) {
   const pinned = !reduce;
 
   return (
-    <section ref={section} id="ch-6" aria-labelledby="journey-title" className="relative">
+    <section ref={section} id="ch-6" aria-labelledby="journey-title" className="theme-dark relative overflow-hidden">
+      <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#7db3e8] opacity-[0.07]" />
       {/* Desktop: pinned, steps slide past while the building grows floor by floor */}
       <div className={cn("hidden min-h-screen items-center", pinned && "lg:flex")}>
-        <div className="mx-auto grid w-full max-w-[1600px] items-center gap-10 px-10 pt-20 lg:grid-cols-12">
+        <div className="mx-auto grid w-full max-w-[1280px] items-center gap-10 px-10 pt-20 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <p className="label mb-5">06 · The path</p>
             <h2 id="journey-title" className="display-lg mb-12 max-w-[12ch]">Five steps to a BIM career.</h2>
@@ -106,7 +109,7 @@ export function Journey({ full = false }: { full?: boolean }) {
       </div>
 
       {/* Mobile and reduced motion: vertical stack of slabs */}
-      <div className={cn("mx-auto max-w-[1600px] px-5 py-24 md:px-10", pinned && "lg:hidden")}>
+      <div className={cn("mx-auto max-w-[1280px] px-5 py-24 md:px-10", pinned && "lg:hidden")}>
         <p className="label mb-5">06 · The path</p>
         <h2 className="display-lg mb-10">Five steps to a BIM career.</h2>
         <ol className="space-y-5">

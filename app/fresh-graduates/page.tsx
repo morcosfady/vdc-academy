@@ -29,7 +29,7 @@ export default function FreshGradsPage() {
       <PageHero eyebrow="Fresh graduates" title={["Just graduated?", "Start strong."]} subtitle="Our biggest discount is for people taking their first step into BIM and VDC." />
       <FreshGradChapter />
 
-      <section className="mx-auto max-w-[1600px] px-5 py-24 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 py-24 md:px-10">
         <h2 className="display-md mb-10">How it works</h2>
         <ol className="grid gap-px border border-border bg-border md:grid-cols-3">
           {steps.map((s) => (
@@ -42,7 +42,7 @@ export default function FreshGradsPage() {
         </ol>
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-5 pb-24 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-24 md:px-10">
         <h2 className="display-md mb-8">See your price</h2>
         <DiscountCalculator />
       </section>

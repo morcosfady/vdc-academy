@@ -9,7 +9,7 @@ import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { MenuOverlay } from "./MenuOverlay";
 
-// Transparent over the hero, glass after scrolling, hides on scroll down and returns on scroll up.
+// Transparent over the hero (72px), ink glass with a hairline after scrolling, hides on scroll down.
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -33,18 +33,18 @@ export function Header() {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-[transform,background-color,backdrop-filter] duration-500",
-          scrolled ? "glass glass-blur border-x-0 border-t-0 py-3" : "py-6",
+          "fixed inset-x-0 top-0 z-50 h-[72px] transition-[transform,background-color,border-color] duration-500",
+          scrolled ? "glass-blur border-b border-border bg-bg/80" : "border-b border-transparent",
           hidden && !menu ? "-translate-y-full" : "translate-y-0",
         )}
       >
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-5 md:px-10">
+        <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between gap-6 px-5 md:px-8">
           <Link prefetch={false} href="/" aria-label="VDC Academy by Bay BIM Designs, home">
             <Logo />
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-9 lg:flex">
             {site.nav.map((item) => (
-              <Link prefetch={false} key={item.href} href={item.href} className="label !text-[11px] transition-colors hover:!text-text">
+              <Link prefetch={false} key={item.href} href={item.href} className="text-[15px] font-medium text-text/80 transition-colors hover:text-text">
                 {item.label}
               </Link>
             ))}
@@ -56,11 +56,11 @@ export function Header() {
               onClick={() => setMenu(true)}
               aria-haspopup="dialog"
               aria-expanded={menu}
-              className="label hidden !text-[11px] hover:!text-text sm:inline-flex sm:items-center sm:gap-3 sm:px-2 sm:py-3"
+              className="hidden h-11 items-center gap-3 rounded-[10px] px-3 text-[15px] font-medium text-text/80 hover:text-text sm:inline-flex"
             >
-              Menu <span aria-hidden className="inline-block w-6 border-t border-current shadow-[0_5px_0_currentColor]" />
+              Menu <span aria-hidden className="inline-block w-5 border-t-[1.5px] border-current shadow-[0_5px_0_currentColor]" />
             </button>
-            <Button href="/apply" variant="glow" className="!px-5 !py-3">
+            <Button href="/apply" variant="glow" className="!h-11 !px-5">
               Apply
             </Button>
           </div>

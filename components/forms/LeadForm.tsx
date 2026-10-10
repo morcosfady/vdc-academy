@@ -47,7 +47,7 @@ export function LeadForm({ topic = "Notify me about the next cohort", button = "
       <Field label="Name" name="name" required autoComplete="name" error={errors.name} />
       <Field label="Email" name="email" type="email" required autoComplete="email" error={errors.email} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -start-[9999px] h-0 w-0 opacity-0" />
-      <button type="submit" disabled={state === "sending"} className="h-14 bg-cta px-7 text-[13px] font-medium uppercase tracking-[0.14em] text-cta-text disabled:opacity-60">
+      <button type="submit" disabled={state === "sending"} className="h-14 rounded-[10px] bg-cta px-7 text-[15px] font-medium text-cta-text hover:bg-cta-hover disabled:opacity-60">
         {state === "sending" ? "Sending" : button}
       </button>
       <div className="sm:col-span-3"><Turnstile onToken={setToken} /></div>

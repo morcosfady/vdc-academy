@@ -80,35 +80,35 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
   const mats = useMemo(() => {
     const sys = (color: string) => ({ base: new Color(color), mat: new MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.2, emissive: color, emissiveIntensity: 0.35 }) });
     return {
-      structure: sys("#b9d0d6"),
-      slab: sys("#2a5560"),
-      ducts: sys("#7fb7e6"),
-      pipes: sys("#ffbc7d"),
-      trays: sys("#6fd6cd"),
-      hangers: sys("#b9d0d6"),
-      clash: sys("#ff3b30"),
-      marker: sys("#ff3b30"),
+      structure: sys("#c9ddf0"),
+      slab: sys("#2c4a63"),
+      ducts: sys("#8cc0f0"),
+      pipes: sys("#c9a36a"),
+      trays: sys("#6fb1ee"),
+      hangers: sys("#c9ddf0"),
+      clash: sys("#e5484d"),
+      marker: sys("#e5484d"),
     };
   }, []);
 
   const glass = useMemo(
     () =>
       new MeshPhysicalMaterial({
-        color: "#d6eef2",
-        roughness: 0.06,
+        color: "#d3e6f8",
+        roughness: 0.05,
         metalness: 0,
         transmission: 1,
-        thickness: 0.7,
+        thickness: 0.5,
         ior: 1.4,
-        dispersion: 0.5,
-        attenuationColor: new Color("#6fd6cd"),
-        attenuationDistance: 5,
-        envMapIntensity: 1.2,
+        dispersion: 0.35,
+        attenuationColor: new Color("#b4d4f2"),
+        attenuationDistance: 9,
+        envMapIntensity: 0.8,
       }),
     [],
   );
-  const glassLow = useMemo(() => new MeshStandardMaterial({ color: "#9fd3dc", transparent: true, opacity: 0.18, roughness: 0.1, depthWrite: false }), []);
-  const edge = useMemo(() => new LineBasicMaterial({ color: "#6fd6cd", transparent: true, opacity: 0.9 }), []);
+  const glassLow = useMemo(() => new MeshStandardMaterial({ color: "#9cc4ee", transparent: true, opacity: 0.18, roughness: 0.1, depthWrite: false }), []);
+  const edge = useMemo(() => new LineBasicMaterial({ color: "#6fb1ee", transparent: true, opacity: 0.9 }), []);
   const edgeHi = useMemo(() => new LineBasicMaterial({ color: "#ffffff", transparent: true, opacity: 1 }), []);
 
   const plan = useMemo(() => SIZE.map(([W, D]) => ({ ...layout(W, D), W, D })), []);
@@ -120,9 +120,9 @@ export function SteppedBuilding({ stateRef, autoBuild = false, buildSeconds = 5 
   const edgeLines = useRef<LineSegments[]>([]);
   const clashDuct = useRef<Mesh>(null);
   const marker = useRef<Mesh>(null);
-  const red = useMemo(() => new Color("#ff3b30"), []);
-  const green = useMemo(() => new Color("#34c759"), []);
-  const duct = useMemo(() => new Color("#7fb7e6"), []);
+  const red = useMemo(() => new Color("#e5484d"), []);
+  const green = useMemo(() => new Color("#d9b06a"), []);
+  const duct = useMemo(() => new Color("#8cc0f0"), []);
 
   useFrame(({ clock }, dt) => {
     const s = stateRef.current;

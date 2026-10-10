@@ -20,7 +20,7 @@ export function ProgramHero({ slug, level, title, summary }: { slug: string; lev
   const state = useRef(newState({ lod: 400, ...(isolateFor[slug] ?? {}) }));
   return (
     <section className="relative overflow-hidden pt-32 md:pt-40">
-      <div className="mx-auto grid max-w-[1600px] items-center gap-6 px-5 md:px-10 lg:grid-cols-2">
+      <div className="mx-auto grid max-w-[1280px] items-center gap-6 px-5 md:px-10 lg:grid-cols-2">
         <div className="relative z-10 pb-10 lg:pb-24">
           <p className="label mb-5">{level} · Program</p>
           <h1 className="display-lg max-w-[14ch] !text-[clamp(2rem,5vw,4.4rem)]" aria-label={title}>

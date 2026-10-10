@@ -19,8 +19,8 @@ export function Footer() {
   ];
 
   return (
-    <footer className="cv-auto relative overflow-hidden border-t border-border pb-10 pt-24 md:pt-36">
-      <div className="mx-auto max-w-[1600px] px-5 md:px-10">
+    <footer className="theme-dark relative overflow-hidden bg-[#000e12] border-t border-border pb-10 pt-24 md:pt-36">
+      <div className="mx-auto max-w-[1280px] px-5 md:px-8">
         <p className="display-lg max-w-4xl">Build it digitally before you build it for real.</p>
         <div className="mt-16 grid gap-10 md:grid-cols-4">
           <div>

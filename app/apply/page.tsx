@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Apply", description: "Apply to a VDC
 
 export default function ApplyPage() {
   return (
-    <Suspense fallback={<div className="min-h-[80svh]" />}>
+    <Suspense fallback={<div className="min-h-[1700px]" aria-hidden />}>
       <ApplyFlow />
     </Suspense>
   );

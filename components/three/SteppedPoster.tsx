@@ -25,8 +25,8 @@ export function SteppedPoster({ className }: { className?: string }) {
           <g key={i} stroke="var(--accent)" strokeWidth="1.4" fill="url(#pg)">
             <path d={`M${cx - hw} ${y} l${hw} 26 l${hw} -26 v-34 l-${hw} -26 l-${hw} 26 z`} />
             <path d={`M${cx} ${y + 26} v-34`} fill="none" opacity="0.5" />
-            <path d={`M${cx - hw + 24} ${y - 14} h${f.w - 48}`} fill="none" stroke="#ffbc7d" opacity="0.7" />
-            <path d={`M${cx - hw + 30} ${y - 22} h${f.w - 60}`} fill="none" stroke="#7fb7e6" opacity="0.7" />
+            <path d={`M${cx - hw + 24} ${y - 14} h${f.w - 48}`} fill="none" stroke="#c9a36a" opacity="0.7" />
+            <path d={`M${cx - hw + 30} ${y - 22} h${f.w - 60}`} fill="none" stroke="#8cc0f0" opacity="0.7" />
           </g>
         );
       })}

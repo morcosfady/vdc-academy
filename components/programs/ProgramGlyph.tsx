@@ -16,7 +16,7 @@ export function ProgramGlyph({ slug, className }: { slug: string; className?: st
       body = (<><Slab x={8} y={20} w={48} />{[12, 26, 40, 52].map((x) => <rect key={x} x={x} y="26" width="4" height="26" fill="currentColor" opacity=".7" />)}<Slab x={8} y={52} w={48} accent /></>);
       break;
     case "revit-mep":
-      body = (<><Slab x={8} y={14} w={48} />{[26, 36, 46].map((y, i) => <rect key={y} x="10" y={y} width="44" height="4" fill={i === 1 ? "#ffbc7d" : "#7fb7e6"} />)}</>);
+      body = (<><Slab x={8} y={14} w={48} />{[26, 36, 46].map((y, i) => <rect key={y} x="10" y={y} width="44" height="4" fill={i === 1 ? "#c9a36a" : "#8cc0f0"} />)}</>);
       break;
     case "low-voltage-bim":
       body = (<><Slab x={8} y={14} w={48} /><rect x="10" y="32" width="44" height="3" fill="var(--accent)" />{[14, 24, 34, 44].map((x) => <circle key={x} cx={x + 4} cy="46" r="3" fill="var(--accent)" />)}</>);
@@ -25,7 +25,7 @@ export function ProgramGlyph({ slug, className }: { slug: string; className?: st
       body = (<><rect x="10" y="26" width="26" height="26" fill="currentColor" opacity=".7" /><rect x="28" y="12" width="26" height="26" fill="var(--accent)" opacity=".9" /></>);
       break;
     case "navisworks-clash-detection":
-      body = (<><rect x="8" y="22" width="32" height="26" fill="currentColor" opacity=".55" /><rect x="24" y="30" width="32" height="22" fill="#7fb7e6" opacity=".8" /><circle cx="32" cy="38" r="5" fill="#ff3b30" /></>);
+      body = (<><rect x="8" y="22" width="32" height="26" fill="currentColor" opacity=".55" /><rect x="24" y="30" width="32" height="22" fill="#8cc0f0" opacity=".8" /><circle cx="32" cy="38" r="5" fill="#e5484d" /></>);
       break;
     case "4d-5d-simulation":
       body = (<><Slab x={8} y={50} w={48} /><Slab x={16} y={38} w={40} o={0.8} /><Slab x={24} y={26} w={32} o={0.6} /><Slab x={32} y={14} w={24} accent /></>);

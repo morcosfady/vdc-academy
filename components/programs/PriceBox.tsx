@@ -25,7 +25,7 @@ export function PriceBox({ slug, priceFull, className }: { slug: string; priceFu
             role="radio"
             aria-checked={status === o}
             onClick={() => setStatus(o)}
-            className={cn("border px-3 py-2 text-xs uppercase tracking-[0.1em] transition-colors", status === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+            className={cn("rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors", status === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
           >
             {o ? `${discounts[o].emoji} ${discounts[o].label}` : "Standard"}
           </button>

@@ -11,14 +11,14 @@ export default function InstructorsPage() {
     return (
       <>
         <PageHero eyebrow="Instructors" title={["Coming with", "our first cohort."]} subtitle="Meet the working BIM professionals who teach each program." />
-        <div className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10"><Button href="/apply" variant="glow">Apply now</Button></div>
+        <div className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10"><Button href="/apply" variant="glow">Apply now</Button></div>
       </>
     );
   }
   return (
     <>
       <PageHero eyebrow="Instructors" title={["Learn from", "working professionals."]} />
-      <ul className="mx-auto grid max-w-[1600px] gap-5 px-5 pb-32 md:grid-cols-3 md:px-10">
+      <ul className="mx-auto grid max-w-[1280px] gap-5 px-5 pb-32 md:grid-cols-3 md:px-10">
         {content.instructors.map((i) => (
           <li key={i.name} className="glass p-6">
             {i.photo && <Image src={i.photo} alt="" width={400} height={400} className="mb-5 aspect-square w-full object-cover" />}

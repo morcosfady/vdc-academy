@@ -16,7 +16,7 @@ export default function AboutPage() {
   return (
     <>
       <PageHero eyebrow="About" title={["Training from", "people who build", "models for a living."]} />
-      <section className="mx-auto grid max-w-[1600px] gap-16 px-5 pb-24 md:px-10 lg:grid-cols-2">
+      <section className="mx-auto grid max-w-[1280px] gap-16 px-5 pb-24 md:px-10 lg:grid-cols-2">
         <Slab>
           <p className="text-xl leading-relaxed">
             VDC Academy is the training academy of {site.parent}, a BIM and VDC company in {site.city}. {site.parent} provides BIM modeling, coordination, clash detection and construction simulation to design and construction teams.
@@ -30,7 +30,7 @@ export default function AboutPage() {
         </Slab>
       </section>
 
-      <section className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10">
         <h2 className="label mb-6">What we stand for</h2>
         <ul className="grid gap-px border border-border bg-border md:grid-cols-3">
           {values.map((v, i) => (

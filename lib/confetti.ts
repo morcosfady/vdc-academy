@@ -3,7 +3,7 @@ export function confetti(origin: HTMLElement) {
   if (document.documentElement.classList.contains("reduce-motion")) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const r = origin.getBoundingClientRect();
-  const colors = ["#6fd6cd", "#ffbc7d", "#a3bec7", "#ffffff", "#7fb7e6"];
+  const colors = ["#6fb1ee", "#c9a36a", "#7db3e8", "#ffffff", "#8cc0f0"];
   for (let i = 0; i < 42; i++) {
     const el = document.createElement("span");
     el.setAttribute("aria-hidden", "true");

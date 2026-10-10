@@ -1,6 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { photos } from "@/assets/images";
+import { BlueprintLayer } from "@/components/ui/BlueprintLayer";
+import { Photo } from "@/components/ui/Photo";
 import { Button } from "@/components/ui/Button";
 import { CountUp } from "@/components/ui/CountUp";
 import { Slab } from "@/components/ui/Slab";
@@ -41,7 +44,7 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
       <button
         type="button"
         onClick={() => dlg.current?.showModal()}
-        className="inline-flex items-center justify-center bg-cta px-7 py-4 text-[13px] font-medium uppercase tracking-[0.14em] text-cta-text shadow-[0_0_30px_var(--glow)] transition-shadow hover:shadow-[0_0_48px_var(--glow)]"
+        className="inline-flex h-[52px] items-center justify-center rounded-[10px] bg-cta px-7 text-[15px] font-medium text-cta-text shadow-[0_8px_26px_-10px_var(--glow)] transition-[box-shadow,background-color] hover:bg-cta-hover hover:shadow-[0_12px_38px_-6px_var(--glow)]"
       >
         Check if I qualify
       </button>
@@ -76,7 +79,7 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
                   {degrees.map((d) => <option key={d}>{d}</option>)}
                 </select>
               </label>
-              <button ref={btn} type="submit" className="w-full bg-cta px-6 py-4 text-[13px] font-medium uppercase tracking-[0.14em] text-cta-text">
+              <button ref={btn} type="submit" className="h-[52px] w-full rounded-[10px] bg-cta px-6 text-[15px] font-medium text-cta-text hover:bg-cta-hover">
                 See my result
               </button>
             </form>
@@ -84,7 +87,7 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
             <div aria-live="polite">
               {result ? (
                 <>
-                  <p className="font-display text-5xl text-warm">{discounts.freshGrad.percent}%</p>
+                  <p className="text-5xl font-semibold text-warm">{discounts.freshGrad.percent}%</p>
                   <p className="mt-4 text-lg">You qualify for the fresh graduate discount, pending verification.</p>
                   <p className="mt-2 text-sm text-muted">Upload your graduation certificate or transcript with your application.</p>
                   <Button href="/apply?status=freshGrad" variant="glow" className="mt-6 w-full">Apply with my discount</Button>
@@ -107,33 +110,37 @@ export function QualifyQuiz({ id = "quiz" }: { id?: string }) {
 
 export function FreshGradChapter() {
   return (
-    <section id="ch-5" aria-labelledby="grad-title" className="cv-auto relative overflow-hidden py-28 md:py-44">
-      {/* sunrise behind the skyline */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[80%] bg-[radial-gradient(ellipse_at_50%_100%,rgba(255,188,125,0.28),rgba(111,214,205,0.12)_45%,transparent_70%)]" />
-      <div className="relative z-10 mx-auto max-w-[1600px] px-5 md:px-10">
-        <p className="label mb-5">05 · Fresh graduates</p>
-        <div className="grid items-end gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <p className="font-display whitespace-nowrap text-[clamp(5rem,12.5vw,12rem)] leading-[0.9] tracking-tighter text-warm">
-              <CountUp to={discounts.freshGrad.percent} suffix="%" />
-            </p>
-            <p className="label mt-3">off, our biggest discount</p>
-          </div>
-          <div className="lg:col-span-7">
-            <Slab>
-              <h2 id="grad-title" className="display-lg max-w-[14ch]">Just graduated? Your first job starts here.</h2>
-              <ul className="mt-8 grid gap-3 text-muted sm:grid-cols-3">
-                <li className="border-t border-border pt-4"><span className="label mb-2 block !text-text">Who</span>Graduated in the last {freshGradMonths} months</li>
-                <li className="border-t border-border pt-4"><span className="label mb-2 block !text-text">Upload</span>Your certificate or transcript</li>
-                <li className="border-t border-border pt-4"><span className="label mb-2 block !text-text">Get</span>The biggest discount and career support</li>
-              </ul>
-              <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-                <QualifyQuiz />
-                <Button href="/fresh-graduates" variant="link">See the offer <span aria-hidden>→</span></Button>
-              </div>
-            </Slab>
-          </div>
+    <section id="ch-5" aria-labelledby="grad-title" className="theme-light cv-auto relative overflow-hidden py-24 md:py-36">
+      <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#1f5c99] opacity-[0.06]" />
+      <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-12 px-5 md:px-8 lg:grid-cols-12">
+        <div className="lg:col-span-6">
+          <p className="label mb-6">05 · Fresh graduates</p>
+          <p className="font-semibold leading-[0.9] tracking-tighter text-text" style={{ fontFamily: "var(--font-head), sans-serif", fontSize: "clamp(5.5rem, 13vw, 11rem)" }}>
+            <CountUp to={discounts.freshGrad.percent} suffix="%" />
+          </p>
+          <div className="mt-2 h-1 w-40 bg-warm" aria-hidden />
+          <p className="label mt-4">off, our biggest discount</p>
+          <Slab className="mt-10">
+            <h2 id="grad-title" className="display-md max-w-[18ch]">Just graduated? Your first job starts here.</h2>
+            <ul className="mt-8 grid gap-4 text-muted sm:grid-cols-3">
+              <li className="border-t border-border pt-4"><span className="label mb-2 block !text-text">Who</span>Graduated in the last {freshGradMonths} months</li>
+              <li className="border-t border-border pt-4"><span className="label mb-2 block !text-text">Upload</span>Your certificate or transcript</li>
+              <li className="border-t border-border pt-4"><span className="label mb-2 block !text-text">Get</span>The biggest discount and career support</li>
+            </ul>
+            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <QualifyQuiz />
+              <Button href="/fresh-graduates" variant="link">See the offer <span aria-hidden>→</span></Button>
+            </div>
+          </Slab>
         </div>
+        <Slab index={1} className="lg:col-span-6">
+          <figure className="relative overflow-hidden rounded-2xl shadow-[0_30px_70px_-30px_rgba(10,29,35,0.55)]">
+            <Photo photo={photos.crane} alt="Steel frame of a building under construction with tower cranes" className="aspect-[14/11]" />
+            <figcaption className="absolute bottom-5 start-5 rounded-lg bg-[#0a1d23]/85 px-4 py-2.5 text-sm text-[#f2f7fb]">
+              Your first model could be on a site like this.
+            </figcaption>
+          </figure>
+        </Slab>
       </div>
     </section>
   );

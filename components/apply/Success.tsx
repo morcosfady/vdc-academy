@@ -27,7 +27,7 @@ export function Success() {
   }, []);
 
   return (
-    <div className="mx-auto grid max-w-[1600px] items-center gap-10 px-5 pb-32 pt-36 md:px-10 lg:grid-cols-2">
+    <div className="mx-auto grid max-w-[1280px] items-center gap-10 px-5 pb-32 pt-36 md:px-10 lg:grid-cols-2">
       <div className="relative z-10">
         <p className="label mb-5">Application received</p>
         <h1 ref={mark} className="display-lg max-w-[12ch]">Thank you{info?.name ? `, ${info.name}` : ""}.</h1>

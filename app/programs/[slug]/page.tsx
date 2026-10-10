@@ -52,7 +52,7 @@ export default async function ProgramPage({ params }: Props) {
       />
       <ProgramHero slug={p.slug} level={p.level} title={p.title} summary={p.summary} />
 
-      <div className="mx-auto grid max-w-[1600px] gap-12 px-5 py-20 md:px-10 lg:grid-cols-3 lg:py-32">
+      <div className="mx-auto grid max-w-[1280px] gap-12 px-5 py-20 md:px-10 lg:grid-cols-3 lg:py-32">
         <div className="space-y-24 lg:col-span-2">
           <Slab as="section">
             <h2 className="display-md mb-8">What you will learn</h2>
@@ -117,7 +117,7 @@ export default async function ProgramPage({ params }: Props) {
         </div>
       </div>
 
-      <section className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10">
+      <section className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10">
         <h2 className="display-md mb-10">Related programs</h2>
         <ul className="grid gap-5 md:grid-cols-3">
           {related.map((r) => <li key={r.slug}><ProgramCard p={r} /></li>)}

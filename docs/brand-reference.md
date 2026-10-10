@@ -1,47 +1,42 @@
-# Brand reference: baybimdesigns.com
+# Brand reference: baybimdesigns.com (re-checked Oct 10, 2026)
 
-Extracted 2026-10-10 from the live site (Elementor CSS, `post-7/8/41/204.css`). Logo: https://baybimdesigns.com/wp-content/uploads/2025/10/Logo.png (201x42 PNG, striped "B" mark + "BAY BIM DESIGNS").
+Method: opened https://baybimdesigns.com/ in a real browser and read the computed styles of every visible element (`scripts/brand-probe.mjs`), plus the Elementor CSS.
 
-## Colors (exact hex from the site CSS)
+## Palette (confirmed)
 
-| Role | Hex | Notes |
+| Role | Value | Seen on the brand site |
 |---|---|---|
-| Primary (brand teal) | `#365B62` | Elementor `--e-global-color-primary`; used 63 times: buttons, headings, borders |
-| Darkest / ink | `#0A1D23` | Dark sections, small headings |
-| Near-black teal | `#000E12` | Deepest background |
-| Muted teal-gray | `#83969A` | Secondary text |
-| Light blue-gray | `#A3BEC7` | Soft accents |
-| Pale blue | `#DEEFFD` | Light tint |
-| Text | `#545454` | Body text on light |
-| Secondary | `#54595F` | |
-| Accent (Elementor default) | `#61CE70` | Elementor default green, barely visible on the live site |
-| White | `#FFFFFF` | Button fill on dark, text on dark |
+| Ink (main dark) | `#0A1D23` | text and dark sections (93 elements) |
+| Deep | `#000E12` | darkest shade, footer and vignettes |
+| Slate steel | `#365B62` | borders, buttons, icons (55 borders, 10 fills) |
+| Pale blue | `#DEEFFD` | light tint |
+| Charcoal text | `#333333` | body text (1,175 elements) |
+| Grey text | `#69727D` | secondary text |
+| White | `#FFFFFF` | |
+
+### `#216FF3` and `#CC3366` are NOT brand colors
+`rgb(33, 111, 243)` (`#216FF3`) and `rgb(204, 51, 102)` appear on the brand site only on the **Readabler accessibility widget** (`.mdp-readabler-*` elements). They are plugin colors, so they are not used.
 
 ## Fonts
+- Headings and buttons on the brand site: **EurostileExtended** (156 elements), self-hosted and commercial.
+- Body: **Poppins** (1,182 elements).
+- Licensing: Eurostile Extended needs a web license. We do not redistribute the files. Until the owner supplies licensed files, **Michroma** (free, similar wide technical look) is used only for small uppercase labels. Headlines are Poppins SemiBold.
 
-- Headings and buttons: **EurostileExtended** (custom self-hosted, commercial font), 700, headings 46 to 60px, line-height about 1.2, `capitalize` on some.
-- Body: **Poppins**, 400.
-- Elementor also loads Roboto and Roboto Slab, rarely used.
-- The academy cannot ship EurostileExtended without a license. We use **Michroma** (Google Fonts, similar wide techno look) for headings until the owner supplies the licensed files. Swap in `app/layout.tsx`.
+## VDC Academy v3 color system (no green)
 
-## Buttons and shapes
+Dark theme (default)
+| Token | Value | Contrast |
+|---|---|---|
+| bg | `#0A1D23` fading to `#000E12` | |
+| surface | `#10272F` | |
+| border | `#365B62` at about 55% | |
+| heading text | `#F2F7FB` | 16.0:1 on ink |
+| body text | `#A9BCC4` | 8.8:1 on ink |
+| accent (edges, links, focus) | `#7DB3E8` steel blue | 7.8:1 on ink |
+| button | `#2F6FB0` with white text | 5.2:1 |
+| brass (small doses) | `#C9A36A` | 7.4:1 on ink |
+| clash red (clash animation only) | `#E5484D` | |
 
-- Primary button: fill `#365B62`, white text, 1px solid `#365B62`, radius **4px**, padding 16px 24px, 16px EurostileExtended, capitalize.
-- Inverse button (on dark): white fill, `#365B62` text.
-- Cards: radius 16px (most common), some 24px and 22px.
-- Small buttons on mobile: 12px, padding 10px 8px.
+Light sections (pale blue to white): ink text `#0A1D23` (14.7:1), muted `#3D5359` (6.9:1), accent `#1F5C99` (5.9:1), brass text `#7A5A22` (5.4:1).
 
-## Tone and copy
-
-- "Bay BIM Designs partners with architects, contractors, and engineers to deliver top-quality BIM and VDC solutions that ensure project success before construction."
-- Services line: "BIM Modeling, Consulting & Coordination, Clash Detection & VDC Services, Revit Family Creation & Virtual Construction Simulation. Fort Worth TX"
-- Professional, engineering, results oriented. Testimonials from technology contractors and design firms.
-- One testimonial confirms Bay BIM trained a Low Voltage Electrical design-build firm's team over about 6 months (owner approval needed before reuse).
-
-## Navigation (main site)
-
-About Bay BIM, BIM Solutions, BIM for AE Design Firms, BIM for GC + Subcontractors, BIM for Owners, Blog, "Connect with an Expert" (CTA).
-
-## Academy design tokens (derived)
-
-Dark first: background `#000E12`, elevated `#0A1D23`, surface `#102a31` (tint of `#0A1D23`/`#365B62`). Glow `#4f8c97` (lightened primary). Accent for CTAs and MEP highlights `#5fd0c4` (a cyan tint of the brand teal) so buttons pop on dark. Fresh-grad highlight uses a warm amber `#ffbc7d` (already present in the site CSS). Light mode: background `#f4f9fc` (tint of `#DEEFFD`), text `#0A1D23`. Final values live in `app/globals.css`.
+The steel blue and brass are derived from the brand pale blue and are a design choice, not measured brand values. A test (`tests/no-green.spec.ts`) fails if any green-hue color appears in the source.

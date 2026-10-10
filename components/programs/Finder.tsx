@@ -39,7 +39,7 @@ function Chips<T extends string>({ label, options, value, onChange }: { label: s
             type="button"
             aria-pressed={value === o}
             onClick={() => onChange(value === o ? null : o)}
-            className={cn("border px-3.5 py-2 text-xs uppercase tracking-[0.1em] transition-colors", value === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
+            className={cn("rounded-lg border px-3.5 py-2 text-[13px] font-medium transition-colors", value === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
           >
             {o}
           </button>
@@ -81,7 +81,7 @@ export function Finder({ compact = false }: { compact?: boolean }) {
       role="tab"
       aria-selected={mode === m}
       onClick={() => setMode(m)}
-      className={cn("border-b-2 px-1 pb-3 text-[12px] uppercase tracking-[0.16em] transition-colors", mode === m ? "border-accent text-text" : "border-transparent text-muted hover:text-text")}
+      className={cn("border-b-2 px-1 pb-3 text-[15px] font-medium transition-colors", mode === m ? "border-accent text-text" : "border-transparent text-muted hover:text-text")}
     >
       {text}
     </button>

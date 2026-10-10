@@ -11,14 +11,14 @@ export default function StudentWorkPage() {
     return (
       <>
         <PageHero eyebrow="Student work" title={["Coming with", "our first cohort."]} subtitle="Student models and coordination projects will be shown here." />
-        <div className="mx-auto max-w-[1600px] px-5 pb-32 md:px-10"><Button href="/apply" variant="glow">Apply now</Button></div>
+        <div className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10"><Button href="/apply" variant="glow">Apply now</Button></div>
       </>
     );
   }
   return (
     <>
       <PageHero eyebrow="Student work" title={["Models built", "by our students."]} />
-      <ul className="mx-auto grid max-w-[1600px] gap-5 px-5 pb-32 sm:grid-cols-2 md:px-10 lg:grid-cols-3">
+      <ul className="mx-auto grid max-w-[1280px] gap-5 px-5 pb-32 sm:grid-cols-2 md:px-10 lg:grid-cols-3">
         {content.studentWork.map((w) => (
           <li key={w.title}>
             <Image src={w.image} alt={w.title} width={800} height={600} className="aspect-[4/3] w-full object-cover" />

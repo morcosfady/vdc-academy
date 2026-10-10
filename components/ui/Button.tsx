@@ -6,13 +6,16 @@ import { cn } from "@/lib/utils";
 
 type Variant = "primary" | "glow" | "outline" | "secondary" | "ghost" | "link";
 
+const base = "inline-flex items-center justify-center gap-2 text-[15px] font-medium transition-[transform,box-shadow,color,border-color,background-color] duration-300";
+const sized = "h-[52px] rounded-[10px] px-7";
+
 const styles: Record<Variant, string> = {
-  primary: "bg-cta text-cta-text hover:brightness-110",
-  glow: "bg-cta text-cta-text shadow-[0_0_30px_var(--glow)] hover:shadow-[0_0_48px_var(--glow)]",
-  outline: "border border-text/40 text-text hover:border-accent hover:text-accent-text",
-  secondary: "border border-border text-text hover:border-accent hover:text-accent-text",
-  ghost: "text-text hover:bg-surface",
-  link: "px-0 text-text underline-offset-8 hover:text-accent-text hover:underline",
+  primary: `${sized} bg-cta text-cta-text hover:bg-cta-hover hover:shadow-[0_10px_30px_-8px_var(--glow)]`,
+  glow: `${sized} bg-cta text-cta-text shadow-[0_8px_26px_-10px_var(--glow)] hover:bg-cta-hover hover:shadow-[0_12px_38px_-6px_var(--glow)]`,
+  outline: `${sized} border border-text/35 text-text hover:border-accent hover:text-accent-text`,
+  secondary: `${sized} border border-border text-text hover:border-accent hover:text-accent-text`,
+  ghost: `${sized} text-text hover:bg-surface`,
+  link: "h-auto px-0 text-text underline decoration-text/30 underline-offset-8 hover:text-accent-text hover:decoration-accent",
 };
 
 type Props = {
@@ -31,21 +34,18 @@ export function Button({ href, variant = "primary", className, magnetic, childre
     if (!magnetic || !el || e.pointerType !== "mouse") return;
     if (document.documentElement.classList.contains("reduce-motion")) return;
     const r = el.getBoundingClientRect();
-    el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.18}px, ${(e.clientY - r.top - r.height / 2) * 0.3}px)`;
+    el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.15}px, ${(e.clientY - r.top - r.height / 2) * 0.25}px)`;
   }
   const leave = () => ref.current && (ref.current.style.transform = "");
 
   return (
-    <Link prefetch={false}
+    <Link
+      prefetch={false}
       ref={ref}
       href={href}
       onPointerMove={move}
       onPointerLeave={leave}
-      className={cn(
-        "inline-flex items-center justify-center gap-2 px-7 py-4 text-[13px] font-medium uppercase tracking-[0.14em] transition-[transform,box-shadow,color,border-color,filter] duration-300",
-        styles[variant],
-        className,
-      )}
+      className={cn(base, styles[variant], className)}
     >
       {children}
     </Link>

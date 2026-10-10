@@ -53,14 +53,14 @@ function Scene({ stateRef, drag, autoBuild, autoRotate, reduce, buildSeconds, on
 
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[6, 10, 6]} intensity={1.4} />
-      <pointLight position={[-8, 3, -6]} color="#6fd6cd" intensity={60} />
+      <ambientLight intensity={0.25} />
+      <directionalLight position={[6, 10, 6]} intensity={1.0} />
+      <pointLight position={[-8, 3, -6]} color="#6fb1ee" intensity={60} />
       <Environment resolution={256} frames={1}>
-        <Lightformer form="rect" intensity={5} position={[0, 8, -6]} scale={[24, 5, 1]} />
-        <Lightformer form="rect" intensity={3} position={[-10, 2, 4]} rotation-y={Math.PI / 2} scale={[14, 6, 1]} color="#6fd6cd" />
-        <Lightformer form="rect" intensity={2} position={[10, 3, 3]} rotation-y={-Math.PI / 2} scale={[14, 6, 1]} color="#ffffff" />
-        <Lightformer form="ring" intensity={2} position={[0, -4, 8]} scale={8} color="#ffbc7d" />
+        <Lightformer form="rect" intensity={2.6} position={[0, 8, -6]} scale={[24, 5, 1]} />
+        <Lightformer form="rect" intensity={1.8} position={[-10, 2, 4]} rotation-y={Math.PI / 2} scale={[14, 6, 1]} color="#6fb1ee" />
+        <Lightformer form="rect" intensity={1.2} position={[10, 3, 3]} rotation-y={-Math.PI / 2} scale={[14, 6, 1]} color="#ffffff" />
+        <Lightformer form="ring" intensity={2} position={[0, -4, 8]} scale={8} color="#c9a36a" />
       </Environment>
       <group ref={g}>
         <SteppedBuilding stateRef={stateRef} autoBuild={autoBuild} buildSeconds={buildSeconds} />

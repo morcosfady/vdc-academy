@@ -55,7 +55,7 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
           exit={{ clipPath: "inset(0 0 100% 0)" }}
           transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
         >
-          <div className="mx-auto flex min-h-full max-w-[1600px] flex-col px-5 py-6 md:px-10">
+          <div className="mx-auto flex min-h-full max-w-[1280px] flex-col px-5 py-6 md:px-10">
             <div className="flex items-center justify-between">
               <span className="label">Menu</span>
               <button type="button" onClick={onClose} aria-label="Close menu" className="grid size-11 place-items-center border border-border hover:border-accent">

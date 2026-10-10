@@ -13,8 +13,10 @@ import { JsonLd, orgLd } from "@/components/seo/JsonLd";
 import { MotionProvider } from "@/components/layout/MotionProvider";
 import "./globals.css";
 
-// Two families only. Michroma stands in for the licensed EurostileExtended used on baybimdesigns.com.
+// Two families: Poppins (body and headlines) and Michroma for small uppercase labels. Michroma stands in for the
+// licensed Eurostile Extended used on baybimdesigns.com.
 const display = Michroma({ weight: "400", subsets: ["latin"], variable: "--font-display", display: "swap" });
+const head = Poppins({ weight: ["600"], subsets: ["latin"], variable: "--font-head", display: "optional" });
 const body = Poppins({ weight: ["400", "500"], subsets: ["latin"], variable: "--font-body", display: "optional" });
 
 export const metadata: Metadata = {
@@ -25,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${display.variable} ${head.variable} ${body.variable}`}>
       <body>
         <JsonLd data={orgLd} />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
