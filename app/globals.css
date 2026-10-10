@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* Brand tokens come from baybimdesigns.com, see docs/brand-reference.md */
+:root {
+  --brand-primary: #365b62;
+  --brand-secondary: #83969a;
+  --brand-accent: #5fd0c4;
+  --brand-warm: #ffbc7d;
+
+  --bg: #f4f9fc;
+  --bg-elevated: #ffffff;
+  --surface: #deeffd;
+  --text: #0a1d23;
+  --text-muted: #44585d;
+  --border: #b9d0d6;
+  --glow: rgba(54, 91, 98, 0.35);
+  --grid-line: rgba(54, 91, 98, 0.1);
+  --cta-bg: #365b62;
+  --cta-text: #ffffff;
+}
+
+.dark {
+  --bg: #000e12;
+  --bg-elevated: #0a1d23;
+  --surface: #102a31;
+  --text: #e8f1f4;
+  --text-muted: #a3bec7;
+  --border: #23424a;
+  --glow: rgba(95, 208, 196, 0.35);
+  --grid-line: rgba(163, 190, 199, 0.08);
+  --cta-bg: #5fd0c4;
+  --cta-text: #000e12;
+}
+
+@theme inline {
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-warm: var(--brand-warm);
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-cta: var(--cta-bg);
+  --color-cta-text: var(--cta-text);
+  --font-heading: var(--font-heading);
+  --font-sans: var(--font-body);
+  --radius-card: 16px;
+  --radius-btn: 4px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+/* Blueprint grid background */
+.blueprint-grid {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand-accent);
+  outline-offset: 3px;
+}
+
+.dark :focus-visible {
+  outline-color: var(--brand-accent);
+}
+
+html:not(.dark) :focus-visible {
+  outline-color: var(--brand-primary);
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--cta-bg);
+  color: var(--cta-text);
+  border-radius: var(--radius-btn);
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Subtle placeholder style for content the owner still has to provide */
+.placeholder-chip {
+  border-bottom: 1px dashed var(--brand-warm);
+  color: var(--brand-warm);
+}
+
+html:not(.dark) .placeholder-chip {
+  color: #8a4b00;
+  border-bottom-color: #8a4b00;
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
