@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { site } from "@/config/site";
+import { ReduceMotionToggle } from "./ReduceMotionToggle";
 
 const legal = [
   { href: "/privacy", label: "Privacy" },
@@ -58,9 +59,10 @@ export function Footer() {
           </ul>
         </div>
       </div>
-      <p className="mx-auto mt-10 max-w-7xl px-4 text-sm text-text-muted md:px-6">
-        © {new Date().getFullYear()} VDC Academy, a {site.parent} company
-      </p>
+      <div className="mx-auto mt-10 flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 text-sm text-text-muted md:px-6">
+        <p>© {new Date().getFullYear()} VDC Academy, a {site.parent} company</p>
+        <ReduceMotionToggle />
+      </div>
     </footer>
   );
 }

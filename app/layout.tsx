@@ -6,6 +6,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MobileApplyBar } from "@/components/layout/MobileApplyBar";
+import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import "./globals.css";
 
 // Michroma stands in for the licensed EurostileExtended used on baybimdesigns.com
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <a href="#main" className="skip-link">
             Skip to content
           </a>
+          <SmoothScroll />
           <AnnouncementBar />
           <Header />
           <main id="main">{children}</main>

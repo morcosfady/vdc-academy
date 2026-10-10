@@ -12,18 +12,39 @@ Folder: `F:\Projects\VDC Academy` (separate from the Pharaoh's Bites repo).
 - Base components: Button, Badge, SectionHeader. Placeholder home page.
 - `.env.example`, `content/TODO-content.md`.
 
+## Phase 2: Home page (done 2026-10-10)
+
+- Procedural 3D building (`components/three/Building.tsx`): instanced boxes, no model files. Assembles on load (structure, then ducts/pipes/cable trays, then glass), wireframe turns solid. Shared mutable state in `lib/modelState.ts`.
+- Scenes: `HeroScene` (hero and final CTA, auto-rotate, mouse tilt, drag orbit), `StoryScene`, `PathScene`, `ViewerScene`. All lazy-loaded with `next/dynamic` and mounted only when near the viewport (`WhenVisible`), frameloop stops off screen, DPR drops via PerformanceMonitor, aspect-aware camera (`FitCamera`), SVG fallback when WebGL is missing.
+- Home sections in `components/home/`: Hero, Stats, ScrollStory (pinned GSAP scrub: model, exploded view, clash turns green, 4D floor-by-floor, LOD slider 100 to 500), Features (TiltCard), software marquee, programs carousel, learning path (3D road, camera follows scroll), fresh grad spotlight (count-up, confetti), gallery with interactive viewer (discipline toggles + section slider), instructors flip cards, testimonial, pricing teaser with fresh grad switch, FAQ preview, final CTA.
+- Lenis smooth scroll synced with GSAP. Footer "Reduce motion" toggle (also honors the OS setting): disables smooth scroll, auto-rotate, confetti, marquee; story gets stage buttons instead of scroll pinning.
+- Verified in the browser (desktop width): hero assembles, story stages 1 to 4 work, clash marker red then green, viewer toggles, pricing switch. `pnpm build` passes. Home first-load JS 245 kB; 3D code loads after.
+
+## Decisions and deviations
+
+- Programs preview is a CSS scroll-snap carousel with arrows, not a GSAP pinned horizontal scroll (simpler, works on touch).
+- No bloom post-processing (skipped for performance).
+- Preloader (logo drawing) not built yet.
+- Cursor follower and magnetic button not built yet.
+- Testimonial uses a Bay BIM client quote from baybimdesigns.com, shown with an "[approval pending]" chip.
+- Stats show `[XX]` placeholders (a `Counter` component is ready for real numbers).
+- Software names are plain text badges, not logos (confirm trademark use first).
+
 ## Not done / not tested
 
-- Not yet built: TiltCard, Counter, Marquee etc. (come with the sections that use them in Phase 2+).
-- Reduce-motion footer toggle (CSS class `.reduce-motion` exists, toggle not wired yet).
+- Not checked on a real phone or in Safari. Lighthouse not run (Phase 7).
+- Announcement bar countdown not built (date is a `[DATE]` placeholder).
 - next-intl not wired into routing yet (strings still inline).
 - Playwright, Vitest, axe not set up yet (Phase 7).
+- Light mode visuals of the 3D scenes not reviewed.
+- Linked pages (`/programs`, `/apply`, etc.) do not exist yet and 404 until later phases.
 
 ## Gotchas
 
 - EurostileExtended is a licensed font. Michroma is a stand-in in `app/layout.tsx`.
 - pnpm 12 prints "Ignored build scripts" after install; harmless so far (`pnpm approve-builds` if something breaks).
-- Announcement bar countdown is not built yet; date is a `[DATE]` placeholder.
+- First 3D load in `pnpm dev` takes several seconds (dev compile). Production is much faster.
+- Hot reload can briefly show a stale "X is not defined" error right after multi-file edits; reload fixes it.
 
 ## Placeholders still needed
 

@@ -140,3 +140,24 @@ html:not(.dark) .placeholder-chip {
     transition-duration: 0.001ms !important;
   }
 }
+
+html.lenis,
+html.lenis body {
+  height: auto;
+  scroll-behavior: auto;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: marquee 40s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+.reduce-motion .marquee-track {
+  animation: none;
+}

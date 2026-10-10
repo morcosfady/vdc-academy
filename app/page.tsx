@@ -1,24 +1,35 @@
-import { Button } from "@/components/ui/Button";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Badge } from "@/components/ui/Badge";
-import { site } from "@/config/site";
+import { Hero } from "@/components/home/Hero";
+import { Stats } from "@/components/home/Stats";
+import { ScrollStory } from "@/components/home/ScrollStory";
+import { Features } from "@/components/home/Features";
+import { SoftwareMarquee } from "@/components/home/SoftwareMarquee";
+import { ProgramsPreview } from "@/components/home/ProgramsPreview";
+import { LearningPath } from "@/components/home/LearningPath";
+import { FreshGrad } from "@/components/home/FreshGrad";
+import { GalleryPreview } from "@/components/home/GalleryPreview";
+import { Instructors } from "@/components/home/Instructors";
+import { Testimonials } from "@/components/home/Testimonials";
+import { PricingTeaser } from "@/components/home/PricingTeaser";
+import { FaqPreview } from "@/components/home/FaqPreview";
+import { FinalCta } from "@/components/home/FinalCta";
 
-// Phase 1 placeholder. The 3D showcase arrives in Phase 2.
 export default function Home() {
   return (
-    <section className="blueprint-grid">
-      <div className="mx-auto max-w-7xl px-4 py-24 md:px-6 md:py-32">
-        <SectionHeader
-          tag="A-001 · PHASE 1 FOUNDATION"
-          title={site.tagline}
-          subtitle="Hands-on training in Revit, Navisworks, clash detection, and virtual construction, taught by working professionals from Bay BIM Designs."
-        />
-        <div className="flex flex-wrap items-center gap-4">
-          <Button href="/apply" variant="glow">Apply Now</Button>
-          <Button href="/programs" variant="secondary">Explore Programs</Button>
-          <Badge>🎓 Fresh grad? Get up to {site.freshGradMaxDiscount}% off</Badge>
-        </div>
-      </div>
-    </section>
+    <>
+      <Hero />
+      <Stats />
+      <ScrollStory />
+      <Features />
+      <SoftwareMarquee />
+      <ProgramsPreview />
+      <LearningPath />
+      <FreshGrad />
+      <GalleryPreview />
+      <Instructors />
+      <Testimonials />
+      <PricingTeaser />
+      <FaqPreview />
+      <FinalCta />
+    </>
   );
 }
