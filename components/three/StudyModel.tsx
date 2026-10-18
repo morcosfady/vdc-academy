@@ -133,17 +133,17 @@ const SYS: Sys[] = ["structure", "ducts", "pipes", "trays", "hangers"];
 
 // Paper and night colors for every material
 const PAL = {
-  slab: ["#f2efe8", "#15303a"],
-  core: ["#e8e4db", "#0e2229"],
+  slab: ["#f2efe8", "#152f3f"],
+  core: ["#e8e4db", "#0e212b"],
   glass: ["#d6e8f6", "#163247"],
   edge: ["#0a1d23", "#deeffd"],
   mullion: ["#0a1d23", "#deeffd"],
   structure: ["#365b62", "#8fa9b0"],
   ducts: ["#2a63c4", "#7faef0"],
   pipes: ["#b8925a", "#d9b06a"],
-  trays: ["#1c3540", "#a3b6bd"],
+  trays: ["#1b3444", "#a3b6bd"],
   hangers: ["#365b62", "#8fa9b0"],
-  ghost: ["#e9e5dc", "#0d2028"],
+  ghost: ["#e9e5dc", "#0d1f2a"],
 } as const;
 
 export function StudyModel({ stateRef, autoBuild = false, buildSeconds = 2 }: { stateRef: MutableRefObject<SteppedState>; autoBuild?: boolean; buildSeconds?: number }) {

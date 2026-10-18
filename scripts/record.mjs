@@ -8,11 +8,11 @@ const dir = "docs/audit/.video-tmp";
 fs.mkdirSync(dir, { recursive: true });
 
 const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir, size: { width: 1280, height: 720 } }, colorScheme: "dark" });
-await ctx.addInitScript(() => { try { localStorage.setItem("theme", "dark"); sessionStorage.removeItem("vdc-intro"); } catch {} });
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir, size: { width: 1280, height: 720 } }, colorScheme: "light" });
+await ctx.addInitScript(() => { try { sessionStorage.removeItem("vdc-intro"); } catch {} });
 const page = await ctx.newPage();
 await page.goto(base + "?gl=force", { waitUntil: "load" });
-await page.waitForTimeout(6500); // hero intro
+await page.waitForTimeout(3000); // hero intro
 const total = await page.evaluate(() => document.documentElement.scrollHeight);
 for (let y = 0; y < total; y += 140) {
   await page.mouse.wheel(0, 140);
