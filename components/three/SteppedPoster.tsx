@@ -1,35 +1,23 @@
-// Static stepped building drawn in SVG. It is the first thing painted (LCP), the fallback without WebGL,
-// and the reduced-motion image. Colors follow the theme.
-export function SteppedPoster({ className }: { className?: string }) {
-  const floors = [
-    { x: 0, w: 220 },
-    { x: 34, w: 190 },
-    { x: -24, w: 200 },
-    { x: 30, w: 176 },
-    { x: -18, w: 150 },
-    { x: 10, w: 118 },
-  ];
+import { photos } from "@/assets/images";
+
+// The rendered still of the study model: the first thing painted (LCP), the no-WebGL fallback and the
+// reduced-motion image. Rendered by scripts/poster.mjs from /poster. `night` picks the ink version.
+export function SteppedPoster({ className, night = false, priority = false }: { className?: string; night?: boolean; priority?: boolean }) {
+  const p = night ? photos.modelNight : photos.modelPaper;
   return (
-    <svg viewBox="0 0 400 420" className={className} aria-hidden preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--accent)" stopOpacity="0.28" />
-          <stop offset="1" stopColor="var(--accent)" stopOpacity="0.04" />
-        </linearGradient>
-      </defs>
-      {floors.map((f, i) => {
-        const y = 340 - i * 52;
-        const cx = 200 + f.x;
-        const hw = f.w / 2;
-        return (
-          <g key={i} stroke="var(--accent)" strokeWidth="1.4" fill="url(#pg)">
-            <path d={`M${cx - hw} ${y} l${hw} 26 l${hw} -26 v-34 l-${hw} -26 l-${hw} 26 z`} />
-            <path d={`M${cx} ${y + 26} v-34`} fill="none" opacity="0.5" />
-            <path d={`M${cx - hw + 24} ${y - 14} h${f.w - 48}`} fill="none" stroke="#c9a36a" opacity="0.7" />
-            <path d={`M${cx - hw + 30} ${y - 22} h${f.w - 60}`} fill="none" stroke="#8cc0f0" opacity="0.7" />
-          </g>
-        );
-      })}
-    </svg>
+    <picture className={className}>
+      <source srcSet={p.avif} type="image/avif" />
+      <img
+        src={p.webp}
+        alt=""
+        width={p.width}
+        height={p.height}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        {...(priority ? { fetchPriority: "high" as const } : {})}
+        className="h-full w-full object-contain"
+        draggable={false}
+      />
+    </picture>
   );
 }

@@ -1,50 +1,66 @@
 // Grades and optimizes the licensed photos in assets/raw into AVIF + WebP under assets/images.
-// Dark treatment = duotone from Bay BIM ink to a pale steel blue. Light treatment keeps the photo natural.
+// One grade for every photo so they feel like one shoot: slightly desaturated, lifted blacks, cool shadows
+// (toward ink), warm highlights (toward paper), consistent contrast. Run: node scripts/make-images.mjs
 import sharp from "sharp";
 import fs from "node:fs";
 
 fs.mkdirSync("assets/images", { recursive: true });
 
-const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-const INK = hex("#050f14");
-const MID = hex("#2b5f8a");
-const HIGH = hex("#bcd9f2");
+const INK = [10, 29, 35];
+const PAPER = [246, 238, 220];
 
-async function duotone(buf, w, h) {
-  const { data, info } = await sharp(buf).resize(w, h, { fit: "cover" }).greyscale().normalise().raw().toBuffer({ resolveWithObject: true });
+async function grade(buf, w, h, position = "attention") {
+  const { data, info } = await sharp(buf).resize(w, h, { fit: "cover", position }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const out = Buffer.alloc(info.width * info.height * 3);
   for (let i = 0; i < info.width * info.height; i++) {
-    const l = Math.pow(data[i] / 255, 1.15);
-    const [a, b, t] = l < 0.55 ? [INK, MID, l / 0.55] : [MID, HIGH, (l - 0.55) / 0.45];
-    for (let c = 0; c < 3; c++) out[i * 3 + c] = Math.round(a[c] + (b[c] - a[c]) * t);
+    const r = data[i * 3] / 255, g = data[i * 3 + 1] / 255, b = data[i * 3 + 2] / 255;
+    const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const ws = Math.pow(1 - l, 2) * 0.22; // shadows lean to ink
+    const wh = Math.pow(l, 2) * 0.1; // highlights lean to paper
+    const px = [r, g, b].map((c, k) => {
+      let v = c * 0.74 + l * 0.26; // desaturate
+      v = v + (v - 0.5) * 0.1; // gentle contrast
+      v = 0.045 + v * 0.955; // lifted blacks
+      v = v * (1 - ws) + (INK[k] / 255) * ws;
+      v = v * (1 - wh) + (PAPER[k] / 255) * wh;
+      return Math.round(Math.min(1, Math.max(0, v)) * 255);
+    });
+    out[i * 3] = px[0];
+    out[i * 3 + 1] = px[1];
+    out[i * 3 + 2] = px[2];
   }
   return sharp(out, { raw: { width: info.width, height: info.height, channels: 3 } });
 }
 
 async function save(img, name) {
-  await img.clone().avif({ quality: 48, effort: 6 }).toFile(`assets/images/${name}.avif`);
-  await img.clone().webp({ quality: 72 }).toFile(`assets/images/${name}.webp`);
+  await img.clone().avif({ quality: 50, effort: 6 }).toFile(`assets/images/${name}.avif`);
+  await img.clone().webp({ quality: 74 }).toFile(`assets/images/${name}.webp`);
   const a = fs.statSync(`assets/images/${name}.avif`).size;
   const w = fs.statSync(`assets/images/${name}.webp`).size;
   console.log(name, `avif ${(a / 1024) | 0} KB`, `webp ${(w / 1024) | 0} KB`);
 }
 
-// crop a landscape band out of a portrait photo
-const band = (file, top, width, height) => sharp(`assets/raw/${file}.jpg`).extract({ left: 0, top, width: 2400, height: Math.round((2400 * height) / width) });
-
+// [name, raw file, width, height, crop position]
 const jobs = [
-  ["hero-glass", "glass-tower", 900, 2000, 1125, "dark"],
-  ["panel-steel", "steel-crane", 1500, 1200, 900, "dark"],
-  ["panel-glass", "glass-tower", 1700, 1200, 900, "dark"],
-  ["panel-facade", "dusk-facade", 450, 1200, 900, "dark"],
-  ["card-steel", "steel-crane", 1500, 640, 360, "dark"],
-  ["card-glass", "glass-tower", 1700, 640, 360, "dark"],
-  ["card-facade", "dusk-facade", 450, 640, 360, "dark"],
-  ["light-crane", "steel-crane", 1250, 1400, 1100, "light"],
+  ["site", "pexels/8961008", 1200, 1500, "centre"],
+  ["grad", "pexels/8960944", 1200, 1500, "right"],
+  ["team", "pexels/8470778", 1600, 1000, "left"],
+  ["screen", "pexels/8961073", 1600, 900, "centre"],
+  ["hero-glass", "glass-tower", 2000, 1125, "centre"],
+  ["panel-steel", "steel-crane", 1200, 900, "centre"],
+  ["panel-glass", "glass-tower", 1200, 900, "centre"],
+  ["panel-facade", "dusk-facade", 1200, 900, "centre"],
+  ["card-steel", "steel-crane", 960, 600, "centre"],
+  ["card-glass", "glass-tower", 960, 600, "centre"],
+  ["card-facade", "dusk-facade", 960, 600, "top"],
+  ["light-crane", "steel-crane", 1400, 1100, "centre"],
 ];
 
-for (const [name, file, top, w, h, mode] of jobs) {
-  const buf = await band(file, top, w, h).toBuffer();
-  if (mode === "dark") await save(await duotone(buf, w, h), name);
-  else await save(sharp(buf).resize(w, h).modulate({ saturation: 0.55 }), name);
+for (const [name, file, w, h, pos] of jobs) {
+  const src = fs.existsSync(`assets/raw/${file}.jpg`) ? `assets/raw/${file}.jpg` : null;
+  if (!src) {
+    console.log("skip", name, "(raw missing)");
+    continue;
+  }
+  await save(await grade(fs.readFileSync(src), w, h, pos), name);
 }

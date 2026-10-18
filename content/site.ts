@@ -17,7 +17,7 @@ export const content = {
     address: f<string>("Fort Worth, TX", true),
   },
   social: { linkedin: f<string>() },
-  nextCohort: f<string>(), // for example "January 12"
+  nextCohort: f<string>("January 12, 2027", true), // DRAFT, owner to confirm
   domain: f<string>(),
   testimonials: [
     {

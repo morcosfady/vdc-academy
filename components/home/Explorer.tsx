@@ -4,19 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { loadGsap } from "@/lib/gsap";
 import { SceneSlot } from "@/components/three/SceneSlot";
-import { Slab } from "@/components/ui/Slab";
-import { BlueprintLayer } from "@/components/ui/BlueprintLayer";
-import { Badge } from "@/components/ui/Badge";
+import { SegmentedControl } from "@/components/ds/Controls";
+import { Software } from "@/components/ds/Chips";
+import { SheetTag } from "@/components/ds/Devices";
 import { LODS, lodNotes, newState, type Isolate } from "@/lib/modelState";
 import { disciplines } from "@/content/floors";
+import { copy } from "@/content/copy";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
 import { cn } from "@/lib/utils";
 
 const WEEKS = 40;
-const buttons: { id: Isolate; label: string }[] = [{ id: "all", label: "Whole model" }, ...disciplines.map((d) => ({ id: d.id, label: d.label }))];
+const items: { id: Isolate; label: string }[] = [{ id: "all", label: "Whole model" }, ...disciplines.map((d) => ({ id: d.id, label: d.label }))];
 
+// S2. Ink, full bleed. The model in night mode in the middle, a drawing index on the left, one info panel on the right.
 export function Explorer() {
-  const state = useRef(newState({ lod: 300 }));
+  const state = useRef(newState({ lod: 300, mood: 1 }));
   const tl = useRef<{ kill: () => void } | null>(null);
   const reduce = useReduceMotion();
   const [active, setActive] = useState<Isolate>("all");
@@ -24,6 +26,7 @@ export function Explorer() {
   const [week, setWeek] = useState(0);
   const [resolved, setResolved] = useState(false);
   const current = disciplines.find((d) => d.id === active);
+  const c = copy.explorer;
 
   useEffect(() => () => void tl.current?.kill(), []);
 
@@ -38,9 +41,7 @@ export function Explorer() {
       if (reduce) {
         Object.assign(s, { clash: 0.2, focus: 1 });
       } else {
-        // Loop: red clash, pause, reroute to green, pause, again.
-        const t = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
-        s.focus = 0;
+        const t = gsap.timeline({ repeat: -1, repeatDelay: 1 });
         gsap.to(s, { focus: 1, duration: 1.2, ease: "power3.inOut" });
         t.fromTo(s, { clash: 0 }, { clash: 0.5, duration: 1.4, ease: "none" })
           .to(s, { clash: 1, duration: 1.4, ease: "power2.inOut", onStart: () => setResolved(true) })
@@ -67,106 +68,118 @@ export function Explorer() {
     state.current.sim = w / WEEKS;
   }
 
-  function changeLod(l: number) {
-    setLod(l);
-    state.current.lod = l;
-  }
+  const rule = { borderColor: "var(--rule)" };
 
   return (
-    <section id="ch-2" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden py-20 md:py-32">
-      <BlueprintLayer className="drift pointer-events-none absolute inset-0 h-full w-full text-[#7db3e8] opacity-[0.07]" />
-      <div aria-hidden className="glow-layer pointer-events-none absolute end-[-10%] top-1/2 size-[760px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(90,160,225,0.22),transparent_65%)]" />
-      <div className="relative z-10 mx-auto grid max-w-[1280px] gap-10 px-5 md:px-8 lg:grid-cols-12">
-        <div className="relative z-10 lg:col-span-4">
-          <Slab>
-            <p className="label mb-5">02 · The model</p>
-            <h2 id="explorer-title" className="display-md">Rotate it. Strip it back. See what we teach.</h2>
-            <p className="mt-6 max-w-sm text-muted">Pick a discipline to isolate it. Drag the building to turn it.</p>
-          </Slab>
+    <section id="explorer" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden py-20 lg:py-24">
+      <div className="wrap">
+        <div className="flex items-end justify-between gap-6">
+          <SheetTag sheet={c.sheet} name={c.name} />
+          <p className="mono hidden sm:block">{c.hint}</p>
+        </div>
+        <h2 id="explorer-title" className="sr-only">
+          {c.title}
+        </h2>
 
-          <div role="group" aria-label="Isolate a discipline" className="fade-edges -mx-5 mt-8 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:[mask-image:none]">
-            {buttons.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                aria-pressed={active === b.id}
-                onClick={() => select(b.id)}
-                className={cn("min-h-11 rounded-lg border px-4 py-2.5 text-[14px] font-medium transition-colors", active === b.id ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:border-text hover:text-text")}
-              >
-                {b.label}
-              </button>
-            ))}
+        <div className="mt-10 grid gap-8 lg:grid-cols-12 lg:gap-6">
+          {/* Drawing index (desktop: vertical list, phones: chip row) */}
+          <div role="group" aria-label="Isolate a discipline" className="order-2 lg:order-1 lg:col-span-3">
+            <ol className="fade-edges -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:block lg:overflow-visible lg:px-0 lg:[mask-image:none]">
+              {items.map((b, i) => (
+                <li key={b.id} className="shrink-0 lg:border-b" style={rule}>
+                  <button
+                    type="button"
+                    aria-pressed={active === b.id}
+                    onClick={() => select(b.id)}
+                    className={cn(
+                      "flex h-11 items-center gap-4 rounded-[4px] border px-4 text-[15px] transition-colors duration-200 lg:h-14 lg:w-full lg:rounded-none lg:border-0 lg:px-0",
+                      active === b.id ? "border-accent text-text lg:border-l-2 lg:ps-4" : "text-muted hover:text-text",
+                    )}
+                    style={active === b.id ? { borderColor: "var(--accent)" } : rule}
+                  >
+                    <span className="mono hidden lg:inline">{String(i).padStart(2, "0")}</span>
+                    {b.label}
+                  </button>
+                </li>
+              ))}
+            </ol>
           </div>
 
-          <div key={active} className="glass slide-in mt-8 min-h-[190px] p-6" aria-live="polite">
-            {current ? (
-              <>
-                <p className="meta mb-3">{current.label}</p>
-                <p>{current.sentence}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {current.software.map((s) => <Badge key={s}>{s}</Badge>)}
-                </div>
-                <Link prefetch={false} href={`/programs/${current.slug}`} className="mt-5 inline-block text-sm text-accent-text underline underline-offset-8">
-                  {current.program} <span aria-hidden>→</span>
-                </Link>
-              </>
-            ) : (
-              <>
-                <p className="meta mb-3">Whole model</p>
-                <p>Structure, ducts, pipes and cable trays, all in one coordinated model. This is what BIM looks like inside.</p>
-              </>
+          {/* The model */}
+          <div className="relative order-1 lg:order-2 lg:col-span-6">
+            <SceneSlot stateRef={state} interactive autoRotate={active === "all"} rotateSpeed={0.08} fit={0.84} label={c.modelAlt} className="h-[56svh] min-h-[380px] lg:h-[min(72svh,720px)]" />
+            {active === "clash" && (
+              <p className="absolute start-0 top-0 flex items-center gap-3 rounded-[4px] border bg-ink/85 px-4 py-2.5 text-[14px] text-text" style={rule} role="status">
+                <span
+                  aria-hidden
+                  className={cn("inline-block size-3 rounded-full border-2", resolved ? "border-accent" : "animate-pulse border-clash")}
+                />
+                <span className="mono !text-text">{c.clash.id}</span>
+                <span className="text-muted">{c.clash.what}</span>
+                <span className={cn("font-medium", resolved ? "text-accent-text" : "text-clash")}>{resolved ? `${c.clash.resolved} ✓` : c.clash.open}</span>
+              </p>
             )}
+            {active === "clash" && reduce && (
+              <button
+                type="button"
+                onClick={() => {
+                  state.current.clash = resolved ? 0.2 : 1;
+                  setResolved(!resolved);
+                }}
+                className="mono absolute end-0 top-0 rounded-[4px] border bg-ink/85 px-4 py-3 !text-text"
+                style={rule}
+              >
+                {resolved ? "Show clash" : "Fix clash"}
+              </button>
+            )}
+            {active === "4d" && (
+              <div className="absolute inset-x-0 bottom-0 rounded-[4px] border bg-ink/85 px-5 py-4" style={rule}>
+                <label className="mono flex justify-between !text-text" htmlFor="week">
+                  <span>{c.sim.label}</span>
+                  <span>{c.sim.week(week, WEEKS)}</span>
+                </label>
+                <input id="week" type="range" min={0} max={WEEKS} value={week} onChange={(e) => scrub(Number(e.target.value))} className="mt-3 w-full accent-[var(--accent)]" />
+              </div>
+            )}
+          </div>
+
+          {/* Info panel */}
+          <div key={active} className="slide-in order-3 lg:col-span-3" aria-live="polite">
+            <div className="border-t pt-6" style={rule}>
+              {current ? (
+                <>
+                  <h3 className="!text-[1.5rem]">{current.label}</h3>
+                  <p className="mt-4 text-muted">{current.sentence}</p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {current.software.map((s) => (
+                      <Software key={s}>{s}</Software>
+                    ))}
+                  </div>
+                  <Link prefetch={false} href={`/programs/${current.slug}`} className="ul-draw group mt-7 inline-flex items-center gap-2 pb-1 text-[15px] font-medium text-text hover:text-accent-text">
+                    {c.view}
+                    <svg aria-hidden width="16" height="12" viewBox="0 0 16 12" className="transition-transform duration-200 group-hover:translate-x-0.5">
+                      <path d="M0 6h14M9 1l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                  </Link>
+                  <p className="mono mt-4">{current.program}</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="!text-[1.5rem]">{c.all.title}</h3>
+                  <p className="mt-4 text-muted">{c.all.text}</p>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="relative lg:col-span-8">
-          <SceneSlot
-            stateRef={state}
-            interactive
-            autoRotate={active === "all"}
-            label="Interactive 3D building. Drag to rotate. Use the buttons to isolate a discipline."
-            className="h-[62svh] min-h-[420px] lg:h-[78svh]"
-          />
-
-          {active === "clash" && (
-            <p className="glass absolute start-4 top-4 z-10 rounded-lg px-4 py-2.5 text-[14px] text-text" role="status">
-              CLASH #0147 · DUCT vs BEAM · 120mm
-              <span className={cn("ms-3 font-medium", resolved ? "text-[#d9b06a]" : "text-[#ff6b60]")}>{resolved ? "✓ RESOLVED" : "OPEN"}</span>
-            </p>
-          )}
-          {active === "clash" && reduce && (
-            <button type="button" onClick={() => { state.current.clash = resolved ? 0.2 : 1; setResolved(!resolved); }} className="glass absolute end-4 top-4 z-10 px-4 py-2 text-sm uppercase tracking-widest">
-              {resolved ? "Show clash" : "Fix clash"}
-            </button>
-          )}
-
-          {active === "4d" && (
-            <div className="glass absolute inset-x-4 bottom-4 z-10 px-5 py-4">
-              <label className="meta flex justify-between" htmlFor="week">
-                <span>Construction schedule</span>
-                <span>Week {week} / {WEEKS}</span>
-              </label>
-              <input id="week" type="range" min={0} max={WEEKS} value={week} onChange={(e) => scrub(Number(e.target.value))} className="mt-3 w-full accent-[var(--accent)]" />
-            </div>
-          )}
-
-          <div className="relative z-10 mt-6 flex flex-wrap items-center gap-x-8 gap-y-3">
-            <span className="meta">Level of development</span>
-            <div role="group" aria-label="Level of development" className="flex">
-              {LODS.map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  aria-pressed={lod === l}
-                  onClick={() => changeLod(l)}
-                  className={cn("min-h-11 border border-e-0 px-4 py-2 text-sm tabular-nums first:rounded-s-lg last:rounded-e-lg last:border-e", lod === l ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-            <p className="text-sm text-muted" aria-live="polite">{lodNotes[lod]}</p>
-          </div>
+        {/* LOD control, centered under the model */}
+        <div className="mt-10 flex flex-col items-center gap-4 text-center">
+          <SegmentedControl label={c.lodLabel} value={String(lod)} onChange={(v) => { setLod(Number(v)); state.current.lod = Number(v); }} options={LODS.map((l) => ({ id: String(l), label: String(l) }))} />
+          <p className="t-small max-w-md text-dim" aria-live="polite">
+            <span className="mono me-3 !text-text">LOD {lod}</span>
+            {lodNotes[lod]}
+          </p>
         </div>
       </div>
     </section>

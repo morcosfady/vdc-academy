@@ -15,6 +15,8 @@ export function ProgramCard({
   level,
   software,
   photo,
+  pos,
+  price,
   featured,
   className,
 }: {
@@ -25,6 +27,8 @@ export function ProgramCard({
   level: string;
   software: string[];
   photo: PhotoData;
+  pos?: string;
+  price?: string;
   featured?: boolean;
   className?: string;
 }) {
@@ -39,22 +43,23 @@ export function ProgramCard({
       )}
     >
       <div className={cn("relative overflow-hidden", featured ? "aspect-[16/10] md:aspect-auto md:w-1/2" : "aspect-[16/10]")}>
-        <Photo photo={photo} className="transition-transform duration-[900ms] ease-[cubic-bezier(.2,.7,.1,1)] group-hover:scale-[1.03]" />
+        <Photo photo={photo} className="transition-transform duration-[900ms] ease-[cubic-bezier(.2,.7,.1,1)] group-hover:scale-[1.03]" style={pos ? { objectPosition: pos } : undefined} />
       </div>
-      <div className={cn("flex flex-1 flex-col p-6 md:p-7", featured && "md:w-1/2")}>
+      <div className={cn("flex flex-1 flex-col p-6 md:p-7", featured && "md:w-1/2 md:p-9")}>
         <div className="flex items-center justify-between">
           <span className="mono !text-text">{sheet}</span>
           <Tag>{level}</Tag>
         </div>
-        <h3 className="mt-5 !text-[1.5rem]">{title}</h3>
+        <h3 className={cn("mt-5", featured ? "!text-[clamp(1.5rem,1.2rem+1vw,2rem)]" : "!text-[1.5rem]")}>{title}</h3>
         <p className="t-small mt-2 text-dim">{line}</p>
         <div className="mt-5 flex flex-wrap gap-2">
           {software.map((s) => (
             <Software key={s}>{s}</Software>
           ))}
         </div>
-        <span className="mt-auto flex justify-end pt-6 text-accent-text" aria-hidden>
-          <svg width="22" height="14" viewBox="0 0 22 14" className="transition-transform duration-200 group-hover:translate-x-1">
+        <span className="mt-auto flex items-center justify-between pt-6 text-accent-text">
+          <span className="mono !text-text">{price ?? ""}</span>
+          <svg aria-hidden width="22" height="14" viewBox="0 0 22 14" className="transition-transform duration-200 group-hover:translate-x-1">
             <path d="M0 7h20M14 1l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" />
           </svg>
         </span>

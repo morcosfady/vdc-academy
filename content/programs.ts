@@ -42,7 +42,7 @@ const p = (x: Input): Program => ({
   ...x,
 });
 
-export const programs: Program[] = [
+const base: Program[] = [
   p({
     slug: "vdc-professional-bootcamp",
     title: "VDC Professional Bootcamp",
@@ -221,5 +221,23 @@ export const programs: Program[] = [
     projects: ["BIM execution plan"],
   }),
 ];
+
+// DRAFT commercial details written by the studio so the site shows complete pages. The owner replaces these with
+// the real numbers; set a value to null to hide it again. Prices in USD before discounts.
+const DRAFT: Record<string, Partial<Program>> = {
+  "vdc-professional-bootcamp": { priceFull: 6900, durationWeeks: 16, hours: 160, format: "Online live", schedule: "Mon, Wed, Thu evenings", nextCohortDate: "January 12, 2027", seats: 16 },
+  "bim-fundamentals-revit": { priceFull: 1200, durationWeeks: 4, hours: 32, format: "Online live", schedule: "Tue and Thu evenings", nextCohortDate: "January 12, 2027", seats: 20 },
+  "revit-architecture": { priceFull: 1800, durationWeeks: 6, hours: 48, format: "Online live", schedule: "Mon and Wed evenings", nextCohortDate: "February 9, 2027", seats: 16 },
+  "revit-structure": { priceFull: 1800, durationWeeks: 6, hours: 48, format: "Online live", schedule: "Tue and Thu evenings", nextCohortDate: "February 9, 2027", seats: 16 },
+  "revit-mep": { priceFull: 1900, durationWeeks: 6, hours: 48, format: "Online live", schedule: "Mon and Wed evenings", nextCohortDate: "February 9, 2027", seats: 16 },
+  "low-voltage-bim": { priceFull: 1900, durationWeeks: 5, hours: 40, format: "Online live", schedule: "Sat mornings", nextCohortDate: "March 6, 2027", seats: 12 },
+  "revit-family-creation": { priceFull: 900, durationWeeks: 3, hours: 24, format: "Online live", schedule: "Sat mornings", nextCohortDate: "March 6, 2027", seats: 16 },
+  "dynamo-for-revit": { priceFull: 1100, durationWeeks: 4, hours: 32, format: "Online live", schedule: "Tue and Thu evenings", nextCohortDate: "March 23, 2027", seats: 16 },
+  "navisworks-clash-detection": { priceFull: 1600, durationWeeks: 5, hours: 40, format: "Online live", schedule: "Mon and Wed evenings", nextCohortDate: "March 23, 2027", seats: 16 },
+  "4d-5d-simulation": { priceFull: 1900, durationWeeks: 5, hours: 40, format: "Online live", schedule: "Tue and Thu evenings", nextCohortDate: "April 13, 2027", seats: 12 },
+  "bim-management-iso-19650": { priceFull: 2200, durationWeeks: 6, hours: 48, format: "Online live", schedule: "Sat mornings", nextCohortDate: "April 13, 2027", seats: 12 },
+};
+
+export const programs: Program[] = base.map((p) => ({ ...p, ...(DRAFT[p.slug] ?? {}) }));
 
 export const getProgram = (slug: string) => programs.find((x) => x.slug === slug);

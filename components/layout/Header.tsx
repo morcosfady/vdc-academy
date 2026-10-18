@@ -50,7 +50,7 @@ export function Header() {
             >
               Menu <span aria-hidden className="inline-block w-5 border-t-[1.5px] border-current shadow-[0_5px_0_currentColor]" />
             </button>
-            <Button href="/apply" className="!h-11 !px-5 max-sm:hidden">
+            <Button href="/apply" className="!h-10 !px-4 sm:!h-11 sm:!px-5">
               Apply
             </Button>
           </div>

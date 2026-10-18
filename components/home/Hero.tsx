@@ -1,27 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { preload } from "react-dom";
-import { loadGsap } from "@/lib/gsap";
-import { photos } from "@/assets/images";
-import { Button } from "@/components/ui/Button";
-import { Photo } from "@/components/ui/Photo";
-import { BlueprintLayer } from "@/components/ui/BlueprintLayer";
-import { RiseLines } from "@/components/ui/RiseLines";
+import { copy } from "@/content/copy";
+import { programs } from "@/content/programs";
+import { site } from "@/config/site";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { newState } from "@/lib/modelState";
-import { content, shown } from "@/content/site";
-import { site } from "@/config/site";
+import { loadGsap } from "@/lib/gsap";
+import { Button } from "@/components/ui/Button";
+import { RiseLines } from "@/components/ui/RiseLines";
+import { DimensionString, GridBubble, SheetTag } from "@/components/ds/Devices";
+import { FactRow } from "@/components/ds/Sections";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
-
-const lines = ["Train on real BIM", "projects. Build a", "real career."];
-
-// Callout tags attached to the model by a thin leader line, like Revit tags. They pop in last.
-const tags = [
-  { text: "LOD 350", top: "20%", left: "4%", dir: "right", d: 1.45 },
-  { text: "MEP · Ducts", top: "47%", right: "0%", dir: "left", d: 1.6 },
-  { text: "Clash resolved ✓", top: "74%", left: "8%", dir: "right", d: 1.75 },
-] as const;
 
 const seen = () => {
   try {
@@ -31,13 +21,12 @@ const seen = () => {
   }
 };
 
+// S1. Paper. Text in columns 1 to 6, the white study model in columns 7 to 12. They never share space.
 export function Hero() {
-  preload(photos.hero.avif, { as: "image", fetchPriority: "high", type: "image/avif" });
   const section = useRef<HTMLElement>(null);
-  // The intro (about 2s) plays once per visit. Repeat views and reduced motion start from the finished state.
-  const state = useRef(newState({ build: 0, lod: 350 }));
+  const state = useRef(newState({ build: 0, lod: 300, mood: 0 }));
   const reduce = useReduceMotion();
-  const cohort = shown(content.nextCohort);
+  const c = copy.hero;
 
   useEffect(() => {
     if (seen()) state.current.build = 1;
@@ -45,26 +34,30 @@ export function Hero() {
       try {
         sessionStorage.setItem("vdc-intro", "1");
       } catch {}
-    }, 3200);
+    }, 2000);
     return () => window.clearTimeout(t);
   }, []);
 
-  // Scroll hands the building to the explorer: it turns about 25 degrees, the floors lift apart and settle back.
+  // Hero to explorer: as the hero scrolls out, paper crossfades to ink, the model turns to night and the camera moves in.
   useEffect(() => {
     if (reduce) return;
+    const el = section.current;
     const s = state.current;
     let kill = () => {};
     let cancelled = false;
     loadGsap().then(({ ScrollTrigger }) => {
-      if (cancelled) return;
+      if (cancelled || !el) return;
       const st = ScrollTrigger.create({
-        trigger: section.current,
+        trigger: el,
         start: "top top",
         end: "bottom top",
-        scrub: 0.6,
+        scrub: 0.5,
         onUpdate: (self) => {
-          s.yaw = self.progress * 0.44;
-          s.explode = Math.sin(self.progress * Math.PI) * 0.45;
+          const p = self.progress;
+          el.style.setProperty("--p", String(p));
+          s.mood = Math.min(1, p * 1.4);
+          s.dolly = p;
+          s.yaw = p * 0.5;
         },
       });
       kill = () => st.kill();
@@ -78,80 +71,63 @@ export function Hero() {
   const d = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
 
   return (
-    <section ref={section} id="ch-1" className="theme-dark relative overflow-hidden lg:min-h-[100svh]">
-      {/* Layer 1: graded architectural photo. Fades in and settles (1.08 to 1.0) */}
-      <div className="absolute inset-0 overflow-hidden" aria-hidden>
-        <Photo photo={photos.hero} priority className="settle opacity-70" />
-      </div>
-      {/* Layer 2: ink gradient so text reads on the left, light fades toward the model */}
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,#0a1d23_0%,rgba(10,29,35,0.92)_30%,rgba(10,29,35,0.45)_60%,rgba(10,29,35,0.2)_100%)]" />
-      <div aria-hidden className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-[#06141a]/85 to-transparent" />
-      <div aria-hidden className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#0a1d23] to-transparent" />
-      {/* Layer 3: soft steel blue light behind the building */}
-      <div aria-hidden className="glow-layer absolute end-[6%] top-1/2 hidden size-[720px] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(90,160,225,0.3),transparent_66%)] lg:block" />
-      {/* Layer 4: technical drawing, drawn line by line */}
-      <BlueprintLayer draw className="pointer-events-none absolute inset-0 h-full w-full text-[#7db3e8] opacity-[0.1]" />
-
-      <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-4 px-5 pt-24 md:px-8 lg:min-h-[calc(100svh-64px)] lg:grid-cols-[45fr_55fr] lg:pt-20">
-        <div className="order-2 pb-10 lg:order-1 lg:pb-0">
-          <p className="label fade-up mb-5" style={d(0.1)}>VDC Academy · by Bay BIM Designs</p>
-          <h1 className="text-[clamp(2.25rem,4.1vw,4rem)] text-[#eaf2f7]" aria-label="Train on real BIM projects. Build a real career.">
-            <RiseLines lines={lines} delay={0.2} />
-          </h1>
-          <p className="fade-up mt-6 max-w-[34rem] text-lg text-[#b4c6ce]" style={d(0.7)}>
-            Hands-on Revit, Navisworks and VDC training from the team behind Bay BIM Designs, with fresh graduate pricing.
-          </p>
-          <div className="fade-up mt-8 flex flex-wrap items-center gap-4" style={d(0.85)}>
-            <Button href="/apply" variant="glow" magnetic>
-              Apply now
-            </Button>
-            <Button href="/programs" variant="outline">
-              Explore programs
-            </Button>
+    <section ref={section} id="hero" className="theme-light hero relative overflow-hidden" style={{ "--p": 0 } as React.CSSProperties}>
+      <div className="wrap relative flex min-h-[100svh] flex-col pt-[72px] lg:min-h-[max(100svh,720px)]">
+        <div className="grid-12 flex-1 items-center gap-y-12 py-12 lg:py-0">
+          <div className="hero-copy col-span-12 lg:col-span-6">
+            <SheetTag sheet={c.sheet} name={c.name} className="fade-up" />
+            <h1 className="t-display mt-8 max-w-[13ch]" aria-label={c.headline.join(" ")}>
+              <RiseLines lines={c.headline} delay={0.3} />
+            </h1>
+            <p className="t-lead fade-up mt-7 max-w-[30rem]" style={d(0.75)}>
+              {c.lead}
+            </p>
+            <div className="fade-up mt-9 flex flex-col gap-5 sm:flex-row sm:items-center" style={d(0.9)}>
+              <Button href="/apply" className="sm:w-auto">
+                {c.primary}
+              </Button>
+              <Button href="/programs" variant="link">
+                {c.secondary}
+              </Button>
+            </div>
+            <FactRow
+              className="fade-up mt-12"
+              items={[
+                c.facts.programs(programs.length),
+                c.facts.live,
+                <span key="g">
+                  Fresh grads save <span className="font-medium text-warm">{site.freshGradMaxDiscount}%</span>
+                </span>,
+              ]}
+            />
           </div>
-          <ul className="fade-up mt-10 flex flex-wrap divide-x divide-[#365b62] text-sm text-[#b4c6ce]" style={d(1.0)}>
-            <li className="pe-5">{site.city}</li>
-            <li className="px-5">Revit · Navisworks · ACC</li>
-            <li className="ps-5">
-              Fresh grads save <span className="text-[#c9a36a]">{site.freshGradMaxDiscount}%</span>
-            </li>
-          </ul>
-          {cohort && <p className="meta mt-6">Next cohort · {cohort}</p>}
-        </div>
 
-        <div className="relative order-1 lg:order-2">
-          <SceneSlot
-            stateRef={state}
-            autoBuild
-            buildSeconds={2.4}
-            label="3D glass building made of offset, stepped floors, with structure, ducts, pipes and cable trays visible inside"
-            className="h-[52svh] lg:h-[80svh]"
-          />
-          <div aria-hidden className="pointer-events-none absolute inset-0 hidden lg:block">
-            {tags.map((t) => (
-              <div
-                key={t.text}
-                className="absolute z-10 flex items-center gap-2"
-                style={{ top: t.top, ...("left" in t ? { left: t.left } : { right: t.right }), flexDirection: t.dir === "left" ? "row-reverse" : "row", ...d(t.d) }}
-              >
-                <span className="tag-dot size-2 rounded-full bg-[#7db3e8] shadow-[0_0_12px_#7db3e8]" />
-                <span className="tag-line w-10 border-t border-[#7db3e8]/70" style={{ "--o": t.dir === "left" ? "right" : "left" } as React.CSSProperties} />
-                <span className="tag-pill rounded-lg border border-[#365b62] bg-[#0a1d23]/80 px-3 py-1.5 text-[13px] font-medium text-[#eaf2f7] backdrop-blur-sm">{t.text}</span>
+          <div className="col-span-12 lg:col-span-6">
+            <div className="model-in relative mx-auto w-[72%] sm:w-[60%] lg:w-full">
+              {/* Grid bubbles: A, B, C across the top and 1, 2, 3 down the side, like a structural grid */}
+              <div aria-hidden className="absolute inset-x-[12%] -top-9 hidden justify-between text-slate lg:flex">
+                {["A", "B", "C"].map((l) => (
+                  <GridBubble key={l} label={l} />
+                ))}
               </div>
-            ))}
+              <div aria-hidden className="absolute -end-10 inset-y-[14%] hidden flex-col justify-between text-slate lg:flex">
+                {["1", "2", "3"].map((l) => (
+                  <GridBubble key={l} label={l} />
+                ))}
+              </div>
+              <SceneSlot stateRef={state} autoBuild buildSeconds={1.6} rotateSpeed={0.105} priority label={c.modelAlt} className="aspect-square lg:aspect-[5/4]" />
+            </div>
+            <DimensionString label="7 storeys · LOD 300" className="fade-up mx-auto mt-5 w-[72%] sm:w-[60%] lg:w-full" />
           </div>
         </div>
-      </div>
 
-      {/* Scroll cue: a thin line with a dot travelling down */}
-      <div aria-hidden className="absolute bottom-16 start-1/2 z-10 hidden h-12 w-px -translate-x-1/2 bg-[#365b62] lg:block">
-        <span className="cue-dot absolute -start-[2px] top-0 block size-[5px] rounded-full bg-[#7db3e8]" />
-      </div>
-
-      <div className="relative z-10 border-t border-[#365b62]/70">
-        <p className="mx-auto max-w-[1280px] px-5 py-5 text-sm text-[#b4c6ce] md:px-8">
-          Built by the team behind Bay BIM Designs, trusted by AE firms, general contractors and technology contractors.
-        </p>
+        <div className="rule-t flex items-center justify-between gap-6 py-5">
+          <span className="mono">{c.footer[0]}</span>
+          <span className="mono hidden sm:inline">{c.footer[1]}</span>
+          <span className="mono flex items-center gap-2">
+            {c.footer[2]} <span aria-hidden className="cue-dot inline-block">↓</span>
+          </span>
+        </div>
       </div>
     </section>
   );

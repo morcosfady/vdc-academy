@@ -19,6 +19,9 @@ export function SceneSlot({
   autoBuild,
   autoRotate,
   buildSeconds,
+  rotateSpeed,
+  priority,
+  fit,
 }: {
   stateRef: MutableRefObject<SteppedState>;
   className?: string;
@@ -27,6 +30,9 @@ export function SceneSlot({
   autoBuild?: boolean;
   autoRotate?: boolean;
   buildSeconds?: number;
+  rotateSpeed?: number;
+  priority?: boolean;
+  fit?: number;
 }) {
   const [ready, setReady] = useState(false);
   const webgl = useWebGL();
@@ -34,7 +40,9 @@ export function SceneSlot({
   return (
     <div className={cn("relative", className)} role="img" aria-label={label}>
       <SteppedPoster
-        className={cn("absolute inset-0 h-full w-full transition-opacity duration-1000", ready ? "opacity-0" : "opacity-100")}
+        night={stateRef.current.mood >= 0.5}
+        priority={priority}
+        className={cn("absolute inset-0 block h-full w-full transition-opacity duration-700", ready ? "opacity-0" : "opacity-100")}
       />
       {webgl && scenesReady && (
         <SteppedView
@@ -44,6 +52,8 @@ export function SceneSlot({
           autoBuild={autoBuild}
           autoRotate={autoRotate}
           buildSeconds={buildSeconds}
+          rotateSpeed={rotateSpeed}
+          fit={fit}
           onReady={() => setReady(true)}
         />
       )}

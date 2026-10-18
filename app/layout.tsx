@@ -5,7 +5,6 @@ import { site } from "@/config/site";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { GridOverlay } from "@/components/ds/GridOverlay";
-import { MobileApplyBar } from "@/components/layout/MobileApplyBar";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { SceneHostLoader } from "@/components/three/SceneHostLoader";
 import { UtmCapture } from "@/components/layout/UtmCapture";
@@ -44,7 +43,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main id="main">{children}</main>
           <Footer />
           <GridOverlay />
-          <MobileApplyBar />
           <PageTransition />
           </MotionProvider>
         </ThemeProvider>

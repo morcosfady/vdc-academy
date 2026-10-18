@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./motion.css";
+@import "./v5.css";
 
 /* VDC Academy design system v5, "The Drawing Set". Palette from Bay BIM Designs (docs/brand-reference.md).
    One accent (blueprint). Brass is for hairlines and the fresh-grad offer only. Clash red lives inside the clash animation.
