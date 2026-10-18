@@ -41,7 +41,7 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-          <FactRow className="mt-14 border-t pt-8" items={c.facts} />
+          <FactRow className="rule-t mt-14 pt-8" items={c.facts} />
         </div>
       </section>
 

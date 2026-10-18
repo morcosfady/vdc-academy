@@ -4,8 +4,8 @@ import { PricingPlans } from "@/components/programs/PricingPlans";
 import { DiscountCalculator } from "@/components/programs/DiscountCalculator";
 import { LeadForm } from "@/components/forms/LeadForm";
 import { Faq } from "@/components/ds/Faq";
-import { SectionHeader } from "@/components/ds/Sections";
-import { discounts, earlyBird, earlyBirdStacksWithFreshGrad } from "@/config/discounts";
+import { DiscountTable, discountRows } from "@/components/programs/DiscountTable";
+import { earlyBirdStacksWithFreshGrad } from "@/config/discounts";
 import { pricesKnown } from "@/content/plans";
 import { pages } from "@/content/copy-pages";
 
@@ -15,13 +15,28 @@ export const metadata: Metadata = {
 };
 
 const c = pages.pricing;
-const rule = { borderColor: "var(--rule)" } as const;
+
+// Section layout shared down the page: title in columns 1 to 4, content in 5 to 12.
+function Row({ id, title, lead, children }: { id: string; title: string; lead?: string; children: React.ReactNode }) {
+  return (
+    <section className="theme-light section !pt-0" aria-labelledby={id}>
+      <div className="wrap">
+        <div className="grid-12 gap-y-10">
+          <div className="col-span-12 lg:col-span-4">
+            <h2 id={id} className="t-h3">
+              {title}
+            </h2>
+            {lead && <p className="t-small mt-4 max-w-sm text-dim">{lead}</p>}
+          </div>
+          <div className="col-span-12 lg:col-span-8">{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function PricingPage() {
-  const rows = [
-    ...Object.values(discounts).map((d) => ({ key: d.id, label: d.label, who: d.who, percent: d.percent, proof: d.proof })),
-    { key: "early", label: earlyBird.label, who: earlyBird.who, percent: earlyBird.percent, proof: c.discounts.auto },
-  ];
+  const rows = discountRows(c.discounts.auto);
   return (
     <>
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} />
@@ -41,74 +56,17 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="theme-light section !pt-0" aria-labelledby="discounts">
-        <div className="wrap">
-          <div className="grid-12 gap-y-10">
-            <div className="col-span-12 lg:col-span-4">
-              <h2 id="discounts" className="t-h3">
-                {c.discounts.title}
-              </h2>
-              <p className="t-small mt-4 max-w-sm text-dim">{c.discounts.note(earlyBirdStacksWithFreshGrad)}</p>
-            </div>
-            <div className="col-span-12 overflow-x-auto lg:col-span-8">
-              <table className="w-full min-w-[560px] border-collapse text-[15px]">
-                <caption className="sr-only">{c.discounts.title}</caption>
-                <thead>
-                  <tr>
-                    {c.discounts.cols.map((h) => (
-                      <th key={h} scope="col" className="mono border-b pb-3 pe-4 text-start font-normal" style={rule}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((d) => (
-                    <tr key={d.key}>
-                      <th scope="row" className="border-b py-4 pe-4 text-start font-medium text-text" style={rule}>
-                        {d.label}
-                      </th>
-                      <td className="border-b py-4 pe-4 text-muted" style={rule}>
-                        {d.who}
-                      </td>
-                      <td className={`border-b py-4 pe-4 font-semibold tabular-nums ${d.key === "freshGrad" ? "text-warm" : "text-text"}`} style={rule}>
-                        {d.percent}%
-                      </td>
-                      <td className="border-b py-4 text-muted" style={rule}>
-                        {d.proof}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Row id="discounts" title={c.discounts.title} lead={c.discounts.note(earlyBirdStacksWithFreshGrad)}>
+        <DiscountTable rows={rows} cols={{ label: c.discounts.cols[0], who: c.discounts.cols[1], proof: c.discounts.cols[3], off: c.discounts.cols[2] }} title={c.discounts.title} />
+      </Row>
 
-      <section className="theme-light section !pt-0" aria-labelledby="calc">
-        <div className="wrap">
-          <SectionHeader title={<span id="calc">{c.calculator.title}</span>} lead={c.calculator.lead} />
-          <div className="mt-10">
-            <DiscountCalculator />
-          </div>
-        </div>
-      </section>
+      <Row id="calc" title={c.calculator.title} lead={c.calculator.lead}>
+        <DiscountCalculator />
+      </Row>
 
-      <section className="theme-light section !pt-0" aria-labelledby="pay">
-        <div className="wrap">
-          <div className="grid-12 gap-y-10">
-            <div className="col-span-12 lg:col-span-4">
-              <h2 id="pay" className="t-h3">
-                {c.faq.title}
-              </h2>
-            </div>
-            <div className="col-span-12 lg:col-span-8">
-              <Faq items={c.faq.items} />
-            </div>
-          </div>
-        </div>
-      </section>
+      <Row id="pay" title={c.faq.title}>
+        <Faq items={c.faq.items} />
+      </Row>
     </>
   );
 }

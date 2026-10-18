@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { media } from "@/content/media";
 import { pages } from "@/content/copy-pages";
-import { discounts, earlyBird, freshGradMonths } from "@/config/discounts";
+import { discounts, freshGradMonths } from "@/config/discounts";
 import { Photo } from "@/components/ui/Photo";
 import { Button } from "@/components/ui/Button";
 import { CountUp } from "@/components/ui/CountUp";
 import { Slab } from "@/components/ui/Slab";
 import { SheetTag } from "@/components/ds/Devices";
-import { SectionHeader } from "@/components/ds/Sections";
 import { Faq } from "@/components/ds/Faq";
 import { QualifyQuiz } from "@/components/home/Grads";
+import { DiscountTable, discountRows } from "@/components/programs/DiscountTable";
 
 export const metadata: Metadata = {
   title: "Fresh Graduates",
@@ -17,14 +17,29 @@ export const metadata: Metadata = {
 };
 
 const c = pages.grads;
-const rule = { borderColor: "var(--rule)" } as const;
+
+// Section layout shared down the page: title in columns 1 to 4, content in 5 to 12.
+function Row({ id, title, lead, first, children }: { id: string; title: string; lead?: string; first?: boolean; children: React.ReactNode }) {
+  return (
+    <section className={`theme-light section ${first ? "rule-t" : "!pt-0"}`} aria-labelledby={id}>
+      <div className="wrap">
+        <div className="grid-12 gap-y-10">
+          <div className="col-span-12 lg:col-span-4">
+            <h2 id={id} className="t-h3">
+              {title}
+            </h2>
+            {lead && <p className="t-small mt-4 max-w-sm text-dim">{lead}</p>}
+          </div>
+          <div className="col-span-12 lg:col-span-8">{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function FreshGradsPage() {
   const pct = discounts.freshGrad.percent;
-  const rows = [
-    ...Object.values(discounts).map((d) => ({ key: d.id, label: d.label, who: d.who, proof: d.proof, percent: d.percent })),
-    { key: "early", label: earlyBird.label, who: earlyBird.who, proof: c.eligibility.auto, percent: earlyBird.percent },
-  ];
+  const rows = discountRows(c.eligibility.auto);
   return (
     <>
       {/* The offer. The 40 is real text in the HTML; the count-up only decorates it. */}
@@ -61,83 +76,25 @@ export default function FreshGradsPage() {
         </div>
       </section>
 
-      <section className="theme-light section rule-t" aria-labelledby="who">
-        <div className="wrap">
-          <div className="grid-12 gap-y-10">
-            <div className="col-span-12 lg:col-span-4">
-              <h2 id="who" className="t-h3">
-                {c.eligibility.title}
-              </h2>
-              <p className="t-small mt-4 max-w-sm text-dim">{c.eligibility.lead}</p>
-            </div>
-            <div className="col-span-12 overflow-x-auto lg:col-span-8">
-              <table className="w-full min-w-[520px] border-collapse text-[15px]">
-                <caption className="sr-only">{c.eligibility.title}</caption>
-                <thead>
-                  <tr>
-                    <th scope="col" className="mono border-b pb-3 pe-4 text-start font-normal" style={rule}>
-                      Discount
-                    </th>
-                    {c.eligibility.cols.map((h) => (
-                      <th key={h} scope="col" className="mono border-b pb-3 pe-4 text-start font-normal" style={rule}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((d) => (
-                    <tr key={d.key}>
-                      <th scope="row" className="border-b py-4 pe-4 text-start font-medium text-text" style={rule}>
-                        {d.label}
-                      </th>
-                      <td className="border-b py-4 pe-4 text-muted" style={rule}>
-                        {d.who}
-                      </td>
-                      <td className="border-b py-4 pe-4 text-muted" style={rule}>
-                        {d.proof}
-                      </td>
-                      <td className={`border-b py-4 font-semibold tabular-nums ${d.key === "freshGrad" ? "text-warm" : "text-text"}`} style={rule}>
-                        {d.percent}%
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Row id="who" title={c.eligibility.title} lead={c.eligibility.lead} first>
+        <DiscountTable rows={rows} cols={{ label: "Discount", who: c.eligibility.cols[0], proof: c.eligibility.cols[1], off: c.eligibility.cols[2] }} title={c.eligibility.title} />
+      </Row>
 
-      <section className="theme-light section !pt-0" aria-labelledby="how">
-        <div className="wrap">
-          <SectionHeader title={<span id="how">{c.how.title}</span>} />
-          <ol className="mt-10 grid gap-x-6 gap-y-8 border-t pt-8 md:grid-cols-3" style={rule}>
-            {c.how.steps.map((s, i) => (
-              <li key={s.t}>
-                <p className="mono !text-accent-text">{String(i + 1).padStart(2, "0")}</p>
-                <h3 className="mt-4 !text-[1.25rem]">{s.t}</h3>
-                <p className="t-small mt-2 text-dim">{s.d}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
+      <Row id="how" title={c.how.title}>
+        <ol className="grid gap-x-6 gap-y-8 border-t pt-8 sm:grid-cols-3" style={{ borderColor: "var(--rule)" }}>
+          {c.how.steps.map((s, i) => (
+            <li key={s.t}>
+              <p className="mono !text-accent-text">{String(i + 1).padStart(2, "0")}</p>
+              <h3 className="mt-4 !text-[1.25rem]">{s.t}</h3>
+              <p className="t-small mt-2 text-dim">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+      </Row>
 
-      <section className="theme-light section !pt-0" aria-labelledby="faq">
-        <div className="wrap">
-          <div className="grid-12 gap-y-10">
-            <div className="col-span-12 lg:col-span-4">
-              <h2 id="faq" className="t-h3">
-                {c.faq.title}
-              </h2>
-            </div>
-            <div className="col-span-12 lg:col-span-8">
-              <Faq items={c.faq.items(freshGradMonths)} />
-            </div>
-          </div>
-        </div>
-      </section>
+      <Row id="faq" title={c.faq.title}>
+        <Faq items={c.faq.items(freshGradMonths)} />
+      </Row>
     </>
   );
 }

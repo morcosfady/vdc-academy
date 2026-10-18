@@ -259,7 +259,8 @@ export function ApplyFlow() {
               }}
               noValidate
             >
-              <AnimatePresence mode="wait">
+              {/* initial={false}: Motion's features load after the first interaction, so the first step must render visible without an entrance. */}
+              <AnimatePresence mode="wait" initial={false}>
                 <m.div key={step} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="space-y-7">
                   {step === 0 && (
                     <>

@@ -20,8 +20,8 @@ export default function LearningPathPage() {
     <>
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} />
 
-      {/* The home page section drawing. Its own link back to this page is hidden here. */}
-      <div className="[&_section]:!pb-0 [&_a[href*=learning-path]]:hidden">
+      {/* The home page section drawing. Its own header and its link back to this page are hidden here. */}
+      <div className="[&>section]:!pt-8 [&>section]:!pb-0 lg:[&>section]:!pt-10 [&_header]:hidden [&_a[href*=learning-path]]:hidden [&_.mt-16]:!mt-0">
         <Path />
       </div>
 
@@ -29,7 +29,7 @@ export default function LearningPathPage() {
         <div className="wrap">
           <SectionHeader title={<span id="floors">{c.floors.title}</span>} lead={c.floors.lead} />
           <ol className="mt-14">
-            {[...floors].reverse().map((f) => {
+            {floors.map((f) => {
               const list = f.slugs.map((s) => programs.find((p) => p.slug === s)!).filter(Boolean);
               return (
                 <li key={f.n} className="grid-12 gap-y-6 border-t py-10" style={rule}>
