@@ -6,25 +6,16 @@ import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
-import { ThemeToggle } from "./ThemeToggle";
 import { MenuOverlay } from "./MenuOverlay";
 
-// Transparent over the hero (72px), ink glass with a hairline after scrolling, hides on scroll down.
+// Paper header with a hairline. The only glass on the site: it blurs once you scroll.
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
   const [menu, setMenu] = useState(false);
 
   useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > 40);
-      if (Math.abs(y - last) > 6) {
-        setHidden(y > last && y > 240);
-        last = y;
-      }
-    };
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -33,13 +24,13 @@ export function Header() {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 h-[72px] transition-[transform,background-color,border-color] duration-500",
-          scrolled ? "glass-blur border-b border-border bg-bg/80" : "theme-dark !bg-transparent border-b border-transparent",
-          hidden && !menu ? "-translate-y-full" : "translate-y-0",
+          "theme-light fixed inset-x-0 top-0 z-50 h-[72px] border-b transition-[background-color,border-color,backdrop-filter] duration-300",
+          scrolled ? "glass-blur !bg-paper/85" : "border-transparent",
         )}
+        style={scrolled ? { borderColor: "var(--rule)" } : undefined}
       >
-        <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between gap-6 px-5 md:px-8">
-          <Link prefetch={false} href="/" aria-label="VDC Academy by Bay BIM Designs, home">
+        <div className="wrap flex h-full items-center justify-between gap-6">
+          <Link prefetch={false} href="/" aria-label="VDC Academy by Bay BIM Designs, home" className="text-ink">
             <Logo />
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-9 lg:flex">
@@ -50,17 +41,16 @@ export function Header() {
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <button
               type="button"
               onClick={() => setMenu(true)}
               aria-haspopup="dialog"
               aria-expanded={menu}
-              className="inline-flex h-11 items-center gap-3 rounded-[10px] px-3 text-[15px] font-medium text-text/80 hover:text-text lg:hidden"
+              className="inline-flex h-11 items-center gap-3 rounded-[8px] px-3 text-[15px] font-medium text-text lg:hidden"
             >
               Menu <span aria-hidden className="inline-block w-5 border-t-[1.5px] border-current shadow-[0_5px_0_currentColor]" />
             </button>
-            <Button href="/apply" variant="glow" className="!h-11 !px-5">
+            <Button href="/apply" className="!h-11 !px-5 max-sm:hidden">
               Apply
             </Button>
           </div>

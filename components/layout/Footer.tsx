@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { site } from "@/config/site";
 import { content, hasInstructors, hasStudentWork, shown } from "@/content/site";
+import { Logo } from "@/components/ui/Logo";
+import { TitleBlock } from "@/components/ds/Devices";
 import { ReduceMotionToggle } from "./ReduceMotionToggle";
 import { ComfortToggle } from "./ComfortToggle";
 
@@ -10,60 +12,130 @@ const legal = [
   { href: "/accessibility", label: "Accessibility" },
 ];
 
+const ruleBorder = { borderColor: "var(--rule)" } as const;
+
+// Deepest ink footer. Four columns, then an architectural title block across the bottom.
 export function Footer() {
-  const linkedin = shown(content.social.linkedin);
   const email = shown(content.contact.email);
-  const explore = [
-    ...site.menu.filter((m) => m.href !== "/contact"),
-    ...(hasInstructors() ? [{ href: "/instructors", label: "Instructors" }] : []),
-    ...(hasStudentWork() ? [{ href: "/student-work", label: "Student Work" }] : []),
+  const linkedin = shown(content.social.linkedin);
+  const programs = [
+    { href: "/programs", label: "All programs" },
+    { href: "/learning-path", label: "Learning path" },
+    { href: "/pricing", label: "Pricing" },
+    { href: "/fresh-graduates", label: "Fresh graduates" },
   ];
+  const academy = [
+    { href: "/about", label: "About" },
+    { href: "/for-companies", label: "For companies" },
+    ...(hasInstructors() ? [{ href: "/instructors", label: "Instructors" }] : []),
+    ...(hasStudentWork() ? [{ href: "/student-work", label: "Student work" }] : []),
+  ];
+  const col = "t-small space-y-3 text-muted";
+  const link = "ul-draw pb-0.5 hover:text-text";
 
   return (
-    <footer className="theme-dark relative overflow-hidden bg-[#06141a] border-t border-border pb-10 pt-24 md:pt-36">
-      <div className="mx-auto max-w-[1280px] px-5 md:px-8">
-        <p className="display-lg max-w-4xl">Build it digitally before you build it for real.</p>
-        <div className="mt-16 grid gap-10 md:grid-cols-4">
-          <div>
-            <p className="label mb-4">Explore</p>
-            <ul className="space-y-2">
-              {explore.map((l) => (
-                <li key={l.href}><Link prefetch={false} href={l.href} className="ul-draw pb-0.5 text-muted hover:text-text">{l.label}</Link></li>
+    <footer className="theme-dark !bg-ink-3 pb-28 pt-24 sm:pb-10 md:pt-32">
+      <div className="wrap">
+        <div className="grid gap-12 md:grid-cols-4">
+          <nav aria-label="Programs">
+            <p className="mono mb-5">Programs</p>
+            <ul className={col}>
+              {programs.map((l) => (
+                <li key={l.href}>
+                  <Link prefetch={false} href={l.href} className={link}>
+                    {l.label}
+                  </Link>
+                </li>
               ))}
             </ul>
-          </div>
+          </nav>
+          <nav aria-label="Academy">
+            <p className="mono mb-5">Academy</p>
+            <ul className={col}>
+              {academy.map((l) => (
+                <li key={l.href}>
+                  <Link prefetch={false} href={l.href} className={link}>
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
           <div>
-            <p className="label mb-4">Contact</p>
-            <ul className="space-y-2 text-muted">
+            <p className="mono mb-5">Support</p>
+            <ul className={col}>
+              <li>
+                <Link prefetch={false} href="/faq" className={link}>
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link prefetch={false} href="/contact" className={link}>
+                  Talk to an advisor
+                </Link>
+              </li>
+              {email && (
+                <li>
+                  <a href={`mailto:${email}`} className={link}>
+                    {email}
+                  </a>
+                </li>
+              )}
               <li>{site.city}</li>
-              {email && <li><a href={`mailto:${email}`} className="hover:text-text">{email}</a></li>}
-              <li><Link prefetch={false} href="/contact" className="hover:text-text">Talk to an advisor</Link></li>
             </ul>
           </div>
           <div>
-            <p className="label mb-4">Bay BIM Designs</p>
-            <ul className="space-y-2 text-muted">
-              <li><a href={site.parentUrl} className="hover:text-text">baybimdesigns.com</a></li>
-              {linkedin && <li><a href={linkedin} className="hover:text-text">LinkedIn</a></li>}
-            </ul>
-          </div>
-          <div>
-            <p className="label mb-4">Legal</p>
-            <ul className="space-y-2">
-              {legal.map((l) => (
-                <li key={l.href}><Link prefetch={false} href={l.href} className="ul-draw pb-0.5 text-muted hover:text-text">{l.label}</Link></li>
-              ))}
+            <p className="mono mb-5">Bay BIM Designs</p>
+            <ul className={col}>
+              <li>
+                <a href={site.parentUrl} className={link}>
+                  baybimdesigns.com
+                </a>
+              </li>
+              {linkedin && (
+                <li>
+                  <a href={linkedin} className={link}>
+                    LinkedIn
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>
-        <div className="mt-16 flex flex-wrap items-center justify-between gap-4 text-sm text-muted">
-          <p>© {new Date().getFullYear()} VDC Academy, a {site.parent} company</p>
-          <span className="flex flex-wrap items-center gap-6"><ReduceMotionToggle /><ComfortToggle /></span>
+
+        <div className="mt-20 border" style={ruleBorder}>
+          <div className="grid md:grid-cols-[1fr_auto]">
+            <div className="flex items-center border-b p-6 md:border-b-0 md:border-e" style={ruleBorder}>
+              <Logo />
+            </div>
+            <TitleBlock
+              className="!border-0"
+              rows={[
+                { k: "Project", v: "VDC Academy" },
+                { k: "Client", v: site.parent },
+                { k: "Sheet", v: "A-999" },
+                { k: "Scale", v: "1:1" },
+              ]}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-t px-6 py-5 text-[13px] text-dim" style={ruleBorder}>
+            <p>© {new Date().getFullYear()} VDC Academy, a {site.parent} company</p>
+            <ul className="flex flex-wrap gap-x-6 gap-y-2">
+              {legal.map((l) => (
+                <li key={l.href}>
+                  <Link prefetch={false} href={l.href} className="ul-draw pb-0.5 hover:text-text">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <span className="flex flex-wrap items-center gap-6">
+              <ReduceMotionToggle />
+              <ComfortToggle />
+            </span>
+          </div>
         </div>
       </div>
-      <p aria-hidden className="pointer-events-none mt-10 select-none whitespace-nowrap text-center font-display text-[11.2vw] leading-none tracking-tight text-text/[0.05]">
-        VDC ACADEMY
-      </p>
     </footer>
   );
 }

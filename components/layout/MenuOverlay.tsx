@@ -49,7 +49,7 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
           role="dialog"
           aria-modal="true"
           aria-label="Menu"
-          className="fixed inset-0 z-[60] overflow-y-auto bg-bg"
+          className="theme-light fixed inset-0 z-[60] overflow-y-auto bg-bg"
           initial={{ clipPath: "inset(0 0 100% 0)" }}
           animate={{ clipPath: "inset(0 0 0% 0)" }}
           exit={{ clipPath: "inset(0 0 100% 0)" }}
@@ -67,9 +67,9 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
               {site.menu.map((l, i) => (
                 <m.li
                   key={l.href}
-                  initial={{ opacity: 0, x: -40 + i * 6 }}
-                  animate={{ opacity: 1, x: i * 14 }}
-                  transition={{ delay: 0.25 + i * 0.05, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                  initial={{ opacity: 0, x: -24 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.25 + i * 0.05, duration: 0.6, ease: [0.2, 0.7, 0.1, 1] }}
                   className="border-b border-border"
                 >
                   <Link prefetch={false} href={l.href} onClick={onClose} className="group flex items-baseline gap-6 py-3 md:py-4">

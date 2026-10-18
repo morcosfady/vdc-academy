@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Michroma, Poppins } from "next/font/google";
+import { IBM_Plex_Mono, Michroma, Poppins } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { site } from "@/config/site";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { FloatingOffer } from "@/components/layout/FloatingOffer";
+import { GridOverlay } from "@/components/ds/GridOverlay";
 import { MobileApplyBar } from "@/components/layout/MobileApplyBar";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { SceneHostLoader } from "@/components/three/SceneHostLoader";
@@ -14,11 +14,11 @@ import { MotionProvider } from "@/components/layout/MotionProvider";
 import { PageTransition } from "@/components/layout/PageTransition";
 import "./globals.css";
 
-// Two families: Poppins (body and headlines) and Michroma for small uppercase labels. Michroma stands in for the
-// licensed Eurostile Extended used on baybimdesigns.com.
-const display = Michroma({ weight: "400", subsets: ["latin"], variable: "--font-semibold", display: "swap" });
-const head = Poppins({ weight: ["600"], subsets: ["latin"], variable: "--font-head", display: "optional" });
-const body = Poppins({ weight: ["400", "500"], subsets: ["latin"], variable: "--font-body", display: "optional" });
+// Two families: Poppins (display and UI) and IBM Plex Mono (technical voice: sheet numbers, dimensions, LOD).
+// Michroma is a stand-in for the licensed Eurostile Extended and is used for the logo wordmark only.
+const body = Poppins({ weight: ["400", "500", "600"], subsets: ["latin"], variable: "--font-body", display: "optional" });
+const mono = IBM_Plex_Mono({ weight: ["400", "500"], subsets: ["latin"], variable: "--font-mono", display: "optional" });
+const logo = Michroma({ weight: "400", subsets: ["latin"], variable: "--font-logo", display: "optional", preload: false });
 
 export const metadata: Metadata = {
   title: { default: `${site.name} by ${site.parent}`, template: `%s | ${site.name}` },
@@ -28,11 +28,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${display.variable} ${head.variable} ${body.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${logo.variable} ${mono.variable} ${body.variable}`}>
       <body>
         <JsonLd data={orgLd} />
         <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('vdc-intro'))document.documentElement.classList.add('intro-seen')}catch(e){}" }} />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
           <MotionProvider>
           <a href="#main" className="skip-link">
             Skip to content
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <main id="main">{children}</main>
           <Footer />
-          <FloatingOffer />
+          <GridOverlay />
           <MobileApplyBar />
           <PageTransition />
           </MotionProvider>

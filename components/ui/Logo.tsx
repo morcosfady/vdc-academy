@@ -9,13 +9,14 @@ export function LogoMark({ size = 28, className }: { size?: number; className?: 
   );
 }
 
+// The wordmark is the only place the Eurostile-style face appears (Michroma stands in until the licensed font is supplied).
 export function Logo() {
   return (
-    <span className="flex items-center gap-3">
+    <span className="flex items-center gap-2.5 whitespace-nowrap sm:gap-3">
       <LogoMark className="text-accent" />
       <span className="leading-none">
-        <span className="block font-display text-[15px] tracking-tight">VDC Academy</span>
-        <span className="label mt-1 block whitespace-nowrap  !tracking-[0.16em]">by Bay BIM Designs</span>
+        <span className="block font-logo text-[12.5px] sm:text-[14px] uppercase tracking-[0.06em]">VDC Academy</span>
+        <span className="mono mt-1.5 block whitespace-nowrap !text-[10.5px]">by Bay BIM Designs</span>
       </span>
     </span>
   );

@@ -1,53 +1,68 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "glow" | "outline" | "secondary" | "ghost" | "link";
+// v5 buttons. primary = blueprint fill, secondary = outline, link = text with an arrow that draws its underline.
+// "glow", "outline" and "ghost" are older names kept so existing pages keep working.
+type Variant = "primary" | "secondary" | "link" | "glow" | "outline" | "ghost";
 
-const base = "inline-flex items-center justify-center gap-2 text-[15px] font-medium transition-[transform,box-shadow,color,border-color,background-color] duration-300";
-const sized = "h-[52px] rounded-[10px] px-7 hover:-translate-y-0.5 active:scale-[0.98]";
+const base =
+  "inline-flex items-center justify-center gap-2 text-[15px] font-medium transition-[transform,background-color,color,border-color] duration-200 ease-[cubic-bezier(.2,.7,.1,1)] disabled:pointer-events-none disabled:opacity-45";
+const sized = "h-[52px] rounded-[8px] px-7 hover:-translate-y-px active:translate-y-0";
 
-const styles: Record<Variant, string> = {
-  primary: `${sized} bg-cta text-cta-text hover:bg-cta-hover hover:shadow-[0_10px_30px_-8px_var(--glow)]`,
-  glow: `${sized} bg-cta text-cta-text shadow-[0_8px_26px_-10px_var(--glow)] hover:bg-cta-hover hover:shadow-[0_12px_38px_-6px_var(--glow)]`,
-  outline: `${sized} border border-text/35 text-text hover:border-accent hover:text-accent-text`,
-  secondary: `${sized} border border-border text-text hover:border-accent hover:text-accent-text`,
-  ghost: `${sized} text-text hover:bg-surface`,
-  link: "ul-draw h-auto px-0 pb-1 text-text hover:text-accent-text",
+const styles: Record<"primary" | "secondary" | "link", string> = {
+  primary: `${sized} bg-cta text-cta-text hover:bg-cta-hover`,
+  secondary: `${sized} border border-[color:color-mix(in_srgb,var(--text)_35%,transparent)] text-text hover:border-accent hover:text-accent-text`,
+  link: "ul-draw group h-auto gap-2 px-0 pb-1 text-text hover:text-accent-text",
+};
+
+const map: Record<Variant, "primary" | "secondary" | "link"> = {
+  primary: "primary",
+  secondary: "secondary",
+  link: "link",
+  glow: "primary",
+  outline: "secondary",
+  ghost: "link",
 };
 
 type Props = {
-  href: string;
+  href?: string;
   variant?: Variant;
   className?: string;
   magnetic?: boolean;
   children: React.ReactNode;
-};
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children">;
 
-export function Button({ href, variant = "primary", className, magnetic, children }: Props) {
-  const ref = useRef<HTMLAnchorElement>(null);
-
-  function move(e: React.PointerEvent<HTMLAnchorElement>) {
-    const el = ref.current;
-    if (!magnetic || !el || e.pointerType !== "mouse") return;
-    if (document.documentElement.classList.contains("reduce-motion")) return;
-    const r = el.getBoundingClientRect();
-    el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.15}px, ${(e.clientY - r.top - r.height / 2) * 0.25}px)`;
-  }
-  const leave = () => ref.current && (ref.current.style.transform = "");
-
+function Arrow() {
   return (
-    <Link
-      prefetch={false}
-      ref={ref}
-      href={href}
-      onPointerMove={move}
-      onPointerLeave={leave}
-      className={cn(base, styles[variant], className)}
-    >
+    <svg aria-hidden width="16" height="12" viewBox="0 0 16 12" className="transition-transform duration-200 group-hover:translate-x-0.5">
+      <path d="M0 6h14M9 1l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function Button({ href, variant = "primary", className, children, ...rest }: Props) {
+  // `magnetic` is accepted for older call sites and ignored in v5.
+  delete (rest as { magnetic?: boolean }).magnetic;
+  const v = map[variant];
+  const cls = cn(base, styles[v], className);
+  const inner = (
+    <>
       {children}
-    </Link>
+      {v === "link" && <Arrow />}
+    </>
+  );
+  if (href) {
+    return (
+      <Link prefetch={false} href={href} className={cls}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" className={cls} {...rest}>
+      {inner}
+    </button>
   );
 }
