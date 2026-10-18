@@ -3,16 +3,16 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { AnimatePresence, m } from "motion/react";
-import { X } from "lucide-react";
 import { site } from "@/config/site";
 import { content, shown } from "@/content/site";
-import { LogoMark } from "@/components/ui/Logo";
+import { Logo } from "@/components/ui/Logo";
+import { Button } from "@/components/ui/Button";
 
-// Full-screen menu. Links enter as stepped slabs. Focus is trapped while open, Escape closes.
+// Full-screen paper menu, like an index sheet: mono numbers, big titles, hairlines. Focus is trapped, Escape closes.
 export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null);
   const email = shown(content.contact.email);
-  const phone = shown(content.contact.phone);
+  const rule = { borderColor: "var(--rule)" };
 
   useEffect(() => {
     if (!open) return;
@@ -49,44 +49,53 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
           role="dialog"
           aria-modal="true"
           aria-label="Menu"
-          className="theme-light fixed inset-0 z-[60] overflow-y-auto bg-bg"
+          className="theme-light fixed inset-0 z-[60] overflow-y-auto bg-paper"
           initial={{ clipPath: "inset(0 0 100% 0)" }}
           animate={{ clipPath: "inset(0 0 0% 0)" }}
           exit={{ clipPath: "inset(0 0 100% 0)" }}
-          transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
+          transition={{ duration: 0.45, ease: [0.2, 0.7, 0.1, 1] }}
         >
-          <div className="mx-auto flex min-h-full max-w-[1280px] flex-col px-5 py-6 md:px-10">
-            <div className="flex items-center justify-between">
-              <span className="label">Menu</span>
-              <button type="button" onClick={onClose} aria-label="Close menu" className="grid size-11 place-items-center border border-border hover:border-accent">
-                <X size={18} aria-hidden />
+          <div className="wrap flex min-h-full flex-col py-5">
+            <div className="flex h-[52px] items-center justify-between">
+              <span className="text-ink">
+                <Logo />
+              </span>
+              <button type="button" onClick={onClose} aria-label="Close menu" className="mono grid h-11 place-items-center rounded-[4px] border px-4 !text-text hover:border-accent" style={rule}>
+                Close
               </button>
             </div>
 
-            <ul className="my-auto py-12">
+            <ol className="my-auto border-t py-6" style={rule}>
               {site.menu.map((l, i) => (
                 <m.li
                   key={l.href}
-                  initial={{ opacity: 0, x: -24 }}
+                  initial={{ opacity: 0, x: -16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.25 + i * 0.05, duration: 0.6, ease: [0.2, 0.7, 0.1, 1] }}
-                  className="border-b border-border"
+                  transition={{ delay: 0.15 + i * 0.05, duration: 0.5, ease: [0.2, 0.7, 0.1, 1] }}
+                  className="border-b"
+                  style={rule}
                 >
                   <Link prefetch={false} href={l.href} onClick={onClose} className="group flex items-baseline gap-6 py-3 md:py-4">
-                    <span className="label w-8">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="display-md transition-colors group-hover:text-accent-text">{l.label}</span>
+                    <span className="mono w-8">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="t-h3 transition-colors group-hover:text-accent-text">{l.label}</span>
                   </Link>
                 </m.li>
               ))}
-            </ul>
+            </ol>
 
             <div className="flex flex-wrap items-end justify-between gap-6">
-              <div className="label space-y-1">
+              <div className="mono space-y-1">
                 <p>{site.city}</p>
-                {email && <p><a href={`mailto:${email}`} className="hover:text-text">{email}</a></p>}
-                {phone && <p>{phone}</p>}
+                <p>{site.coords}</p>
+                {email && (
+                  <p>
+                    <a href={`mailto:${email}`} className="hover:!text-text">{email}</a>
+                  </p>
+                )}
               </div>
-              <LogoMark size={72} className="text-accent opacity-60" />
+              <Button href="/apply" onClick={onClose}>
+                Apply now
+              </Button>
             </div>
           </div>
         </m.div>

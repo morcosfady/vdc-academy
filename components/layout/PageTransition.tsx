@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
 
-// Slab wipe between routes: three ink bars sweep across the screen (about 450ms).
+// Between routes a single paper sheet slides over the page and off again (about 350ms each way).
+// The View Transitions API is not available for static exports with App Router, so this is the CSS version.
 export function PageTransition() {
   const path = usePathname();
   const first = useRef(true);
@@ -20,11 +21,5 @@ export function PageTransition() {
   }, [path, reduce]);
 
   if (!run) return null;
-  return (
-    <div key={run} aria-hidden className="pointer-events-none fixed inset-0 z-[120] flex flex-col overflow-hidden">
-      {[0, 1, 2].map((i) => (
-        <span key={i} className="bar-sweep block flex-1 bg-[#0a1d23]" style={{ animationDelay: `${i * 60}ms` }} />
-      ))}
-    </div>
-  );
+  return <div key={run} aria-hidden className="sheet-sweep pointer-events-none fixed inset-0 z-[120] bg-paper" />;
 }

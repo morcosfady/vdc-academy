@@ -1,13 +1,14 @@
 /* ===== Motion language (see lib/motion.ts). Only transform, opacity and clip-path are animated. ===== */
 :root {
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --ease-scrub: cubic-bezier(0.65, 0, 0.35, 1);
   interpolate-size: allow-keywords;
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -15,7 +16,7 @@
   }
 }
 .fade-up {
-  animation: fade-up 0.8s var(--ease) var(--d, 0s) both;
+  animation: fade-up 0.6s var(--ease) var(--d, 0s) both;
 }
 @keyframes fade-in {
   from {
@@ -379,21 +380,21 @@ details[open] .pm::after {
   animation: strike 0.5s var(--ease) both;
 }
 
-/* Page transition: three bars sweep across (about 450ms) */
-@keyframes bar-sweep {
+/* Page transition: one paper sheet slides over (350ms) and off (350ms) */
+@keyframes sheet-sweep {
   0% {
-    transform: translateX(-101%);
+    transform: translateY(101%);
   }
-  45%,
-  55% {
-    transform: translateX(0);
+  48%,
+  52% {
+    transform: translateY(0);
   }
   100% {
-    transform: translateX(101%);
+    transform: translateY(-101%);
   }
 }
-.bar-sweep {
-  animation: bar-sweep 0.55s cubic-bezier(0.76, 0, 0.24, 1) both;
+.sheet-sweep {
+  animation: sheet-sweep 0.7s cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
 /* Inputs: valid state gets a quiet accent border */

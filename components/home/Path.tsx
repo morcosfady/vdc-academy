@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { copy } from "@/content/copy";
 import { loadGsap } from "@/lib/gsap";
+import { afterInteraction } from "@/lib/interaction";
 import { SectionHeader } from "@/components/ds/Sections";
 import { Button } from "@/components/ui/Button";
 import { Slab } from "@/components/ui/Slab";
@@ -39,7 +40,7 @@ export function Path() {
     el.style.setProperty("--draw", "0");
     let kill = () => {};
     let cancelled = false;
-    loadGsap().then(({ ScrollTrigger }) => {
+    afterInteraction(6000).then(loadGsap).then(({ ScrollTrigger }) => {
       if (cancelled) return;
       const st = ScrollTrigger.create({
         trigger: el.querySelector("svg") ?? el,

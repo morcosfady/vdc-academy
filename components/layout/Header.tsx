@@ -46,9 +46,11 @@ export function Header() {
               onClick={() => setMenu(true)}
               aria-haspopup="dialog"
               aria-expanded={menu}
-              className="inline-flex h-11 items-center gap-3 rounded-[8px] px-3 text-[15px] font-medium text-text lg:hidden"
+              aria-label="Menu"
+              className="inline-flex h-11 min-w-11 items-center justify-center gap-3 rounded-[8px] px-2 text-[15px] font-medium text-text md:px-3 lg:hidden"
             >
-              Menu <span aria-hidden className="inline-block w-5 border-t-[1.5px] border-current shadow-[0_5px_0_currentColor]" />
+              <span className="hidden md:inline">Menu</span>
+              <span aria-hidden className="inline-block w-5 border-t-[1.5px] border-current shadow-[0_5px_0_currentColor]" />
             </button>
             <Button href="/apply" className="!h-10 !px-4 sm:!h-11 sm:!px-5">
               Apply

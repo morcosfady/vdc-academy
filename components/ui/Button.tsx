@@ -55,7 +55,7 @@ export function Button({ href, variant = "primary", className, children, ...rest
   );
   if (href) {
     return (
-      <Link prefetch={false} href={href} className={cls}>
+      <Link prefetch={false} href={href} className={cls} onClick={rest.onClick as React.MouseEventHandler<HTMLAnchorElement> | undefined}>
         {inner}
       </Link>
     );

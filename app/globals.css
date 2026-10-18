@@ -334,17 +334,17 @@ html.lenis body {
   scroll-behavior: auto;
 }
 
-/* Headline rise (CSS only, see RiseLines) */
+/* Headline rise (CSS only, see RiseLines). Starts partly visible so the headline counts as painted at once (LCP). */
 @keyframes rise {
   from {
-    transform: translateY(110%);
+    transform: translateY(45%);
   }
   to {
     transform: translateY(0);
   }
 }
 .rise {
-  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.1, 1) both;
 }
 
 /* Slab reveal (see components/ui/Slab.tsx): CSS only */

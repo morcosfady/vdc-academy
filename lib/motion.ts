@@ -1,28 +1,30 @@
-// One motion language for the whole site: "the building assembles itself".
-// Calm, short distances, expo easing. Import these instead of inventing new values.
+// One motion language for the whole site (v5, "calm, precise, architectural").
+// Only transform, opacity, clip-path and stroke are animated. Import these instead of inventing new values.
 import { loadGsap } from "./gsap";
 
 export const ease = {
-  out: "expo.out", // entrances
-  scrub: "power3.inOut", // scroll scrubs
-  ui: "power2.out", // small UI changes
-  css: "cubic-bezier(0.16, 1, 0.3, 1)", // same curve as expo.out, for CSS
+  out: "cubic-bezier(0.2, 0.7, 0.1, 1)", // entrances (CSS)
+  scrub: "cubic-bezier(0.65, 0, 0.35, 1)", // scroll scrubs (CSS)
+  gsapOut: "power3.out", // closest GSAP curve to `out`
+  gsapScrub: "power2.inOut",
+  css: "cubic-bezier(0.2, 0.7, 0.1, 1)",
 };
-export const dur = { ui: 0.25, reveal: 0.8, hero: 2.2 }; // seconds
-export const stagger = 0.075; // seconds between siblings
-export const rise = 28; // px, never more than 32
+export const dur = { ui: 0.2, reveal: 0.6, image: 0.9, heroMax: 1.6 }; // seconds
+export const stagger = 0.07; // seconds between siblings
+export const rise = 20; // px, between 16 and 24
 
-// Shared reveal: rise 28px and fade in, staggered. Jumps straight to the end state for reduced motion / comfort mode.
+export const reducedMotion = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+  document.documentElement.classList.contains("reduce-motion") ||
+  document.documentElement.classList.contains("comfort");
+
+// Shared reveal: rise 20px and fade in, staggered 70ms. Jumps straight to the end state for reduced motion / comfort mode.
 export async function reveal(targets: gsap.TweenTarget, opts: { delay?: number; stagger?: number } = {}) {
-  const reduce =
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-    document.documentElement.classList.contains("reduce-motion") ||
-    document.documentElement.classList.contains("comfort");
   const { gsap } = await loadGsap();
-  if (reduce) return gsap.set(targets, { clearProps: "all", opacity: 1, y: 0 });
+  if (reducedMotion()) return gsap.set(targets, { clearProps: "all", opacity: 1, y: 0 });
   return gsap.fromTo(
     targets,
     { y: rise, opacity: 0 },
-    { y: 0, opacity: 1, duration: dur.reveal, ease: ease.out, delay: opts.delay ?? 0, stagger: opts.stagger ?? stagger, clearProps: "transform" },
+    { y: 0, opacity: 1, duration: dur.reveal, ease: ease.gsapOut, delay: opts.delay ?? 0, stagger: opts.stagger ?? stagger, clearProps: "transform" },
   );
 }

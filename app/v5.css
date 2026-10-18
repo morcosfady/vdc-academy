@@ -86,3 +86,17 @@ html.reduce-motion .parallax-y {
 input[type="range"] {
   height: 28px;
 }
+
+/* Scroll cue: the arrow nudges down and back */
+@keyframes cue-arrow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+.cue-arrow {
+  animation: cue-arrow 1.8s ease-in-out infinite;
+}

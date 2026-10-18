@@ -7,6 +7,7 @@ import { site } from "@/config/site";
 import { SceneSlot } from "@/components/three/SceneSlot";
 import { newState } from "@/lib/modelState";
 import { loadGsap } from "@/lib/gsap";
+import { afterInteraction } from "@/lib/interaction";
 import { Button } from "@/components/ui/Button";
 import { RiseLines } from "@/components/ui/RiseLines";
 import { DimensionString, GridBubble, SheetTag } from "@/components/ds/Devices";
@@ -45,7 +46,7 @@ export function Hero() {
     const s = state.current;
     let kill = () => {};
     let cancelled = false;
-    loadGsap().then(({ ScrollTrigger }) => {
+    afterInteraction(6000).then(loadGsap).then(({ ScrollTrigger }) => {
       if (cancelled || !el) return;
       const st = ScrollTrigger.create({
         trigger: el,
@@ -77,7 +78,7 @@ export function Hero() {
           <div className="hero-copy col-span-12 lg:col-span-6">
             <SheetTag sheet={c.sheet} name={c.name} className="fade-up" />
             <h1 className="t-display mt-8 max-w-[13ch]" aria-label={c.headline.join(" ")}>
-              <RiseLines lines={c.headline} delay={0.3} />
+              <RiseLines lines={c.headline} delay={0.15} />
             </h1>
             <p className="t-lead fade-up mt-7 max-w-[30rem]" style={d(0.75)}>
               {c.lead}
@@ -125,7 +126,7 @@ export function Hero() {
           <span className="mono">{c.footer[0]}</span>
           <span className="mono hidden sm:inline">{c.footer[1]}</span>
           <span className="mono flex items-center gap-2">
-            {c.footer[2]} <span aria-hidden className="cue-dot inline-block">↓</span>
+            {c.footer[2]} <span aria-hidden className="cue-arrow inline-block">↓</span>
           </span>
         </div>
       </div>
