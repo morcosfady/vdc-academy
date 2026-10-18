@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { z } from "zod";
-import { Field } from "./Field";
+import { Field, TextareaField } from "./Field";
 import { Turnstile } from "./Turnstile";
+import { Button } from "@/components/ui/Button";
 import { insertRow } from "@/lib/submit";
 import { content, shown } from "@/content/site";
 
@@ -34,38 +35,45 @@ export function ContactForm() {
     setState(r.ok ? "done" : r.reason === "disabled" ? "fallback" : "failed");
   }
 
-  if (state === "done") return <p role="status" className="text-lg">Thank you. We will reply soon. ✓</p>;
+  if (state === "done")
+    return (
+      <p role="status" className="text-lg text-text">
+        Thank you. We will reply soon.
+      </p>
+    );
   if (state === "fallback")
     return (
       <p role="status" className="text-muted">
-        The form opens soon. {email ? <>Email us at <a className="underline" href={`mailto:${email}`}>{email}</a>.</> : "Please check back shortly."}
+        The form opens soon.{" "}
+        {email ? (
+          <>
+            Email us at{" "}
+            <a className="underline underline-offset-4" href={`mailto:${email}`}>
+              {email}
+            </a>
+            .
+          </>
+        ) : (
+          "Please check back shortly."
+        )}
       </p>
     );
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-6">
+    <form onSubmit={submit} noValidate className="space-y-7">
       <Field label="Name" name="name" required autoComplete="name" error={errors.name} />
       <Field label="Email" name="email" type="email" required autoComplete="email" error={errors.email} />
-      <div className="relative">
-        <textarea
-          id="f-message"
-          name="message"
-          required
-          rows={5}
-          placeholder="Message"
-          aria-invalid={errors.message ? true : undefined}
-          aria-describedby={errors.message ? "f-message-err" : undefined}
-          className="peer w-full border border-border bg-transparent px-4 pb-3 pt-7 text-base outline-none placeholder-transparent focus:border-accent aria-[invalid=true]:border-[#ff6b60]"
-        />
-        <label htmlFor="f-message" className="pointer-events-none absolute start-4 top-2 text-[14px] uppercase tracking-[0.14em] text-muted">Message *</label>
-        {errors.message && <p id="f-message-err" role="alert" className="absolute start-1 top-full mt-0.5 text-[13px] leading-5 text-[#ff8a80]">{errors.message}</p>}
-      </div>
+      <TextareaField label="Message" name="message" required error={errors.message} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -start-[9999px] h-0 w-0 opacity-0" />
       <Turnstile onToken={setToken} />
-      <button type="submit" disabled={state === "sending"} className="h-[52px] rounded-[10px] bg-cta px-8 text-[15px] font-medium text-cta-text hover:bg-cta-hover disabled:opacity-60">
+      <Button type="submit" disabled={state === "sending"}>
         {state === "sending" ? "Sending" : "Send message"}
-      </button>
-      {state === "failed" && <p role="alert" className="text-sm text-[#ff8a80]">We could not send that. Please try again.</p>}
+      </Button>
+      {state === "failed" && (
+        <p role="alert" className="text-[13px] text-err">
+          We could not send that. Please try again.
+        </p>
+      )}
     </form>
   );
 }

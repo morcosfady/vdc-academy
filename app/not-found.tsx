@@ -4,14 +4,18 @@ import { useEffect, useRef } from "react";
 import { loadGsap } from "@/lib/gsap";
 import { Button } from "@/components/ui/Button";
 import { SceneSlot } from "@/components/three/SceneSlot";
+import { SheetTag } from "@/components/ds/Devices";
 import { newState } from "@/lib/modelState";
+import { copy } from "@/content/copy";
 
-// Playful 404: the building with a clash marker that keeps getting rerouted.
+const c = copy.notFound;
+
+// E-404 on paper: the study model with a clash that keeps getting rerouted.
 export default function NotFound() {
-  const state = useRef(newState({ lod: 400, isolate: "clash", clash: 0 }));
+  const state = useRef(newState({ lod: 400, mood: 0, isolate: "clash", clash: 0 }));
   useEffect(() => {
     const s = state.current;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("reduce-motion") || document.documentElement.classList.contains("comfort");
     if (reduce) {
       s.clash = 0.25;
       return;
@@ -31,14 +35,25 @@ export default function NotFound() {
   }, []);
 
   return (
-    <section className="mx-auto grid min-h-[100svh] max-w-[1280px] items-center gap-6 px-5 pb-16 pt-32 md:px-10 lg:grid-cols-2">
-      <div className="relative z-10">
-        <p className="label mb-5">Error 404 · Clash #0404</p>
-        <h1 className="display-lg max-w-[14ch]">This page has a clash.</h1>
-        <p className="mt-6 max-w-md text-lg text-muted">Let&apos;s reroute you.</p>
-        <div className="mt-8"><Button href="/" variant="glow" magnetic>Back to home</Button></div>
+    <section className="theme-light pt-[72px]">
+      <div className="wrap">
+        <div className="grid-12 items-center gap-y-12 pb-24 pt-14 lg:min-h-[calc(100svh-72px)] lg:py-24">
+          <div className="col-span-12 lg:col-span-6">
+            <SheetTag sheet={c.sheet} name="Not found" />
+            <h1 className="t-h1 mt-8 max-w-[14ch]">{c.title}</h1>
+            <p className="t-lead mt-6 max-w-[30rem]">{c.text}</p>
+            <div className="mt-9 flex flex-col gap-5 sm:flex-row sm:items-center">
+              <Button href="/">{c.home}</Button>
+              <Button href="/programs" variant="link">
+                {c.programs}
+              </Button>
+            </div>
+          </div>
+          <div className="col-span-12 lg:col-span-6">
+            <SceneSlot stateRef={state} autoRotate rotateSpeed={0.06} label="Study model with a clash marker that gets rerouted" className="mx-auto aspect-square w-[80%] sm:w-[64%] lg:aspect-[5/4] lg:w-full" />
+          </div>
+        </div>
       </div>
-      <SceneSlot stateRef={state} label="3D building with a clash marker that gets rerouted" className="pointer-events-none h-[55svh] lg:h-[70svh]" />
     </section>
   );
 }

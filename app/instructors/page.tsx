@@ -3,32 +3,54 @@ import Image from "next/image";
 import { PageHero } from "@/components/ui/PageHero";
 import { Button } from "@/components/ui/Button";
 import { content, hasInstructors } from "@/content/site";
+import { pages } from "@/content/copy-pages";
 
 export const metadata: Metadata = { title: "Instructors", robots: hasInstructors() ? undefined : { index: false } };
+
+const c = pages.instructors;
 
 export default function InstructorsPage() {
   if (!hasInstructors()) {
     return (
-      <>
-        <PageHero eyebrow="Instructors" title={["Coming with", "our first cohort."]} subtitle="Meet the working BIM professionals who teach each program." />
-        <div className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10"><Button href="/apply" variant="glow">Apply now</Button></div>
-      </>
+      <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.emptyTitle]} subtitle={c.emptyLead} className="[&_.rule-b]:border-b-0 pb-24 lg:pb-32">
+        <Button href="/apply">{pages.empty.primary}</Button>
+        <Button href="/programs" variant="link">
+          {pages.empty.secondary}
+        </Button>
+      </PageHero>
     );
   }
   return (
     <>
-      <PageHero eyebrow="Instructors" title={["Learn from", "working professionals."]} />
-      <ul className="mx-auto grid max-w-[1280px] gap-5 px-5 pb-32 md:grid-cols-3 md:px-10">
-        {content.instructors.map((i) => (
-          <li key={i.name} className="glass p-6">
-            {i.photo && <Image src={i.photo} alt="" width={400} height={400} className="mb-5 aspect-square w-full object-cover" />}
-            <p className="display-md !text-xl">{i.name}</p>
-            <p className="meta mt-2">{i.role}{i.years ? ` · ${i.years} years` : ""}</p>
-            {i.bio && <p className="mt-4 text-muted">{i.bio}</p>}
-            {i.linkedin && <p className="mt-4"><a href={i.linkedin} className="text-accent-text underline underline-offset-4">LinkedIn</a></p>}
-          </li>
-        ))}
-      </ul>
+      <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} />
+      <section className="theme-light section !pt-12 lg:!pt-16">
+        <ul className="wrap grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {content.instructors.map((i) => (
+            <li key={i.name} className="card overflow-hidden">
+              {i.photo && (
+                <div className="aspect-[4/5] bg-paper-2">
+                  <Image src={i.photo} alt="" width={400} height={500} className="h-full w-full object-cover" />
+                </div>
+              )}
+              <div className="p-6">
+                <h2 className="!text-[1.25rem]">{i.name}</h2>
+                <p className="mono mt-2">
+                  {i.role}
+                  {i.years ? ` · ${c.years(i.years)}` : ""}
+                </p>
+                {i.bio && <p className="t-small mt-4 text-muted">{i.bio}</p>}
+                {i.linkedin && (
+                  <p className="mt-4">
+                    <a href={i.linkedin} className="ul-draw pb-0.5 text-[15px] font-medium text-text hover:text-accent-text">
+                      LinkedIn
+                    </a>
+                  </p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </>
   );
 }

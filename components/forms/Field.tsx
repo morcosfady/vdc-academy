@@ -1,9 +1,17 @@
 import { cn } from "@/lib/utils";
 
-const base =
-  "peer h-14 w-full border border-border bg-transparent px-4 pt-5 text-base outline-none transition-colors placeholder-transparent focus:border-accent aria-[invalid=true]:border-[#ff6b60]";
+// Form fields for the apply, lead and contact forms. Same look as components/ds/Forms.tsx (hairline border, 4px radius,
+// floating label), but with stable ids (f-<name>) so react-hook-form, labels and tests can address them.
+// The error is absolutely positioned so it never shifts the layout.
 
-// Floating-label input (48px+ tall). Errors are linked with aria-describedby and announced.
+const ruleBorder = { borderColor: "var(--rule)" } as const;
+const control =
+  "peer h-14 w-full rounded-[4px] border bg-transparent px-4 pt-5 text-base text-text outline-none transition-colors duration-200 placeholder-transparent hover:border-[color:var(--text-dim)] focus:border-accent disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-err";
+const floating =
+  "pointer-events-none absolute start-4 top-4 origin-left text-base text-dim transition-all duration-200 peer-focus:top-2 peer-focus:text-xs peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs";
+const fixed = "pointer-events-none absolute start-4 top-2 text-xs text-dim";
+const errorText = "absolute start-1 top-full mt-0.5 text-[13px] leading-5 text-err";
+
 export function Field({
   label,
   name,
@@ -31,18 +39,16 @@ export function Field({
         placeholder={label}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-err` : undefined}
-        className={base}
+        className={control}
+        style={ruleBorder}
         {...rest}
       />
-      <label
-        htmlFor={id}
-        className="pointer-events-none absolute start-4 top-2 text-[14px] uppercase tracking-[0.14em] text-muted transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-[14px] peer-focus:uppercase peer-focus:tracking-[0.14em]"
-      >
+      <label htmlFor={id} className={floating}>
         {label}
         {required && " *"}
       </label>
       {error && (
-        <p id={`${id}-err`} role="alert" className="absolute start-1 top-full mt-0.5 text-[13px] leading-5 text-[#ff8a80]">
+        <p id={`${id}-err`} role="alert" className={errorText}>
           {error}
         </p>
       )}
@@ -56,6 +62,7 @@ export function SelectField({
   options,
   error,
   required,
+  className,
   ...rest
 }: {
   label: string;
@@ -63,11 +70,12 @@ export function SelectField({
   options: readonly string[];
   error?: string;
   required?: boolean;
+  className?: string;
 } & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "name">) {
   const id = `f-${name}`;
   return (
-    <div className="relative">
-      <label htmlFor={id} className="pointer-events-none absolute start-4 top-2 text-[14px] uppercase tracking-[0.14em] text-muted">
+    <div className={cn("relative", className)}>
+      <label htmlFor={id} className={fixed}>
         {label}
         {required && " *"}
       </label>
@@ -77,22 +85,80 @@ export function SelectField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-err` : undefined}
-        className="h-14 w-full appearance-none border border-border bg-transparent px-4 pt-5 text-base outline-none focus:border-accent aria-[invalid=true]:border-[#ff6b60]"
+        className={cn(control, "appearance-none pe-10")}
+        style={ruleBorder}
         {...rest}
       >
-        <option value="" className="bg-[#0a1d23] text-white">Select</option>
+        <option value="" className="bg-white text-[#0a1d23]">
+          Select
+        </option>
         {options.map((o) => (
-          <option key={o} value={o} className="bg-[#0a1d23] text-white">
+          <option key={o} value={o} className="bg-white text-[#0a1d23]">
             {o}
           </option>
         ))}
       </select>
-      <span aria-hidden className="pointer-events-none absolute end-4 top-5 text-muted">▾</span>
+      <svg aria-hidden width="12" height="8" viewBox="0 0 12 8" className="pointer-events-none absolute end-4 top-[26px] text-dim">
+        <path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
       {error && (
-        <p id={`${id}-err`} role="alert" className="absolute start-1 top-full mt-0.5 text-[13px] leading-5 text-[#ff8a80]">
+        <p id={`${id}-err`} role="alert" className={errorText}>
           {error}
         </p>
       )}
     </div>
+  );
+}
+
+export function TextareaField({
+  label,
+  name,
+  error,
+  required,
+  className,
+  rows = 5,
+  ...rest
+}: {
+  label: string;
+  name: string;
+  error?: string;
+  required?: boolean;
+  className?: string;
+} & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "name">) {
+  const id = `f-${name}`;
+  return (
+    <div className={cn("relative", className)}>
+      <textarea
+        id={id}
+        name={name}
+        required={required}
+        rows={rows}
+        placeholder={label}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-err` : undefined}
+        className={cn(control, "h-auto resize-y pb-3 pt-7")}
+        style={ruleBorder}
+        {...rest}
+      />
+      <label htmlFor={id} className={fixed}>
+        {label}
+        {required && " *"}
+      </label>
+      {error && (
+        <p id={`${id}-err`} role="alert" className={errorText}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Checkbox with a 44px tap target and the accent color.
+export function Check({ label, className, ...rest }: { label: React.ReactNode; className?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <label className={cn("flex min-h-11 cursor-pointer items-start gap-3 py-2 text-[15px] text-text", className)}>
+      <input type="checkbox" className="mt-1 size-4 shrink-0 accent-[var(--accent)]" {...rest} />
+      <span>{label}</span>
+    </label>
   );
 }

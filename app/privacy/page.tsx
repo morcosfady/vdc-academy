@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Privacy" };
 
 export default function Privacy() {
   return (
-    <LegalPage eyebrow="Legal" title={["Privacy policy"]} updated="October 2026">
+    <LegalPage eyebrow="Legal" sheet="L-001" title={["Privacy policy"]} updated="October 2026">
       <section>
         <h2>What we collect</h2>
         <p>When you apply we collect: your name, email, phone, WhatsApp, country and city; your education and graduation details; your experience and software skills; the programs you want; and files you choose to upload (proof of graduation or student status, and optionally a CV). Messages and interest forms collect your name, email and message.</p>

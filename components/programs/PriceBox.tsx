@@ -3,52 +3,85 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Roll } from "@/components/ui/Roll";
-import { calcPrice } from "@/lib/pricing";
-import { discounts, type DiscountId } from "@/config/discounts";
+import { Toggle } from "@/components/ds/Controls";
+import { calcPrice, money } from "@/lib/pricing";
+import { discounts } from "@/config/discounts";
+import { pages } from "@/content/copy-pages";
 import { cn } from "@/lib/utils";
 
-const options: (DiscountId | null)[] = [null, "freshGrad", "student", "group"];
+const c = pages.program.enroll;
+const rule = { borderColor: "var(--rule)" } as const;
 
-// Sticky price card. With no price set it says so honestly and still shows the saving for each group.
-export function PriceBox({ slug, priceFull, className }: { slug: string; priceFull: number | null; className?: string }) {
-  const [status, setStatus] = useState<DiscountId | null>("freshGrad");
-  const r = calcPrice(priceFull, status, false);
+// Sticky enrollment card. The fresh graduate toggle recomputes the price; nothing is shown that is not known.
+export function PriceBox({
+  slug,
+  priceFull,
+  nextCohort,
+  seats,
+  schedule,
+  className,
+}: {
+  slug: string;
+  priceFull: number | null;
+  nextCohort: string | null;
+  seats: number | null;
+  schedule: string | null;
+  className?: string;
+}) {
+  const [grad, setGrad] = useState(false);
+  const r = calcPrice(priceFull, grad ? "freshGrad" : null, false);
+  const details = [nextCohort && { k: c.cohort, v: nextCohort }, seats !== null && { k: c.seats, v: seats }, schedule && { k: c.schedule, v: schedule }].filter(Boolean) as { k: string; v: React.ReactNode }[];
 
   return (
-    <aside className={cn("glass p-7", className)} aria-label="Price">
-      <p className="meta mb-4">Who are you?</p>
-      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Who are you?">
-        {options.map((o) => (
-          <button
-            key={o ?? "none"}
-            type="button"
-            role="radio"
-            aria-checked={status === o}
-            onClick={() => setStatus(o)}
-            className={cn("min-h-11 rounded-lg border px-4 py-2 text-[14px] font-medium transition-colors", status === o ? "border-accent bg-accent/15 text-accent-text" : "border-border text-muted hover:text-text")}
-          >
-            {o ? `${discounts[o].emoji} ${discounts[o].label}` : "Standard"}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-7 min-h-[88px]" aria-live="polite">
+    <aside className={cn("card p-7 md:p-8", className)} aria-label={c.label}>
+      <p className="mono">{c.label}</p>
+      <div className="mt-6 min-h-[88px]" aria-live="polite">
         {priceFull === null ? (
           <>
-            <p className="font-semibold text-2xl">Price on request</p>
-            {r.percent > 0 && <p className="mt-2 text-warm">You save <Roll value={r.percent} suffix="%" /></p>}
+            <p className="text-[2rem] font-semibold leading-none tracking-tight text-text">{c.onRequest}</p>
+            <p className="t-small mt-3 text-dim">{c.onRequestNote}</p>
           </>
         ) : (
           <>
-            <p className="font-semibold text-4xl"><Roll value={r.final ?? priceFull} prefix="$" /></p>
-            {r.percent > 0 && <p className="mt-2 text-warm">−{r.percent}% · you save <Roll value={r.saving ?? 0} prefix="$" /></p>}
+            <p className="text-[clamp(2.5rem,2rem+1.5vw,3.25rem)] font-semibold leading-none tracking-tight text-text">
+              <Roll value={r.final ?? priceFull} prefix="$" />
+            </p>
+            <p className="t-small mt-3 text-dim">
+              {grad ? (
+                <>
+                  <span className="text-warm">{c.save(discounts.freshGrad.percent)}</span>
+                  <span className="ms-2 line-through">{money(priceFull)}</span>
+                </>
+              ) : (
+                c.full
+              )}
+            </p>
           </>
         )}
-        {status && <p className="mt-3 text-sm text-muted">Pending check of: {discounts[status].proof.toLowerCase()}</p>}
       </div>
+      <Toggle className="mt-6" checked={grad} onChange={setGrad} label={c.toggle} />
+      {grad && (
+        <p className="t-small mt-2 text-dim" role="status">
+          {c.pending}
+        </p>
+      )}
 
-      <Button href={`/apply?program=${slug}${status === "freshGrad" ? "&status=freshGrad" : ""}`} variant="glow" className="mt-6 w-full">
-        Apply to this program
+      {details.length > 0 && (
+        <dl className="mt-7 border-t" style={rule}>
+          {details.map((d) => (
+            <div key={d.k} className="flex items-baseline justify-between gap-4 border-b py-3" style={rule}>
+              <dt className="mono">{d.k}</dt>
+              <dd className="text-[15px] text-text">{d.v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      <Button href={`/apply?program=${slug}${grad ? "&status=freshGrad" : ""}`} className="mt-7 w-full">
+        {c.apply}
+      </Button>
+      <Button href="/contact" variant="link" className="mt-5">
+        {c.ask}
       </Button>
     </aside>
   );
