@@ -21,8 +21,8 @@ export default function LearningPathPage() {
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} />
 
       {/* The home page section drawing. Its own header and its link back to this page are hidden here. */}
-      <div className="[&>section]:!pt-8 [&>section]:!pb-0 lg:[&>section]:!pt-10 [&_header]:hidden [&_a[href*=learning-path]]:hidden [&_.mt-16]:!mt-0">
-        <Path />
+      <div className="[&>section]:!pt-8 [&>section]:!pb-0 lg:[&>section]:!pt-10 [&_header]:hidden [&_.mt-16]:!mt-0">
+        <Path cta={false} />
       </div>
 
       <section className="theme-light section" aria-labelledby="floors">

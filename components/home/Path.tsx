@@ -25,7 +25,8 @@ function stage(i: number) {
   return { x0, x1, top, below };
 }
 
-export function Path() {
+// `cta` hides the link on /learning-path, where the section already is the page.
+export function Path({ cta = true }: { cta?: boolean } = {}) {
   const c = copy.path;
   const section = useRef<HTMLElement>(null);
   const reduce = useReduceMotion();
@@ -37,7 +38,8 @@ export function Path() {
       el.style.setProperty("--draw", "1");
       return;
     }
-    el.style.setProperty("--draw", "0");
+    // Fully drawn until GSAP is loaded (it waits for the first interaction), so the drawing is never blank.
+    el.style.setProperty("--draw", "1");
     let kill = () => {};
     let cancelled = false;
     afterInteraction(6000).then(loadGsap).then(({ ScrollTrigger }) => {
@@ -49,6 +51,7 @@ export function Path() {
         scrub: 0.4,
         onUpdate: (self) => el.style.setProperty("--draw", String(self.progress)),
       });
+      el.style.setProperty("--draw", String(st.progress));
       kill = () => st.kill();
     });
     // Safety: never leave the drawing blank
@@ -146,11 +149,13 @@ export function Path() {
           ))}
         </ol>
 
-        <div className="mt-14">
-          <Button href="/learning-path" variant="link">
-            {c.cta}
-          </Button>
-        </div>
+        {cta && (
+          <div className="mt-14">
+            <Button href="/learning-path" variant="link">
+              {c.cta}
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
