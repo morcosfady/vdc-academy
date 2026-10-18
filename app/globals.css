@@ -142,6 +142,10 @@ html {
   background: var(--paper);
   scroll-padding-top: 88px;
 }
+/* The fixed header is 72px: anchored sections start below it */
+section[id] {
+  scroll-margin-top: 72px;
+}
 
 body {
   background: var(--bg);

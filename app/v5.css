@@ -100,3 +100,27 @@ input[type="range"] {
 .cue-arrow {
   animation: cue-arrow 1.8s ease-in-out infinite;
 }
+
+/* Drawer: bottom sheet on phones, right-hand panel from md */
+dialog.drawer {
+  inset: auto 0 0 0;
+  margin: 0;
+}
+@media (min-width: 768px) {
+  dialog.drawer {
+    inset: 0 0 0 auto;
+  }
+}
+dialog.drawer[open] {
+  animation: drawer-in 0.35s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+}
+@keyframes drawer-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0.02;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

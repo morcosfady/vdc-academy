@@ -16,6 +16,7 @@ export function SceneSlot({
   className,
   label,
   interactive,
+  tilt,
   autoBuild,
   autoRotate,
   buildSeconds,
@@ -27,6 +28,7 @@ export function SceneSlot({
   className?: string;
   label?: string;
   interactive?: boolean;
+  tilt?: boolean;
   autoBuild?: boolean;
   autoRotate?: boolean;
   buildSeconds?: number;
@@ -49,6 +51,7 @@ export function SceneSlot({
           stateRef={stateRef}
           className="absolute inset-0"
           interactive={interactive}
+          tilt={tilt}
           autoBuild={autoBuild}
           autoRotate={autoRotate}
           buildSeconds={buildSeconds}

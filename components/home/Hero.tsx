@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { copy } from "@/content/copy";
 import { programs } from "@/content/programs";
 import { site } from "@/config/site";
 import { SceneSlot } from "@/components/three/SceneSlot";
+import { BUBBLE_FLOORS } from "@/components/three/StudyModel";
 import { newState } from "@/lib/modelState";
 import { loadGsap } from "@/lib/gsap";
 import { afterInteraction } from "@/lib/interaction";
 import { Button } from "@/components/ui/Button";
 import { RiseLines } from "@/components/ui/RiseLines";
-import { DimensionString, GridBubble, SheetTag } from "@/components/ds/Devices";
+import { DimensionString, SheetTag } from "@/components/ds/Devices";
 import { FactRow } from "@/components/ds/Sections";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
+import { cn } from "@/lib/utils";
 
 const seen = () => {
   try {
@@ -22,12 +24,45 @@ const seen = () => {
   }
 };
 
+// A grid bubble that is a real control: hover or focus previews, click keeps it on.
+function Bubble({ label, pressed, onEnter, onLeave, onToggle, aria }: { label: string; pressed: boolean; onEnter: () => void; onLeave: () => void; onToggle: () => void; aria: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={aria}
+      aria-pressed={pressed}
+      onPointerEnter={onEnter}
+      onPointerLeave={onLeave}
+      onFocus={onEnter}
+      onBlur={onLeave}
+      onClick={onToggle}
+      className={cn(
+        "mono grid size-9 place-items-center rounded-full border transition-[background-color,color,border-color] duration-200 hover:border-accent hover:!text-accent-text focus-visible:border-accent",
+        pressed ? "border-transparent bg-cta !text-cta-text hover:!text-cta-text" : "border-current !text-slate",
+      )}
+      style={{ fontSize: 11 }}
+    >
+      {label}
+    </button>
+  );
+}
+
 // S1. Paper. Text in columns 1 to 6, the white study model in columns 7 to 12. They never share space.
 export function Hero() {
   const section = useRef<HTMLElement>(null);
   const state = useRef(newState({ build: 0, lod: 300, mood: 0 }));
   const reduce = useReduceMotion();
   const c = copy.hero;
+  // Grid controls: A, B, C highlight a column axis; 1, 2, 3 isolate a floor. `held` is the clicked one, hover previews.
+  const [axis, setAxis] = useState<{ held: number; hover: number }>({ held: -1, hover: -1 });
+  const [floor, setFloor] = useState<{ held: number; hover: number }>({ held: -1, hover: -1 });
+
+  useEffect(() => {
+    state.current.axis = axis.hover >= 0 ? axis.hover : axis.held;
+  }, [axis]);
+  useEffect(() => {
+    state.current.floor = floor.hover >= 0 ? floor.hover : floor.held;
+  }, [floor]);
 
   useEffect(() => {
     if (seen()) state.current.build = 1;
@@ -104,21 +139,37 @@ export function Hero() {
           </div>
 
           <div className="col-span-12 lg:col-span-6">
-            <div className="model-in relative mx-auto w-[72%] sm:w-[60%] lg:w-full">
-              {/* Grid bubbles: A, B, C across the top and 1, 2, 3 down the side, like a structural grid */}
-              <div aria-hidden className="absolute inset-x-[12%] -top-9 hidden justify-between text-slate lg:flex">
-                {["A", "B", "C"].map((l) => (
-                  <GridBubble key={l} label={l} />
+            {/* The model sits in a frame with the grid bubbles on its edges: A, B, C across the top, 1, 2, 3 down the side. The frame keeps every bubble inside the column. */}
+            <div className="model-in relative mx-auto w-[72%] sm:w-[60%] lg:w-full lg:pe-12 lg:pt-12">
+              <div role="group" aria-label="Grid lines" className="absolute inset-x-[10%] top-0 hidden justify-between lg:flex lg:pe-12">
+                {["A", "B", "C"].map((l, i) => (
+                  <Bubble
+                    key={l}
+                    label={l}
+                    aria={`Highlight grid line ${l}`}
+                    pressed={axis.held === i}
+                    onEnter={() => setAxis((a) => ({ ...a, hover: i }))}
+                    onLeave={() => setAxis((a) => ({ ...a, hover: -1 }))}
+                    onToggle={() => setAxis((a) => ({ held: a.held === i ? -1 : i, hover: -1 }))}
+                  />
                 ))}
               </div>
-              <div aria-hidden className="absolute -end-10 inset-y-[14%] hidden flex-col justify-between text-slate xl:flex">
-                {["1", "2", "3"].map((l) => (
-                  <GridBubble key={l} label={l} />
+              <div role="group" aria-label="Floors" className="absolute inset-y-[14%] end-0 hidden flex-col justify-between lg:flex">
+                {["1", "2", "3"].map((l, i) => (
+                  <Bubble
+                    key={l}
+                    label={l}
+                    aria={`Isolate floor ${BUBBLE_FLOORS[i] + 1}`}
+                    pressed={floor.held === BUBBLE_FLOORS[i]}
+                    onEnter={() => setFloor((f) => ({ ...f, hover: BUBBLE_FLOORS[i] }))}
+                    onLeave={() => setFloor((f) => ({ ...f, hover: -1 }))}
+                    onToggle={() => setFloor((f) => ({ held: f.held === BUBBLE_FLOORS[i] ? -1 : BUBBLE_FLOORS[i], hover: -1 }))}
+                  />
                 ))}
               </div>
-              <SceneSlot stateRef={state} autoBuild buildSeconds={1.6} rotateSpeed={0.105} priority label={c.modelAlt} className="aspect-square lg:aspect-[5/4]" />
+              <SceneSlot stateRef={state} autoBuild buildSeconds={1.6} rotateSpeed={0.105} interactive tilt priority label={c.modelAlt} className="aspect-square lg:aspect-[5/4]" />
             </div>
-            <DimensionString label="7 storeys · LOD 300" className="fade-up mx-auto mt-5 w-[72%] sm:w-[60%] lg:w-full" />
+            <DimensionString label="7 storeys · LOD 300" className="fade-up mx-auto mt-5 w-[72%] sm:w-[60%] lg:w-full lg:pe-12" />
           </div>
         </div>
 

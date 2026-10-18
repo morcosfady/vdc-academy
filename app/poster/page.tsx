@@ -9,11 +9,16 @@ import { newState } from "@/lib/modelState";
 // LCP image and the no-WebGL / reduced-motion fallback. Not linked from anywhere. Use ?mood=1&gl=force for night.
 function Poster() {
   const sp = useSearchParams();
-  const state = useRef(newState({ mood: Number(sp.get("mood") ?? 0), lod: Number(sp.get("lod") ?? 300), yaw: Number(sp.get("yaw") ?? 0), isolate: (sp.get("iso") as never) ?? "all" }));
+  const n = (k: string, d: number) => (sp.get(k) === null ? d : Number(sp.get(k)));
+  const state = useRef(
+    newState({ mood: n("mood", 0), lod: n("lod", 300), yaw: n("yaw", 0), isolate: (sp.get("iso") as never) ?? "all", sim: n("sim", -1), focus: n("focus", 0), floor: n("floor", -1), axis: n("axis", -1) }),
+  );
+  const bg = sp.get("bg"); // "paper", "ink" or a hex without #; transparent when absent
+  const color = bg === "paper" ? "#f6f4ef" : bg === "ink" ? "#0a1d23" : bg ? `#${bg}` : "transparent";
   return (
     <div className="poster-root fixed inset-0 z-[200]">
-      <style>{`html,body{background:transparent!important}header,footer,main>*:not(.poster-root){display:none}`}</style>
-      <SceneSlot stateRef={state} autoRotate={false} label="Model still" className="h-full w-full" />
+      <style>{`html,body{background:${color}!important}header,footer,main>*:not(.poster-root){display:none}`}</style>
+      <SceneSlot stateRef={state} autoRotate={false} fit={n("fit", 1)} label="Model still" className="h-full w-full" />
     </div>
   );
 }

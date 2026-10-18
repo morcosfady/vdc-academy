@@ -71,7 +71,7 @@ export function Explorer() {
   const rule = { borderColor: "var(--rule)" };
 
   return (
-    <section id="explorer" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden py-20 lg:py-24">
+    <section id="explorer" aria-labelledby="explorer-title" className="theme-dark relative overflow-hidden pb-20 pt-14 lg:pb-24 lg:pt-16">
       <div className="wrap">
         <div className="flex items-end justify-between gap-6">
           <SheetTag sheet={c.sheet} name={c.name} />
@@ -81,9 +81,9 @@ export function Explorer() {
           {c.title}
         </h2>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-12 lg:gap-6">
+        <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-6">
           {/* Drawing index (desktop: vertical list, phones: chip row) */}
-          <div role="group" aria-label="Isolate a discipline" className="order-2 lg:order-1 lg:col-span-3">
+          <div role="group" aria-label="Isolate a discipline" className="order-2 min-w-0 lg:order-1 lg:col-span-3">
             <ol className="fade-edges -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:block lg:overflow-visible lg:px-0 lg:[mask-image:none]">
               {items.map((b, i) => (
                 <li key={b.id} className="shrink-0 lg:border-b" style={rule}>
@@ -106,8 +106,8 @@ export function Explorer() {
           </div>
 
           {/* The model */}
-          <div className="relative order-1 lg:order-2 lg:col-span-6">
-            <SceneSlot stateRef={state} interactive autoRotate={active === "all"} rotateSpeed={0.08} fit={0.84} label={c.modelAlt} className="h-[56svh] min-h-[380px] lg:h-[min(72svh,720px)]" />
+          <div className="relative order-1 min-w-0 lg:order-2 lg:col-span-6">
+            <SceneSlot stateRef={state} interactive autoRotate={active === "all"} rotateSpeed={0.08} fit={1} label={c.modelAlt} className="h-[56svh] min-h-[380px] lg:h-[min(62svh,680px)]" />
             {active === "clash" && (
               <p className="absolute start-0 top-0 flex items-center gap-3 rounded-[4px] border bg-ink/85 px-4 py-2.5 text-[14px] text-text" style={rule} role="status">
                 <span
@@ -144,7 +144,7 @@ export function Explorer() {
           </div>
 
           {/* Info panel */}
-          <div key={active} className="slide-in order-3 lg:col-span-3" aria-live="polite">
+          <div key={active} className="slide-in order-3 min-w-0 lg:col-span-3" aria-live="polite">
             <div className="border-t pt-6" style={rule}>
               {current ? (
                 <>

@@ -8,7 +8,11 @@ export const pages = {
     name: "Programs",
     title: "All programs.",
     lead: "Eleven programs from first model to BIM manager. Filter by what you need, compare up to three.",
-    filters: { level: "Level", discipline: "Discipline", format: "Format", software: "Software", all: "All" },
+    filters: {
+      button: "Filters",
+      drawerTitle: "Filter programs",
+      show: (n: number) => `Show ${n} program${n === 1 ? "" : "s"}`,
+      reset: "Reset", level: "Level", discipline: "Discipline", format: "Format", software: "Software", all: "All" },
     count: (n: number, total: number) => `${n} of ${total} programs`,
     clear: "Clear filters",
     empty: "No program matches every filter. Clear one to see more.",

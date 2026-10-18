@@ -15,17 +15,19 @@ export type SteppedState = {
   yaw: number; // extra rotation in radians (drag + scroll)
   mood: number; // 0 paper (white study model on a table), 1 night (dark slabs, fine mist edges, systems glow)
   dolly: number; // 0..1 camera moves in (hero to explorer handover)
+  axis: number; // grid line to highlight: 0 A, 1 B, 2 C, -1 none
+  floor: number; // floor to isolate (others fade to 15%), -1 none
 };
 
 export const LODS = [100, 200, 300, 350, 400, 500] as const;
 
 export const lodNotes: Record<number, string> = {
-  100: "Massing only. Simple volumes to test the shape.",
-  200: "Floors and walls. Approximate size and placement.",
-  300: "Columns, beams and main ducts at real size.",
-  350: "Hangers and connections between systems.",
-  400: "Small pipes and cable trays, ready to fabricate.",
-  500: "Tags and data on every element, as built.",
+  100: "Massing only.",
+  200: "Slabs and walls.",
+  300: "Columns, beams and main ducts.",
+  350: "Hangers, supports, connections and pipe fittings.",
+  400: "Small pipes, cable trays, sprinklers and light fixtures.",
+  500: "Element tags with leader lines and floor labels.",
 };
 
 export const newState = (over: Partial<SteppedState> = {}): SteppedState => ({
@@ -41,5 +43,7 @@ export const newState = (over: Partial<SteppedState> = {}): SteppedState => ({
   yaw: 0,
   mood: 0,
   dolly: 0,
+  axis: -1,
+  floor: -1,
   ...over,
 });

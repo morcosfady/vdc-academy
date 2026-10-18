@@ -405,7 +405,9 @@ textarea:user-valid {
   border-color: color-mix(in srgb, var(--accent) 70%, transparent);
 }
 
-/* Horizontal chip rows on phones fade at the edges */
-.fade-edges {
-  mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+/* Horizontal chip rows on phones fade at the edges (never on desktop, where the same list is vertical) */
+@media (max-width: 1023px) {
+  .fade-edges {
+    mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  }
 }

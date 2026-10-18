@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type MutableRefObject } from "react";
+import { useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, PerspectiveCamera, View } from "@react-three/drei";
 import { Vector3, type Group } from "three";
@@ -8,12 +8,13 @@ import { StudyModel, TOTAL_H, clashWorld } from "./StudyModel";
 import type { SteppedState } from "@/lib/modelState";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
 
-type Drag = { down: boolean; x: number; vel: number; yaw: number };
+type Drag = { down: boolean; x: number; vel: number; yaw: number; tx: number; ty: number };
 
 const BASE = new Vector3(13.6, 8.4, 17.2);
 const LOOK = new Vector3(0, -0.4, 0);
+const TILT = (8 * Math.PI) / 180;
 
-function Scene({ stateRef, drag, aspect, fit, autoBuild, autoRotate, rotateSpeed, reduce, buildSeconds, onReady }: { stateRef: MutableRefObject<SteppedState>; drag: MutableRefObject<Drag>; aspect: MutableRefObject<number>; fit: number; autoBuild: boolean; autoRotate: boolean; rotateSpeed: number; reduce: boolean; buildSeconds: number; onReady?: () => void }) {
+function Scene({ stateRef, drag, box, fit, autoBuild, autoRotate, rotateSpeed, reduce, buildSeconds, onReady }: { stateRef: MutableRefObject<SteppedState>; drag: MutableRefObject<Drag>; box: React.RefObject<HTMLDivElement | null>; fit: number; autoBuild: boolean; autoRotate: boolean; rotateSpeed: number; reduce: boolean; buildSeconds: number; onReady?: () => void }) {
   const g = useRef<Group>(null);
   const frames = useRef(0);
   const pos = useRef(new Vector3());
@@ -23,17 +24,33 @@ function Scene({ stateRef, drag, aspect, fit, autoBuild, autoRotate, rotateSpeed
   const clashPos = useRef(new Vector3());
   const clashCam = useRef(new Vector3());
   const up = useRef(new Vector3(0, 1, 0));
+  const tilt = useRef({ x: 0, y: 0 });
+  const aspect = useRef(1.25);
 
   useFrame(({ camera }, dt) => {
     const s = stateRef.current;
     const d = drag.current;
-    if (frames.current < 4 && ++frames.current === 4) onReady?.();
+    // Camera fit uses this slot's own size (the shared canvas covers the window); measured every 20 frames
+    if (frames.current % 20 === 0 && box.current) {
+      const r = box.current.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) aspect.current = r.width / r.height;
+      box.current.dataset.aspect = aspect.current.toFixed(2);
+    }
+    frames.current++;
+    if (frames.current === 4) onReady?.();
     if (!d.down) {
       d.yaw += d.vel;
       d.vel *= 0.94;
       if (autoRotate && !reduce && Math.abs(d.vel) < 0.0005) d.yaw += dt * rotateSpeed;
     }
-    if (g.current) g.current.rotation.y = 0.62 + s.yaw + d.yaw;
+    // Mouse tilt: damped toward the pointer, at most 8 degrees each way
+    const kt = Math.min(1, dt * 5);
+    tilt.current.x += (d.ty * TILT - tilt.current.x) * kt;
+    tilt.current.y += (d.tx * TILT - tilt.current.y) * kt;
+    if (g.current) {
+      g.current.rotation.y = 0.62 + s.yaw + d.yaw + tilt.current.y;
+      g.current.rotation.x = tilt.current.x;
+    }
     // The clash point turns with the model, so the close-up camera turns with it.
     const rot = g.current?.rotation.y ?? 0;
     clashPos.current.copy(clashBase.current).applyAxisAngle(up.current, rot);
@@ -66,10 +83,13 @@ function Scene({ stateRef, drag, aspect, fit, autoBuild, autoRotate, rotateSpeed
 }
 
 // A region of the page where the study model is drawn into the shared canvas.
+// `interactive`: drag to rotate with inertia (mouse only). `tilt`: the model leans toward the mouse, at most 8 degrees.
+// Both are off for touch pointers (so pages still scroll) and with reduced motion.
 export default function SteppedView({
   stateRef,
   className,
   interactive = false,
+  tilt = false,
   autoBuild = false,
   autoRotate = true,
   rotateSpeed = 0.1,
@@ -80,6 +100,7 @@ export default function SteppedView({
   stateRef: MutableRefObject<SteppedState>;
   className?: string;
   interactive?: boolean;
+  tilt?: boolean;
   autoBuild?: boolean;
   autoRotate?: boolean;
   rotateSpeed?: number;
@@ -88,49 +109,50 @@ export default function SteppedView({
   onReady?: () => void;
 }) {
   const reduce = useReduceMotion();
-  const drag = useRef<Drag>({ down: false, x: 0, vel: 0, yaw: 0 });
+  const drag = useRef<Drag>({ down: false, x: 0, vel: 0, yaw: 0, tx: 0, ty: 0 });
   const box = useRef<HTMLDivElement>(null);
-  const aspect = useRef(1.25);
 
-  // The shared canvas covers the window, so the camera fit uses this slot's own size, not the canvas size.
-  useEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([e]) => {
-      const { width, height } = e.contentRect;
-      if (width && height) aspect.current = width / height;
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // Reduced motion: show the finished building at once.
+  // Reduced motion: show the finished building at once, no drag, no tilt.
   if (reduce && stateRef.current.build < 1) stateRef.current.build = 1;
+  const canDrag = interactive && !reduce;
+  const canTilt = tilt && !reduce;
+  const mouse = (e: React.PointerEvent) => e.pointerType === "mouse";
 
   return (
     <div
       ref={box}
       className={className}
-      style={{ touchAction: interactive ? "pan-y" : "auto", cursor: interactive ? "grab" : undefined }}
+      style={{ touchAction: "pan-y", cursor: canDrag ? "grab" : undefined }}
       onPointerDown={(e: React.PointerEvent) => {
-        if (!interactive) return;
+        if (!canDrag || !mouse(e)) return;
         drag.current.down = true;
         drag.current.x = e.clientX;
+        drag.current.vel = 0;
         (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
       }}
       onPointerMove={(e: React.PointerEvent) => {
-        if (!interactive || !drag.current.down) return;
+        if (!mouse(e)) return;
+        if (canTilt) {
+          const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          drag.current.tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+          drag.current.ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+        }
+        if (!canDrag || !drag.current.down) return;
         const dx = e.clientX - drag.current.x;
         drag.current.x = e.clientX;
         drag.current.yaw += dx * 0.008;
         drag.current.vel = dx * 0.0016;
+      }}
+      onPointerLeave={() => {
+        drag.current.tx = 0;
+        drag.current.ty = 0;
       }}
       onPointerUp={() => (drag.current.down = false)}
       onPointerCancel={() => (drag.current.down = false)}
     >
       <View className="absolute inset-0 h-full w-full">
         <PerspectiveCamera makeDefault position={[13.6, 8.4, 17.2]} fov={26} />
-        <Scene stateRef={stateRef} drag={drag} aspect={aspect} fit={fit} autoBuild={autoBuild} autoRotate={autoRotate} rotateSpeed={rotateSpeed} reduce={reduce} buildSeconds={buildSeconds} onReady={onReady} />
+        <Scene stateRef={stateRef} drag={drag} box={box} fit={fit} autoBuild={autoBuild} autoRotate={autoRotate} rotateSpeed={rotateSpeed} reduce={reduce} buildSeconds={buildSeconds} onReady={onReady} />
       </View>
     </div>
   );

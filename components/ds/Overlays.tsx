@@ -67,3 +67,55 @@ export function Toast({ children, tone = "ink", className }: { children: React.R
     </div>
   );
 }
+
+// Drawer: a side panel on wide screens, a bottom sheet on phones. Native <dialog> for focus and Escape.
+export function Drawer({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (open && !d.open) d.showModal();
+    if (!open && d.open) d.close();
+  }, [open]);
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(e) => e.target === ref.current && onClose()}
+      aria-labelledby="drawer-title"
+      className="drawer m-0 max-h-[88svh] w-full max-w-none rounded-t-[12px] border-0 bg-paper p-0 text-ink backdrop:bg-[rgba(10,29,35,0.55)] md:h-full md:max-h-none md:w-[440px] md:rounded-none md:border-s"
+      style={{ borderColor: "var(--rule)" }}
+    >
+      <div className="flex max-h-[88svh] flex-col md:h-full md:max-h-none">
+        <div className="flex items-center justify-between gap-6 border-b px-6 py-4" style={{ borderColor: "var(--rule)" }}>
+          <h2 id="drawer-title" className="!text-[1.125rem] !font-semibold !tracking-normal">
+            {title}
+          </h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="-me-2 grid size-11 place-items-center text-ink hover:text-blueprint">
+            <svg aria-hidden width="14" height="14" viewBox="0 0 14 14">
+              <path d="M1 1l12 12M13 1 1 13" stroke="currentColor" strokeWidth="1.5" fill="none" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        {footer && (
+          <div className="border-t px-6 py-4" style={{ borderColor: "var(--rule)" }}>
+            {footer}
+          </div>
+        )}
+      </div>
+    </dialog>
+  );
+}

@@ -238,6 +238,13 @@ const DRAFT: Record<string, Partial<Program>> = {
   "bim-management-iso-19650": { priceFull: 2200, durationWeeks: 6, hours: 48, format: "Online live", schedule: "Sat mornings", nextCohortDate: "April 13, 2027", seats: 12 },
 };
 
-export const programs: Program[] = base.map((p) => ({ ...p, ...(DRAFT[p.slug] ?? {}) }));
+// Prices stay hidden ("Price on request") until the owner confirms them. Flip this to true once the DRAFT prices are real.
+export const pricesConfirmed = false;
+
+export const programs: Program[] = base.map((p) => {
+  const d = { ...(DRAFT[p.slug] ?? {}) };
+  if (!pricesConfirmed) delete d.priceFull;
+  return { ...p, ...d };
+});
 
 export const getProgram = (slug: string) => programs.find((x) => x.slug === slug);
