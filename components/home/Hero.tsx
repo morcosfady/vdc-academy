@@ -111,7 +111,7 @@ export function Hero() {
                   <GridBubble key={l} label={l} />
                 ))}
               </div>
-              <div aria-hidden className="absolute -end-10 inset-y-[14%] hidden flex-col justify-between text-slate lg:flex">
+              <div aria-hidden className="absolute -end-10 inset-y-[14%] hidden flex-col justify-between text-slate xl:flex">
                 {["1", "2", "3"].map((l) => (
                   <GridBubble key={l} label={l} />
                 ))}

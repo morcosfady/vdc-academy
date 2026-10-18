@@ -5,9 +5,10 @@
   interpolate-size: allow-keywords;
 }
 
+/* Entrances start at 0.02, not 0: an element at opacity 0 does not count as painted, which pushed the LCP to the end of hydration */
 @keyframes fade-up {
   from {
-    opacity: 0;
+    opacity: 0.02;
     transform: translateY(20px);
   }
   to {
@@ -20,7 +21,7 @@
 }
 @keyframes fade-in {
   from {
-    opacity: 0;
+    opacity: 0.02;
   }
   to {
     opacity: 1;
@@ -148,7 +149,7 @@ html.intro-seen .tag-pill {
 /* Program cards fan in along a gentle curve */
 @keyframes fan-in {
   from {
-    opacity: 0;
+    opacity: 0.02;
     transform: translateY(32px) rotate(-1.6deg) scale(0.98);
   }
   to {
@@ -163,7 +164,7 @@ html.intro-seen .tag-pill {
 /* Panels slide in from the side when a new selection opens */
 @keyframes slide-in {
   from {
-    opacity: 0;
+    opacity: 0.02;
     transform: translateX(-18px);
   }
   to {

@@ -16,7 +16,7 @@ import "./globals.css";
 // Two families: Poppins (display and UI) and IBM Plex Mono (technical voice: sheet numbers, dimensions, LOD).
 // Michroma is a stand-in for the licensed Eurostile Extended and is used for the logo wordmark only.
 const body = Poppins({ weight: ["400", "500", "600"], subsets: ["latin"], variable: "--font-body", display: "optional" });
-const mono = IBM_Plex_Mono({ weight: ["400", "500"], subsets: ["latin"], variable: "--font-mono", display: "optional" });
+const mono = IBM_Plex_Mono({ weight: ["400"], subsets: ["latin"], variable: "--font-mono", display: "optional" });
 const logo = Michroma({ weight: "400", subsets: ["latin"], variable: "--font-logo", display: "optional", preload: false });
 
 export const metadata: Metadata = {
