@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Terms" };
 
 export default function Terms() {
   return (
-    <LegalPage eyebrow="Legal" title={["Terms of use"]} updated="October 2026">
+    <LegalPage eyebrow="Legal" sheet="L-002" title={["Terms of use"]} updated="October 2026">
       <section>
         <h2>Applications</h2>
         <p>Applying does not guarantee a seat. We review each application and reply within 1 to 2 business days. An advisor may contact you before enrollment.</p>

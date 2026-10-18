@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProgram, programs } from "@/content/programs";
-import { Badge } from "@/components/ui/Badge";
-import { Slab } from "@/components/ui/Slab";
+import { programMeta } from "@/content/floors";
+import { cover } from "@/content/media";
+import { pages } from "@/content/copy-pages";
+import { money } from "@/lib/pricing";
 import { PriceBox } from "@/components/programs/PriceBox";
-import { ProgramCard } from "@/components/programs/ProgramCard";
-import { JsonLd } from "@/components/seo/JsonLd";
 import { ProgramHero } from "@/components/programs/ProgramHero";
+import { sheetOf } from "@/components/programs/sheet";
+import { ProgramCard } from "@/components/ds/Cards";
+import { Software } from "@/components/ds/Chips";
+import { Accordion } from "@/components/ds/Controls";
+import { Button } from "@/components/ui/Button";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 type Props = { params: Promise<{ slug: string }> };
+const c = pages.program;
+const rule = { borderColor: "var(--rule)" } as const;
 
 export function generateStaticParams() {
   return programs.map((p) => ({ slug: p.slug }));
@@ -23,20 +30,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProgramPage({ params }: Props) {
   const p = getProgram((await params).slug);
   if (!p) notFound();
-  const related = programs.filter((x) => x.slug !== p.slug).slice(0, 3);
 
-  // Only fields we actually know are shown. Missing ones are left out, never faked.
-  const facts: [string, string][] = [
-    ["Duration", p.durationWeeks !== null ? `${p.durationWeeks} weeks` : ""],
-    ["Hours", p.hours !== null ? String(p.hours) : ""],
-    ["Format", p.format ?? ""],
-    ["Schedule", p.schedule ?? ""],
-    ["Next cohort", p.nextCohortDate ?? ""],
-    ["Seats", p.seats !== null ? String(p.seats) : ""],
-    ["Prerequisites", p.prerequisites.join(", ")],
-    ["Certificate", p.certificate],
-  ];
-  const known = facts.filter(([, v]) => v);
+  // Related: same floor first, then the rest of the catalog, three in total.
+  const floor = programMeta[p.slug]?.floor;
+  const related = [...programs.filter((x) => x.slug !== p.slug && programMeta[x.slug]?.floor === floor), ...programs.filter((x) => x.slug !== p.slug && programMeta[x.slug]?.floor !== floor)].slice(0, 3);
+
+  // Only facts we know are shown. Missing ones are left out, never faked.
+  const facts = [p.durationWeeks !== null && c.facts.weeks(p.durationWeeks), p.hours !== null && c.facts.hours(p.hours), p.format, p.level].filter((x): x is string => Boolean(x));
 
   return (
     <>
@@ -50,79 +50,118 @@ export default async function ProgramPage({ params }: Props) {
           ...(p.priceFull !== null ? { offers: { "@type": "Offer", price: p.priceFull, priceCurrency: "USD" } } : {}),
         }}
       />
-      <ProgramHero slug={p.slug} level={p.level} title={p.title} summary={p.summary} />
+      <ProgramHero slug={p.slug} sheet={sheetOf(p)} level={p.level} title={p.title} summary={p.summary} facts={facts} />
 
-      <div className="mx-auto grid max-w-[1280px] gap-12 px-5 py-20 md:px-10 lg:grid-cols-3 lg:py-32">
-        <div className="space-y-24 lg:col-span-2">
-          <Slab as="section">
-            <h2 className="display-md mb-8">What you will learn</h2>
-            <ol className="divide-y divide-border border-y border-border">
-              {p.outcomes.map((o, i) => (
-                <li key={o} className="flex gap-6 py-4">
-                  <span className="label w-8 pt-1 !text-accent-text">{String(i + 1).padStart(2, "0")}</span>
-                  <span>{o}</span>
-                </li>
-              ))}
-            </ol>
-          </Slab>
+      <section className="theme-light rule-t">
+        <div className="wrap">
+          <div className="grid-12 gap-y-14 py-16 lg:py-24">
+            <div className="col-span-12 space-y-20 lg:col-span-7">
+              <section aria-labelledby="outcomes">
+                <h2 id="outcomes" className="t-h3">
+                  {c.outcomes}
+                </h2>
+                <ol className="mt-8 border-t" style={rule}>
+                  {p.outcomes.map((o, i) => (
+                    <li key={o} className="flex gap-6 border-b py-4 text-[1.0625rem] text-text" style={rule}>
+                      <span className="mono w-8 shrink-0 pt-1.5 !text-accent-text">{String(i + 1).padStart(2, "0")}</span>
+                      <span>{o}</span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
 
-          <Slab as="section">
-            <h2 className="display-md mb-8">Modules</h2>
-            <div className="divide-y divide-border border-y border-border">
-              {p.modules.map((m, i) => (
-                <details key={m.title} className="group py-5" open={i === 0}>
-                  <summary className="flex cursor-pointer list-none items-baseline justify-between gap-6">
-                    <span className="flex items-baseline gap-5">
-                      <span className="label !text-accent-text">M-{String(i + 1).padStart(2, "0")}</span>
-                      <span className="text-lg">{m.title}</span>
-                    </span>
-                    <span aria-hidden className="pm" />
-                  </summary>
-                  <ul className="mt-4 space-y-2 ps-[3.2rem] text-muted">
-                    {m.lessons.map((l) => <li key={l}>{l}</li>)}
+              <section aria-labelledby="modules">
+                <h2 id="modules" className="t-h3">
+                  {c.modules}
+                </h2>
+                <Accordion
+                  className="mt-8"
+                  items={p.modules.map((m) => ({
+                    q: m.title,
+                    a: (
+                      <ul className="space-y-2">
+                        {m.lessons.map((l) => (
+                          <li key={l} className="flex gap-3">
+                            <span aria-hidden className="mt-3 h-px w-4 shrink-0 bg-current opacity-50" />
+                            {l}
+                          </li>
+                        ))}
+                      </ul>
+                    ),
+                  }))}
+                />
+              </section>
+
+              <div className="grid gap-12 sm:grid-cols-2">
+                <section aria-labelledby="software">
+                  <h2 id="software" className="t-h4">
+                    {c.software}
+                  </h2>
+                  <ul className="mt-5 flex flex-wrap gap-2">
+                    {p.software.map((s) => (
+                      <li key={s}>
+                        <Software>{s}</Software>
+                      </li>
+                    ))}
                   </ul>
-                </details>
-              ))}
-            </div>
-          </Slab>
+                </section>
+                <section aria-labelledby="build">
+                  <h2 id="build" className="t-h4">
+                    {c.build}
+                  </h2>
+                  <ul className="mt-5 space-y-3 text-muted">
+                    {p.projects.map((x) => (
+                      <li key={x} className="flex gap-3">
+                        <span aria-hidden className="mt-3 h-px w-4 shrink-0 bg-current opacity-50" />
+                        {x}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
 
-          <Slab as="section" className="grid gap-12 sm:grid-cols-2">
-            <div>
-              <h2 className="mb-4 text-base font-medium">Software</h2>
-              <ul className="flex flex-wrap gap-2">{p.software.map((s) => <li key={s}><Badge className="px-4 py-2">{s}</Badge></li>)}</ul>
-            </div>
-            <div>
-              <h2 className="mb-4 text-base font-medium">You will build</h2>
-              <ul className="space-y-2 text-muted">{p.projects.map((x) => <li key={x}>{x}</li>)}</ul>
-            </div>
-          </Slab>
-
-          {known.length > 0 && (
-            <Slab as="section">
-              <h2 className="mb-4 text-base font-medium">Details</h2>
-              <dl className="grid gap-px border border-border bg-border sm:grid-cols-2">
-                {known.map(([k, v]) => (
-                  <div key={k} className="bg-bg p-5">
-                    <dt className="meta mb-1">{k}</dt>
-                    <dd>{v}</dd>
+              <section aria-labelledby="details">
+                <h2 id="details" className="t-h4">
+                  {c.details}
+                </h2>
+                <dl className="mt-5 border-t" style={rule}>
+                  <div className="grid gap-2 border-b py-4 sm:grid-cols-[160px_1fr]" style={rule}>
+                    <dt className="mono pt-1">{c.prerequisites}</dt>
+                    <dd className="text-muted">{p.prerequisites.join(", ")}</dd>
                   </div>
-                ))}
-              </dl>
-            </Slab>
-          )}
-        </div>
+                  <div className="grid gap-2 border-b py-4 sm:grid-cols-[160px_1fr]" style={rule}>
+                    <dt className="mono pt-1">{c.certificate}</dt>
+                    <dd className="text-muted">{p.certificate}</dd>
+                  </div>
+                </dl>
+              </section>
+            </div>
 
-        <div className="lg:sticky lg:top-28 lg:self-start">
-          <PriceBox slug={p.slug} priceFull={p.priceFull} />
+            <div className="col-span-12 lg:col-span-4 lg:col-start-9">
+              <PriceBox className="lg:sticky lg:top-24" slug={p.slug} priceFull={p.priceFull} nextCohort={p.nextCohortDate} seats={p.seats} schedule={p.schedule} />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <section className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10">
-        <h2 className="display-md mb-10">Related programs</h2>
-        <ul className="grid gap-5 md:grid-cols-3">
-          {related.map((r) => <li key={r.slug}><ProgramCard p={r} /></li>)}
-        </ul>
-        <p className="mt-10"><Link prefetch={false} href="/programs" className="text-accent-text underline underline-offset-8">All programs</Link></p>
+      <section className="theme-light section !pt-0" aria-labelledby="related">
+        <div className="wrap">
+          <div className="flex flex-wrap items-end justify-between gap-6 border-t pt-10" style={rule}>
+            <h2 id="related" className="t-h3">
+              {c.related}
+            </h2>
+            <Button href="/programs" variant="link">
+              {c.all}
+            </Button>
+          </div>
+          <ul className="mt-10 grid gap-6 md:grid-cols-3">
+            {related.map((r) => (
+              <li key={r.slug}>
+                <ProgramCard href={`/programs/${r.slug}`} sheet={sheetOf(r)} title={r.title} line={r.summary} level={r.level} software={r.software.slice(0, 3)} photo={cover(r.slug).photo} pos={cover(r.slug).pos} price={r.priceFull !== null ? money(r.priceFull) : undefined} />
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
     </>
   );

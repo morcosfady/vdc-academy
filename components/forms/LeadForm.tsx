@@ -4,6 +4,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Field } from "./Field";
 import { Turnstile } from "./Turnstile";
+import { Button } from "@/components/ui/Button";
 import { insertRow } from "@/lib/submit";
 import { content, shown } from "@/content/site";
 
@@ -34,24 +35,46 @@ export function LeadForm({ topic = "Notify me about the next cohort", button = "
     setState(r.ok ? "done" : r.reason === "disabled" ? "fallback" : "failed");
   }
 
-  if (state === "done") return <p role="status" className="text-lg">Thank you. We will be in touch soon. ✓</p>;
+  if (state === "done")
+    return (
+      <p role="status" className="text-lg text-text">
+        Thank you. We will be in touch soon.
+      </p>
+    );
   if (state === "fallback")
     return (
       <p role="status" className="text-muted">
-        Applications open soon. {email ? <>Email us at <a className="underline" href={`mailto:${email}`}>{email}</a>.</> : "Check back shortly."}
+        Applications open soon.{" "}
+        {email ? (
+          <>
+            Email us at{" "}
+            <a className="underline underline-offset-4" href={`mailto:${email}`}>
+              {email}
+            </a>
+            .
+          </>
+        ) : (
+          "Check back shortly."
+        )}
       </p>
     );
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-start">
+    <form onSubmit={submit} noValidate className="grid gap-x-4 gap-y-7 sm:grid-cols-[1fr_1fr_auto] sm:items-start">
       <Field label="Name" name="name" required autoComplete="name" error={errors.name} />
       <Field label="Email" name="email" type="email" required autoComplete="email" error={errors.email} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -start-[9999px] h-0 w-0 opacity-0" />
-      <button type="submit" disabled={state === "sending"} className="h-14 rounded-[10px] bg-cta px-7 text-[15px] font-medium text-cta-text hover:bg-cta-hover disabled:opacity-60">
+      <Button type="submit" disabled={state === "sending"} className="!h-14">
         {state === "sending" ? "Sending" : button}
-      </button>
-      <div className="sm:col-span-3"><Turnstile onToken={setToken} /></div>
-      {state === "failed" && <p role="alert" className="text-sm text-[#ff8a80] sm:col-span-3">We could not send that. Please try again.</p>}
+      </Button>
+      <div className="empty:hidden sm:col-span-3">
+        <Turnstile onToken={setToken} />
+      </div>
+      {state === "failed" && (
+        <p role="alert" className="text-[13px] text-err sm:col-span-3">
+          We could not send that. Please try again.
+        </p>
+      )}
     </form>
   );
 }

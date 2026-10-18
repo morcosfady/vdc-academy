@@ -1,49 +1,70 @@
 import type { Metadata } from "next";
 import { PageHero } from "@/components/ui/PageHero";
 import { Button } from "@/components/ui/Button";
-import { Slab } from "@/components/ui/Slab";
+import { Photo } from "@/components/ui/Photo";
+import { FactRow } from "@/components/ds/Sections";
+import { media } from "@/content/media";
+import { pages } from "@/content/copy-pages";
 import { site } from "@/config/site";
 
 export const metadata: Metadata = { title: "About", description: "VDC Academy is the training academy of Bay BIM Designs in Fort Worth, TX." };
 
-const values = [
-  { t: "Hands-on", d: "You learn by modeling, coordinating and fixing real problems, not by watching slides." },
-  { t: "Real files", d: "Practice projects are modeled after the work AE firms, contractors and technology teams do every day." },
-  { t: "Honest", d: "Clear programs, clear prices, clear discounts. No inflated promises." },
-];
+const c = pages.about;
+const rule = { borderColor: "var(--rule)" } as const;
 
 export default function AboutPage() {
   return (
     <>
-      <PageHero eyebrow="About" title={["Training from", "people who build", "models for a living."]} />
-      <section className="mx-auto grid max-w-[1280px] gap-16 px-5 pb-24 md:px-10 lg:grid-cols-2">
-        <Slab>
-          <p className="text-xl leading-relaxed">
-            VDC Academy is the training academy of {site.parent}, a BIM and VDC company in {site.city}. {site.parent} provides BIM modeling, coordination, clash detection and construction simulation to design and construction teams.
-          </p>
-        </Slab>
-        <Slab index={1}>
-          <p className="text-muted">
-            We started the academy to train the next group of BIM modelers, coordinators and VDC engineers with the same methods we use on projects. Fresh graduates get our biggest discount because the first step into the industry should be the easiest one to take.
-          </p>
-          <p className="mt-6"><a href={site.parentUrl} className="text-accent-text underline underline-offset-8">Visit {site.parent} <span aria-hidden>→</span></a></p>
-        </Slab>
+      <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} />
+
+      <section className="theme-light section !pt-12 lg:!pt-16">
+        <div className="wrap">
+          <div className="grid-12 items-start gap-y-12">
+            <figure className="col-span-12 lg:col-span-7">
+              <div className="aspect-[4/3] w-full overflow-hidden rounded-[12px] bg-paper-2">
+                <Photo photo={media.team.photo} alt={media.team.alt} className="parallax-y" />
+              </div>
+            </figure>
+            <div className="col-span-12 lg:col-span-4 lg:col-start-9">
+              {c.story.map((p) => (
+                <p key={p.slice(0, 20)} className="t-body mt-6 text-muted first:mt-0">
+                  {p}
+                </p>
+              ))}
+              <p className="mt-8">
+                <a href={site.parentUrl} className="ul-draw inline-flex items-center gap-2 pb-1 text-[15px] font-medium text-text hover:text-accent-text">
+                  {c.visit}
+                  <svg aria-hidden width="16" height="12" viewBox="0 0 16 12">
+                    <path d="M0 6h14M9 1l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                </a>
+              </p>
+            </div>
+          </div>
+          <FactRow className="rule-t mt-14 pt-8" items={c.facts} />
+        </div>
       </section>
 
-      <section className="mx-auto max-w-[1280px] px-5 pb-32 md:px-10">
-        <h2 className="label mb-6">What we stand for</h2>
-        <ul className="grid gap-px border border-border bg-border md:grid-cols-3">
-          {values.map((v, i) => (
-            <li key={v.t} className="bg-bg p-8">
-              <p className="label !text-accent-text">{String(i + 1).padStart(2, "0")}</p>
-              <p className="display-md mt-4 !text-2xl">{v.t}</p>
-              <p className="mt-3 text-muted">{v.d}</p>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-12 flex flex-wrap gap-x-8 gap-y-4">
-          <Button href="/apply" variant="glow">Apply now</Button>
-          <Button href="/programs" variant="link">See programs <span aria-hidden>→</span></Button>
+      <section className="theme-light section !pt-0" aria-labelledby="values">
+        <div className="wrap">
+          <h2 id="values" className="t-h3">
+            {c.values.title}
+          </h2>
+          <ol className="mt-10 grid gap-x-6 gap-y-8 border-t pt-8 md:grid-cols-3" style={rule}>
+            {c.values.items.map((v, i) => (
+              <li key={v.t}>
+                <p className="mono !text-accent-text">{String(i + 1).padStart(2, "0")}</p>
+                <h3 className="mt-4 !text-[1.25rem]">{v.t}</h3>
+                <p className="t-small mt-2 text-dim">{v.d}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-14 flex flex-col gap-5 sm:flex-row sm:items-center">
+            <Button href="/apply">{c.primary}</Button>
+            <Button href="/programs" variant="link">
+              {c.secondary}
+            </Button>
+          </div>
         </div>
       </section>
     </>

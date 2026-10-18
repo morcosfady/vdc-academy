@@ -1,46 +1,55 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { PageHero } from "@/components/ui/PageHero";
-import { Journey } from "@/components/home/Journey";
-import { journey } from "@/content/journey";
+import { Path } from "@/components/home/Path";
+import { ProgramCard } from "@/components/ds/Cards";
+import { SectionHeader } from "@/components/ds/Sections";
+import { sheetOf } from "@/components/programs/sheet";
+import { floors } from "@/content/floors";
 import { programs } from "@/content/programs";
+import { cover } from "@/content/media";
+import { pages } from "@/content/copy-pages";
+import { money } from "@/lib/pricing";
 
 export const metadata: Metadata = { title: "Learning Path", description: "From BIM trainee to VDC manager in five steps." };
 
-const stepPrograms = [
-  ["bim-fundamentals-revit"],
-  ["revit-architecture", "revit-structure", "revit-mep", "low-voltage-bim", "revit-family-creation"],
-  ["navisworks-clash-detection"],
-  ["4d-5d-simulation", "dynamo-for-revit"],
-  ["bim-management-iso-19650", "vdc-professional-bootcamp"],
-];
+const c = pages.path;
+const rule = { borderColor: "var(--rule)" } as const;
 
 export default function LearningPathPage() {
   return (
     <>
-      <PageHero eyebrow="Learning path" title={["From first model", "to VDC manager."]} subtitle="Five steps. Each one adds a floor." />
-      <Journey full />
-      <section className="mx-auto max-w-[1280px] px-5 py-24 md:px-10">
-        <h2 className="display-md mb-10">Programs on each step</h2>
-        <ol className="divide-y divide-border border-y border-border">
-          {journey.map((s, i) => (
-            <li key={s.title} className="grid gap-4 py-8 md:grid-cols-12">
-              <p className="label md:col-span-1">0{i + 1}</p>
-              <div className="md:col-span-4">
-                <p className="display-md !text-2xl">{s.title}</p>
-                <p className="mt-2 text-sm text-muted">You become: {s.role}</p>
-              </div>
-              <ul className="space-y-2 md:col-span-7">
-                {stepPrograms[i].map((slug) => {
-                  const p = programs.find((x) => x.slug === slug);
-                  return p ? (
-                    <li key={slug}><Link prefetch={false} href={`/programs/${slug}`} className="hover:text-accent-text">{p.title} <span aria-hidden>→</span></Link></li>
-                  ) : null;
-                })}
-              </ul>
-            </li>
-          ))}
-        </ol>
+      <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} />
+
+      {/* The home page section drawing. Its own header and its link back to this page are hidden here. */}
+      <div className="[&>section]:!pt-8 [&>section]:!pb-0 lg:[&>section]:!pt-10 [&_header]:hidden [&_a[href*=learning-path]]:hidden [&_.mt-16]:!mt-0">
+        <Path />
+      </div>
+
+      <section className="theme-light section" aria-labelledby="floors">
+        <div className="wrap">
+          <SectionHeader title={<span id="floors">{c.floors.title}</span>} lead={c.floors.lead} />
+          <ol className="mt-14">
+            {floors.map((f) => {
+              const list = f.slugs.map((s) => programs.find((p) => p.slug === s)!).filter(Boolean);
+              return (
+                <li key={f.n} className="grid-12 gap-y-6 border-t py-10" style={rule}>
+                  <div className="col-span-12 lg:col-span-3">
+                    <p className="mono">{c.floors.floor(f.n)}</p>
+                    <h3 className="mt-3 !text-[1.5rem]">{f.title}</h3>
+                    <p className="t-small mt-2 text-dim">{f.note}</p>
+                  </div>
+                  <ul className="col-span-12 grid gap-6 md:grid-cols-2 lg:col-span-9">
+                    {list.map((p) => (
+                      <li key={p.slug}>
+                        <ProgramCard href={`/programs/${p.slug}`} sheet={sheetOf(p)} title={p.title} line={p.summary} level={p.level} software={p.software.slice(0, 3)} photo={cover(p.slug).photo} pos={cover(p.slug).pos} price={p.priceFull !== null ? money(p.priceFull) : undefined} />
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </section>
     </>
   );
