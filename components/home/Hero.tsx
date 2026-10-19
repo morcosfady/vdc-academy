@@ -109,9 +109,8 @@ export function Hero() {
         <div className="grid-12 flex-1 items-center gap-y-12 py-12 lg:py-0">
           <div className="hero-copy col-span-12 lg:col-span-6">
             <SheetTag sheet={c.sheet} name={c.name} />
-            <h1 className="t-display mt-8 max-w-[13ch]" aria-label={c.headline.join(" ")}>
-              {c.headline[0]} <br className="hidden lg:block" />
-              {c.headline[1]}
+            <h1 className="t-display mt-8 max-w-[12ch]" aria-label={c.headline.join(" ")}>
+              {c.headline.join(" ")}
             </h1>
             <p className="t-lead mt-7 max-w-[30rem]">
               {c.lead}

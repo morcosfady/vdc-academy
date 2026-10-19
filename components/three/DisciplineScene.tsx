@@ -328,7 +328,7 @@ function Family() {
       <Dim a={[-1.2, 0.5, 0.5]} b={[1.2, 0.5, 0.5]} text="L = 1200" up={-0.5} />
       <Dim a={[1.2, 0.5, -0.3]} b={[1.2, 0.5, 0.3]} text="W = 600" up={-0.5} />
       <Tag text="H = 85" at={[-2.4, 1.3, 0.6]} from={[-1.2, 1.3, 0.3]} />
-      <Tag text="LF-01 · LIGHT FIXTURE" at={[1.5, 3.3, 0.7]} from={[1.2, 2.1, 0.3]} tone="blueprint" />
+      <Tag text="LF-01 · LIGHT FIXTURE" at={[1.6, 2.9, 0.8]} from={[1.2, 2.1, 0.3]} tone="blueprint" />
       <Tag text="TYPE: RECESSED" at={[-1.9, 2.6, 0.3]} />
     </>
   );
@@ -452,7 +452,7 @@ function Clash() {
           <StudyModel stateRef={state} />
         </group>
       </group>
-      <Tag text="CLASH #0147 · DUCT vs BEAM" at={[-0.6, 3.7, 2.4]} tone="clash" size={0.3} />
+      <Tag text="CLASH #0147 · DUCT vs BEAM" at={[0.6, 3.8, 2.4]} tone="clash" size={0.3} />
       <Tag text="RESOLVED ✓" at={[1.3, 1.7, 2.7]} tone="blueprint" size={0.3} />
     </>
   );
@@ -468,7 +468,7 @@ export const SCENES: Record<string, { el: () => React.ReactNode; cam: V3; look: 
   "revit-family-creation": { el: Family, cam: [4.6, 3.0, 5.6], look: [0, 1.4, 0], alt: "An exploded light fixture family with dimension strings and parameters" },
   "navisworks-clash-detection": { el: Clash, cam: [4.2, 3.4, 5.4], look: [0, 2.4, 0], alt: "Inside the structure at the clash: a duct meets a beam, a red ring marks it, a resolved tag beside it" },
   "4d-5d-simulation": { el: Sim, cam: [5.4, 3.6, 7.2], look: [0.2, 1.2, 0.6], alt: "The building half built beside a small schedule timeline" },
-  "dynamo-for-revit": { el: Dynamo, cam: [0.4, 2.2, 9.6], look: [-0.2, 1.3, 0], alt: "A node graph with wires feeding a facade whose panels rotate by a parameter" },
+  "dynamo-for-revit": { el: Dynamo, cam: [-0.4, 2.2, 10.2], look: [-0.9, 1.3, 0], alt: "A node graph with wires feeding a facade whose panels rotate by a parameter" },
   "bim-management-iso-19650": { el: Iso, cam: [4.6, 3.6, 7.0], look: [0.4, 1.6, 0], alt: "The study model beside a standards panel with CDE folders and status tags" },
 };
 
