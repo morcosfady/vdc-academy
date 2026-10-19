@@ -1,0 +1,7 @@
+# Supabase CLI config (only what this project needs). `supabase link --project-ref <ref>` fills project_id.
+project_id = "vdc-academy"
+
+# The notify function is called by Database Webhooks with "Authorization: Bearer <WEBHOOK_SECRET>",
+# not with a user JWT, so the gateway must not require one. The function checks the secret itself.
+[functions.notify]
+verify_jwt = false

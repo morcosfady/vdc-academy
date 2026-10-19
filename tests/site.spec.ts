@@ -64,8 +64,37 @@ test("apply: validation, fresh grad detection", async ({ page }) => {
 });
 
 test("apply without keys shows the honest fallback", async ({ page }) => {
+  // The full form is always visible; only the submit step says the truth when no backend is connected.
   await page.goto("apply/");
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("heading", { name: "Applications open soon." })).toHaveCount(0);
+  const next = () => page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel(/Full name/).fill("Test Student");
+  await page.getByLabel(/^Email/).fill("test@example.com");
+  await page.getByLabel(/Phone/).fill("+1 555 123 4567");
+  await page.getByLabel(/^Country/).fill("USA");
+  await page.getByLabel(/^City/).fill("Dallas");
+  await next();
+  await page.getByLabel(/Current status/).selectOption("Working professional");
+  await page.getByLabel(/^Degree/).selectOption("Civil engineering");
+  await page.getByLabel(/^University/).fill("UT Arlington");
+  await page.getByLabel(/Graduation year/).selectOption(String(new Date().getFullYear() - 6));
+  await next();
+  await page.getByLabel(/Years of experience/).selectOption("1 to 3 years");
+  await page.getByLabel(/Career goal/).selectOption("BIM Coordinator");
+  await next();
+  await page.locator('input[name="programs"]').first().check();
+  await page.getByLabel(/Preferred format/).selectOption("Hybrid");
+  await page.getByLabel(/Preferred schedule/).selectOption("Weekends");
+  await page.getByLabel(/Preferred start/).selectOption("Later");
+  await page.getByLabel(/Laptop that can run Revit/).selectOption("Not sure");
+  await next();
+  await page.locator('input[name="consentPrivacy"]').check();
+  await page.locator('input[name="consentContact"]').check();
+  await page.getByRole("button", { name: "Submit application" }).click();
   await expect(page.getByRole("heading", { name: "Applications open soon." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Notify me" })).toBeVisible();
 });
 
 test("explorer works without WebGL", async ({ browser }) => {
