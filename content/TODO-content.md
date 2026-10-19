@@ -28,3 +28,18 @@ Nothing here shows as a placeholder on the site. Items marked DRAFT are shown wi
 - [ ] Licensed Eurostile Extended font files for the logo (Michroma is the stand-in, used in the logo only)
 - [ ] Confirm trademark use for software names (shown as text chips, no logos)
 - [ ] Supabase, Resend, Turnstile keys (see docs/HANDOFF.md)
+
+## From v6
+- [ ] Office hours (`content.contact.hours`), shown in the contact title block when set
+- [ ] Booking link for a 15-minute advisor call (`content.contact.bookingUrl`), shows the "Book a call" button on /contact
+- [ ] Confirm the response time line "Within two working days" (`content.contact.responseTime`, approved by the studio for now)
+- [ ] Email, phone and WhatsApp (`content.contact`): until set, /contact shows only the location, coordinates, response time and the map
+- [ ] Installment options per cohort (the pricing FAQ says "We confirm payment options in your acceptance message")
+- [ ] Refund terms (the pricing FAQ says "We confirm refund terms in your acceptance message")
+- [ ] Confirm the three plan "best for" lines and the "Prices are being finalized" note on /pricing, then set real prices in `content/plans.ts`
+- [ ] Confirm the team training process, coverage topics and formats on /for-companies (on site in DFW, live online, hybrid)
+- [ ] Confirm the "Your first 90 days" typical path on /fresh-graduates (Week 1 Revit basics, Week 4 first coordinated model, Week 8 clash meeting, Week 12 portfolio review)
+- [ ] Confirm the "From the studio to the classroom" client types and descriptions on /about (AE design firms, GCs and subcontractors, owners)
+- [ ] Instructor names, roles and photos (`content.instructors`); until then /instructors shows the role profile and the teach-with-us form
+- [ ] First cohort projects (`content.studentWork`); until then /student-work shows four example projects from the program covers
+- [ ] FAQ: confirm the new answers in `content/faqs.ts` (software list, laptop check, group discount approval, on-site training)

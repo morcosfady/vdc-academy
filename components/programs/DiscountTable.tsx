@@ -13,17 +13,39 @@ export function discountRows(autoLabel: string): DiscountRow[] {
   ];
 }
 
-// Hairline table on wide screens, a stacked list on phones. The fresh graduate row carries the brass percent.
-export function DiscountTable({ rows, cols, title, className }: { rows: DiscountRow[]; cols: { label: string; who: string; proof: string; off: string }; title: string; className?: string }) {
-  const pct = (r: DiscountRow) => <span className={cn("font-semibold tabular-nums", r.key === "freshGrad" ? "text-warm" : "text-text")}>{r.percent}%</span>;
+// A drawing schedule: mono column heads, hairlines, a stacked list on phones. The fresh graduate row is the offer,
+// so it carries a brass rule on its left edge and a brass percentage. `sheet` adds a schedule number above the table.
+export function DiscountTable({
+  rows,
+  cols,
+  title,
+  sheet,
+  className,
+}: {
+  rows: DiscountRow[];
+  cols: { label: string; who: string; proof: string; off: string };
+  title: string;
+  sheet?: { sheet: string; name: string };
+  className?: string;
+}) {
+  const hot = (r: DiscountRow) => r.key === "freshGrad";
+  const pct = (r: DiscountRow) => <span className={cn("font-semibold tabular-nums", hot(r) ? "text-warm" : "text-text")}>{r.percent}%</span>;
+  const edge = (r: DiscountRow) => ({ ...rule, borderLeftColor: hot(r) ? "var(--brass)" : "transparent" });
   return (
     <div className={className}>
+      {sheet && (
+        <div className="mb-4 flex items-center gap-4">
+          <span className="mono !text-text">{sheet.sheet}</span>
+          <span aria-hidden className="h-px w-10" style={{ background: "var(--rule)" }} />
+          <span className="mono">{sheet.name}</span>
+        </div>
+      )}
       <table className="hidden w-full border-collapse text-[15px] md:table">
         <caption className="sr-only">{title}</caption>
         <thead>
           <tr>
-            {[cols.label, cols.who, cols.proof, cols.off].map((h) => (
-              <th key={h} scope="col" className="mono border-b pb-3 pe-4 text-start font-normal last:pe-0 last:text-end" style={rule}>
+            {[cols.label, cols.who, cols.proof, cols.off].map((h, i) => (
+              <th key={h} scope="col" className={cn("mono border-b pb-3 pe-4 text-start font-normal last:pe-0 last:text-end", i === 0 && "ps-4")} style={rule}>
                 {h}
               </th>
             ))}
@@ -31,9 +53,10 @@ export function DiscountTable({ rows, cols, title, className }: { rows: Discount
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.key}>
-              <th scope="row" className="border-b py-4 pe-4 text-start font-medium text-text" style={rule}>
+            <tr key={r.key} className={hot(r) ? "bg-[rgba(184,146,90,0.06)]" : undefined}>
+              <th scope="row" className="border-b border-s-[3px] py-4 pe-4 ps-4 text-start font-medium text-text" style={edge(r)}>
                 {r.label}
+                {hot(r) && <span className="mono ms-3 !text-warm">Offer</span>}
               </th>
               <td className="border-b py-4 pe-4 text-muted" style={rule}>
                 {r.who}
@@ -41,7 +64,7 @@ export function DiscountTable({ rows, cols, title, className }: { rows: Discount
               <td className="border-b py-4 pe-4 text-muted" style={rule}>
                 {r.proof}
               </td>
-              <td className="border-b py-4 text-end" style={rule}>
+              <td className="border-b py-4 pe-2 text-end" style={rule}>
                 {pct(r)}
               </td>
             </tr>
@@ -50,9 +73,12 @@ export function DiscountTable({ rows, cols, title, className }: { rows: Discount
       </table>
       <ul className="border-t md:hidden" style={rule}>
         {rows.map((r) => (
-          <li key={r.key} className="border-b py-5" style={rule}>
-            <div className="flex items-baseline justify-between gap-4">
-              <p className="font-medium text-text">{r.label}</p>
+          <li key={r.key} className={cn("border-b border-s-[3px] py-5 ps-4", hot(r) && "bg-[rgba(184,146,90,0.06)]")} style={edge(r)}>
+            <div className="flex items-baseline justify-between gap-4 pe-2">
+              <p className="font-medium text-text">
+                {r.label}
+                {hot(r) && <span className="mono ms-3 !text-warm">Offer</span>}
+              </p>
               {pct(r)}
             </div>
             <dl className="mt-3 grid grid-cols-[64px_1fr] gap-x-4 gap-y-1.5 text-[15px]">

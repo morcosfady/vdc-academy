@@ -15,6 +15,9 @@ export const content = {
     phone: f<string>(),
     whatsapp: f<string>(), // digits with country code
     address: f<string>("Fort Worth, TX", true),
+    hours: f<string>(), // for example "Mon to Fri, 9 to 5 CT"
+    responseTime: f<string>("Within two working days", true),
+    bookingUrl: f<string>(), // a scheduling link; shows "Book a 15-minute advisor call" on /contact when set
   },
   social: { linkedin: f<string>() },
   nextCohort: f<string>("January 12, 2027", true), // DRAFT, owner to confirm
