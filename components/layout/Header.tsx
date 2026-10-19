@@ -30,7 +30,7 @@ export function Header() {
         style={scrolled ? { borderColor: "var(--rule)" } : undefined}
       >
         <div className="wrap flex h-full items-center justify-between gap-6">
-          <Link prefetch={false} href="/" aria-label="VDC Academy by Bay BIM Designs, home" className="text-ink">
+          <Link prefetch={false} href="/" aria-label="VDC Academy by Bay BIM Designs" className="text-ink">
             <Logo />
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-9 lg:flex">
