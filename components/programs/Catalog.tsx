@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { programs } from "@/content/programs";
+import { programs, pricesConfirmed } from "@/content/programs";
+import { coverAlt } from "@/assets/images/covers";
+import { site } from "@/config/site";
+import Link from "next/link";
 import { programMeta } from "@/content/floors";
 import { cover } from "@/content/media";
 import { pages } from "@/content/copy-pages";
@@ -16,6 +19,7 @@ import { sheetOf } from "./sheet";
 import { cn } from "@/lib/utils";
 
 const c = pages.programs;
+const metaOf = (p: (typeof programs)[number]) => [p.durationWeeks !== null ? `${p.durationWeeks} weeks` : null, p.format].filter(Boolean).join(" · ") || p.level;
 const levels = ["Beginner", "Intermediate", "Advanced"] as const;
 const disciplines = [...new Set(Object.values(programMeta).flatMap((m) => m.disciplines))];
 const software = [...new Set(programs.flatMap((p) => p.software))];
@@ -72,6 +76,15 @@ export function Catalog() {
 
   return (
     <div>
+      <p className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 border-s-2 ps-4 text-[15px] text-text" style={{ borderColor: "var(--brass)" }}>
+        <span>
+          Fresh graduates save up to <span className="font-medium text-warm">{site.freshGradMaxDiscount}%</span> on every program.
+        </span>
+        <Link prefetch={false} href="/fresh-graduates" className="ul-draw pb-0.5 font-medium hover:text-accent-text">
+          See the offer →
+        </Link>
+      </p>
+      {!pricesConfirmed && <p className="mono mb-8">Prices are being finalized. Apply and we send the full price list first.</p>}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <Tabs className="flex-1" label={c.filters.level} value={level} onChange={setLevel} tabs={[c.filters.all, ...levels].map((l) => ({ id: l, label: l }))} />
         <Button variant="secondary" className="!h-11 !px-5" onClick={() => setDrawer(true)} aria-haspopup="dialog" aria-expanded={drawer}>
@@ -113,7 +126,20 @@ export function Catalog() {
       </div>
 
       {list.length === 0 ? (
-        <p className="t-lead mt-10">{c.empty}</p>
+        <div className="mt-10 flex flex-col items-start gap-6 border-t pt-10 sm:flex-row sm:items-center" style={{ borderColor: "var(--rule)" }}>
+          <svg aria-hidden width="96" height="72" viewBox="0 0 96 72" className="shrink-0 text-slate">
+            <path d="M8 60h80M16 60V28h20v32M44 60V16h24v44M76 60V36h12v24" fill="none" stroke="currentColor" strokeWidth="1.25" />
+            <path d="M20 36h12M20 44h12M48 24h16M48 32h16M48 40h16" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+            <circle cx="84" cy="14" r="7" fill="none" stroke="var(--brass)" strokeWidth="1.5" />
+            <path d="M81 14h6M84 11v6" stroke="var(--brass)" strokeWidth="1.5" />
+          </svg>
+          <div>
+            <p className="t-lead">{c.empty}</p>
+            <Button variant="link" className="mt-3" onClick={clear}>
+              {c.clear}
+            </Button>
+          </div>
+        </div>
       ) : (
         <ul key={[level, disc, soft, format].join("|")} className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {list.map((p, i) => {
@@ -121,7 +147,7 @@ export function Catalog() {
             const id = `cmp-${p.slug}`;
             const feat = p.featured && list.length > 1;
             return (
-              <li key={p.slug} className={cn("fan-in", feat && "md:col-span-2")} style={{ "--i": i } as React.CSSProperties}>
+              <li key={p.slug} className={cn(i > 2 && "fan-in", feat && "md:col-span-2")} style={{ "--i": i - 3 } as React.CSSProperties}>
                 <ProgramCard
                   href={`/programs/${p.slug}`}
                   sheet={sheetOf(p)}
@@ -132,6 +158,9 @@ export function Catalog() {
                   photo={cover(p.slug).photo}
                   pos={cover(p.slug).pos}
                   price={p.priceFull !== null ? money(p.priceFull) : undefined}
+                  meta={metaOf(p)}
+                  alt={coverAlt[p.slug]}
+                  facts={feat ? ["All core tracks", "Capstone project", "Career support"] : undefined}
                   featured={feat}
                   footer={
                     <label htmlFor={id} className={cn("inline-flex min-h-9 cursor-pointer items-center gap-3 text-[15px]", !on && full ? "cursor-not-allowed text-dim" : "text-text")}>

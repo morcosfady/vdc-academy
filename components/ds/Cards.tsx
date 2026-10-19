@@ -20,6 +20,9 @@ export function ProgramCard({
   photo,
   pos,
   price,
+  meta,
+  facts,
+  alt,
   featured,
   footer,
   className,
@@ -32,7 +35,10 @@ export function ProgramCard({
   software: string[];
   photo: PhotoData;
   pos?: string;
-  price?: string; // a confirmed price; absent means "Price on request"
+  price?: string; // a confirmed price; absent shows `meta` instead
+  meta?: string; // duration and format if set, else the level
+  facts?: string[]; // three short facts inside the featured card
+  alt?: string;
   featured?: boolean;
   footer?: React.ReactNode;
   className?: string;
@@ -41,7 +47,7 @@ export function ProgramCard({
     <article className={cn("group card flex h-full flex-col overflow-hidden transition-[border-color] duration-300 focus-within:border-accent hover:border-accent", className)}>
       <Link prefetch={false} href={href} className={cn("flex flex-1 flex-col outline-none", featured && "md:flex-row")}>
         <div className={cn("relative overflow-hidden", featured ? "aspect-[16/10] md:aspect-auto md:w-1/2" : "aspect-[16/10]")}>
-          <Photo photo={photo} className="transition-transform duration-[900ms] ease-[cubic-bezier(.2,.7,.1,1)] group-hover:scale-[1.03]" style={pos ? { objectPosition: pos } : undefined} />
+          <Photo photo={photo} alt={alt ?? ""} sizes={featured ? "(min-width: 1024px) 44vw, 100vw" : "(min-width: 1024px) 30vw, (min-width: 768px) 50vw, 100vw"} className="transition-transform duration-[900ms] ease-[cubic-bezier(.2,.7,.1,1)] group-hover:scale-[1.03]" style={pos ? { objectPosition: pos } : undefined} />
         </div>
         <div className={cn("flex flex-1 flex-col p-6 pb-0 md:p-7 md:pb-0", featured && "md:w-1/2 md:p-9 md:pb-0")}>
           <div className="flex items-center justify-between">
@@ -55,6 +61,16 @@ export function ProgramCard({
               <Software key={s}>{s}</Software>
             ))}
           </div>
+          {facts && facts.length > 0 && (
+            <ul className="mt-5 grid gap-2 border-t pt-4 sm:grid-cols-3" style={{ borderColor: "var(--rule)" }}>
+              {facts.map((f) => (
+                <li key={f} className="t-small flex items-start gap-2 text-muted">
+                  <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          )}
           <span className="mt-auto flex items-center justify-between gap-3 py-6 text-accent-text">
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {price ? (
@@ -63,10 +79,10 @@ export function ProgramCard({
                   <span className="mono !text-warm">−{discounts.freshGrad.percent}% for fresh grads</span>
                 </>
               ) : (
-                <span className="mono">Price on request</span>
+                <span className="mono">{meta ?? level}</span>
               )}
             </span>
-            <svg aria-hidden width="22" height="14" viewBox="0 0 22 14" className="shrink-0 transition-transform duration-200 group-hover:translate-x-1">
+            <svg aria-hidden width="22" height="14" viewBox="0 0 22 14" className="shrink-0 transition-transform duration-200 group-hover:translate-x-1 group-focus-within:translate-x-1">
               <path d="M0 7h20M14 1l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.5" />
             </svg>
           </span>

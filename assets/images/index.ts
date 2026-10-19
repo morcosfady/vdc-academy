@@ -28,7 +28,7 @@ import modelPaperWebp from "./model-paper.webp";
 import modelNightAvif from "./model-night.avif";
 import modelNightWebp from "./model-night.webp";
 
-export type Photo = { avif: string; webp: string; width: number; height: number };
+export type Photo = { avif: string; webp: string; width: number; height: number; avifSm?: string; webpSm?: string };
 const p = (a: { src: string; width: number; height: number }, w: { src: string }): Photo => ({ avif: a.src, webp: w.src, width: a.width, height: a.height });
 
 export const photos = {

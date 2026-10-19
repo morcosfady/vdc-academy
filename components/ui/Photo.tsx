@@ -8,16 +8,19 @@ export function Photo({
   className,
   priority = false,
   style,
+  sizes = "(min-width: 1024px) 33vw, 100vw",
 }: {
   photo: PhotoData;
   alt?: string;
   className?: string;
   priority?: boolean;
   style?: React.CSSProperties;
+  sizes?: string;
 }) {
   return (
     <picture>
-      <source srcSet={photo.avif} type="image/avif" />
+      <source srcSet={photo.avifSm ? `${photo.avifSm} ${Math.round(photo.width / 2)}w, ${photo.avif} ${photo.width}w` : photo.avif} sizes={photo.avifSm ? sizes : undefined} type="image/avif" />
+      {photo.webpSm && <source srcSet={`${photo.webpSm} ${Math.round(photo.width / 2)}w, ${photo.webp} ${photo.width}w`} sizes={sizes} type="image/webp" />}
       <img
         src={photo.webp}
         alt={alt}

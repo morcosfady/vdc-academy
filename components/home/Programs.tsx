@@ -4,6 +4,7 @@ import { useState } from "react";
 import { programs } from "@/content/programs";
 import { programMeta } from "@/content/floors";
 import { cover } from "@/content/media";
+import { coverAlt } from "@/assets/images/covers";
 import { copy } from "@/content/copy";
 import { site } from "@/config/site";
 import { money } from "@/lib/pricing";
@@ -49,6 +50,8 @@ export function Programs() {
                   software={p.software.slice(0, 3)}
                   photo={cover(p.slug).photo}
                   pos={cover(p.slug).pos}
+                  alt={coverAlt[p.slug]}
+                  meta={[p.durationWeeks !== null ? `${p.durationWeeks} weeks` : null, p.format].filter(Boolean).join(" · ") || p.level}
                   price={p.priceFull !== null ? money(p.priceFull) : undefined}
                   featured={!!feat}
                 />

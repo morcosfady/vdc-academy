@@ -10,7 +10,6 @@ import { newState } from "@/lib/modelState";
 import { loadGsap } from "@/lib/gsap";
 import { afterInteraction } from "@/lib/interaction";
 import { Button } from "@/components/ui/Button";
-import { RiseLines } from "@/components/ui/RiseLines";
 import { DimensionString, SheetTag } from "@/components/ds/Devices";
 import { FactRow } from "@/components/ds/Sections";
 import { useReduceMotion } from "@/hooks/useReduceMotion";
@@ -104,21 +103,20 @@ export function Hero() {
     };
   }, [reduce]);
 
-  const d = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
-
   return (
     <section ref={section} id="hero" className="theme-light hero relative overflow-hidden" style={{ "--p": 0 } as React.CSSProperties}>
       <div className="wrap relative flex min-h-[100svh] flex-col pt-[72px] lg:min-h-[max(100svh,720px)]">
         <div className="grid-12 flex-1 items-center gap-y-12 py-12 lg:py-0">
           <div className="hero-copy col-span-12 lg:col-span-6">
-            <SheetTag sheet={c.sheet} name={c.name} className="fade-up" />
+            <SheetTag sheet={c.sheet} name={c.name} />
             <h1 className="t-display mt-8 max-w-[13ch]" aria-label={c.headline.join(" ")}>
-              <RiseLines lines={c.headline} delay={0.15} />
+              {c.headline[0]} <br className="hidden lg:block" />
+              {c.headline[1]}
             </h1>
-            <p className="t-lead fade-up mt-7 max-w-[30rem]" style={d(0.75)}>
+            <p className="t-lead mt-7 max-w-[30rem]">
               {c.lead}
             </p>
-            <div className="fade-up mt-9 flex flex-col gap-5 sm:flex-row sm:items-center" style={d(0.9)}>
+            <div className="mt-9 flex flex-col gap-5 sm:flex-row sm:items-center">
               <Button href="/apply" className="sm:w-auto">
                 {c.primary}
               </Button>
@@ -127,7 +125,7 @@ export function Hero() {
               </Button>
             </div>
             <FactRow
-              className="fade-up mt-12"
+              className="mt-12"
               items={[
                 c.facts.programs(programs.length),
                 c.facts.live,
@@ -140,7 +138,7 @@ export function Hero() {
 
           <div className="col-span-12 lg:col-span-6">
             {/* The model sits in a frame with the grid bubbles on its edges: A, B, C across the top, 1, 2, 3 down the side. The frame keeps every bubble inside the column. */}
-            <div className="model-in relative mx-auto w-[72%] sm:w-[60%] lg:w-full lg:pe-12 lg:pt-12">
+            <div className="relative mx-auto w-[72%] sm:w-[60%] lg:w-full lg:pe-12 lg:pt-12">
               <div role="group" aria-label="Grid lines" className="absolute inset-x-[10%] top-0 hidden justify-between lg:flex lg:pe-12">
                 {["A", "B", "C"].map((l, i) => (
                   <Bubble
@@ -169,7 +167,7 @@ export function Hero() {
               </div>
               <SceneSlot stateRef={state} autoBuild buildSeconds={1.6} rotateSpeed={0.105} interactive tilt priority label={c.modelAlt} className="aspect-square lg:aspect-[5/4]" />
             </div>
-            <DimensionString label="7 storeys · LOD 300" className="fade-up mx-auto mt-5 w-[72%] sm:w-[60%] lg:w-full lg:pe-12" />
+            <DimensionString label="7 storeys · LOD 300" className="mx-auto mt-5 w-[72%] sm:w-[60%] lg:w-full lg:pe-12" />
           </div>
         </div>
 

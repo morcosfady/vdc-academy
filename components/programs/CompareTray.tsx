@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { programs } from "@/content/programs";
+import { programMeta } from "@/content/floors";
 import { pages } from "@/content/copy-pages";
 import { money } from "@/lib/pricing";
 import { Software } from "@/components/ds/Chips";
@@ -21,6 +22,7 @@ export function CompareTray({ slugs, onRemove, onClear }: { slugs: string[]; onR
     { k: c.rows.duration, v: (p) => (p.durationWeeks !== null ? pages.program.facts.weeks(p.durationWeeks) : c.onRequest) },
     { k: c.rows.hours, v: (p) => (p.hours !== null ? String(p.hours) : c.onRequest) },
     { k: c.rows.level, v: (p) => p.level },
+    { k: "Discipline", v: (p) => (programMeta[p.slug]?.disciplines ?? []).join(", ") },
     { k: c.rows.format, v: (p) => p.format ?? c.onRequest },
     {
       k: c.rows.software,
@@ -103,7 +105,7 @@ export function CompareTray({ slugs, onRemove, onClear }: { slugs: string[]; onR
               {c.clear}
             </Button>
             <Button className="!h-11 !px-5" onClick={() => setOpen((o) => !o)} aria-expanded={open} disabled={list.length < 2}>
-              {open ? c.close : c.open}
+              {open ? c.close : `${c.open} (${list.length})`}
             </Button>
           </div>
         </div>
