@@ -16,10 +16,11 @@ import { DimensionString, SheetTag } from "@/components/ds/Devices";
 import { programs } from "@/content/programs";
 import { content, shown } from "@/content/site";
 import { pages } from "@/content/copy-pages";
+import { applyCopy } from "@/content/copy-apply";
 import { discounts } from "@/config/discounts";
 import { calcPrice, money } from "@/lib/pricing";
 import { newState } from "@/lib/modelState";
-import { insertRow, submissionsEnabled, uploadFile } from "@/lib/submit";
+import { canSubmit, insertRow, uploadFile } from "@/lib/submit";
 import { readUtm } from "@/lib/utm";
 import {
   CV_TYPES, LEVELS, PROOF_TYPES, SKILLS, defaultValues, fullSchema, isFreshGrad, options, stepFields,
@@ -55,9 +56,9 @@ export function ApplyFlow() {
   const [submitError, setSubmitError] = useState("");
   const [draft, setDraft] = useState<{ values: Partial<ApplyValues>; step: number } | null>(null);
   const [fallback, setFallback] = useState(false);
+  const honeypot = useRef<HTMLInputElement>(null);
   const state = useRef(newState({ lod: 300, sim: 1 / 6, mood: 0 }));
   const email = shown(content.contact.email);
-  const preview = sp.get("preview") === "1";
 
   const form = useForm<ApplyValues>({
     resolver: zodResolver(fullSchema),
@@ -106,17 +107,30 @@ export function ApplyFlow() {
     }
   }, [step, trigger]);
 
+  function finish(d: ApplyValues) {
+    state.current.sim = 1;
+    try {
+      localStorage.removeItem(DRAFT);
+      sessionStorage.setItem("vdc-applied", JSON.stringify({ name: d.fullName.split(" ")[0], program: chosen[0]?.title ?? "", discount: discountType }));
+    } catch {}
+    router.push("/apply/success/");
+  }
+
   async function submit() {
     const ok = await trigger();
     if (!ok) return;
     setSending(true);
     setSubmitError("");
-    if (!submissionsEnabled) {
+    const d = getValues();
+    // Honeypot: a hidden field only bots fill. Nothing is sent; the bot sees the success page anyway.
+    if (honeypot.current?.value) return finish(d);
+    // Not connected yet (no keys in this build): be honest instead of failing silently.
+    if (!canSubmit()) {
       setSending(false);
       setFallback(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    const d = getValues();
     const [proofPath, cvPath] = await Promise.all([proof ? uploadFile(proof, "proof") : null, cv ? uploadFile(cv, "cv") : null]);
     if ((proof && !proofPath) || (cv && !cvPath)) {
       setSending(false);
@@ -167,48 +181,7 @@ export function ApplyFlow() {
     if (d.newsletter) await insertRow("newsletter_subscribers", { email: d.email, name: d.fullName });
     setSending(false);
     if (!r.ok) return setSubmitError(r.message);
-    state.current.sim = 1;
-    try {
-      localStorage.removeItem(DRAFT);
-      sessionStorage.setItem("vdc-applied", JSON.stringify({ name: d.fullName.split(" ")[0], program: chosen[0]?.title ?? "", discount: discountType }));
-    } catch {}
-    router.push("/apply/success/");
-  }
-
-  // Not connected yet: be honest instead of failing silently.
-  if ((!submissionsEnabled && !preview) || fallback) {
-    return (
-      <section className="theme-light pt-[72px]">
-        <div className="wrap">
-          <div className="max-w-2xl pb-24 pt-16 lg:pb-32 lg:pt-28">
-            <SheetTag sheet={c.sheet} name={c.name} />
-            <h1 className="t-h1 mt-8">{c.fallback.title}</h1>
-            <p className="t-lead mt-6">
-              {c.fallback.text}
-              {email ? (
-                <>
-                  , or write to{" "}
-                  <a className="underline underline-offset-4" href={`mailto:${email}`}>
-                    {email}
-                  </a>
-                </>
-              ) : (
-                ""
-              )}
-              .
-            </p>
-            <div className="mt-10">
-              <LeadForm topic={c.fallback.topic} button={c.fallback.button} />
-            </div>
-            <div className="mt-12">
-              <Button href="/programs" variant="link">
-                {c.fallback.explore}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
+    finish(d);
   }
 
   const e = (k: keyof ApplyValues) => (errors[k]?.message as string | undefined);
@@ -217,6 +190,38 @@ export function ApplyFlow() {
     <section className="theme-light pt-[72px]">
       <div className="wrap">
         <div className="grid-12 gap-y-12 pb-24 pt-14 lg:pb-32 lg:pt-20">
+          {fallback ? (
+            // Submit pressed without a backend: say so plainly and take an email instead. Nothing was saved.
+            <div className="col-span-12 lg:col-span-7">
+              <SheetTag sheet={c.sheet} name={c.name} />
+              <h1 className="t-h1 mt-8">{applyCopy.fallback.title}</h1>
+              <p className="t-lead mt-6" role="status">
+                {applyCopy.fallback.lead}
+                {email ? (
+                  <>
+                    {" "}
+                    You can also write to{" "}
+                    <a className="underline underline-offset-4" href={`mailto:${email}`}>
+                      {email}
+                    </a>
+                    .
+                  </>
+                ) : null}
+              </p>
+              <p className="t-small mt-4 text-dim">{applyCopy.fallback.note}</p>
+              <div className="mt-10">
+                <LeadForm topic={c.fallback.topic} button={c.fallback.button} />
+              </div>
+              <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4">
+                <button type="button" onClick={() => setFallback(false)} className="mono ul-draw min-h-11 hover:!text-text">
+                  {applyCopy.fallback.back}
+                </button>
+                <Button href="/programs" variant="link">
+                  {c.fallback.explore}
+                </Button>
+              </div>
+            </div>
+          ) : (
           <div className="col-span-12 lg:col-span-7">
             <SheetTag sheet={c.sheet} name={c.name} />
             <Stepper className="mt-8" step={step + 1} total={STEPS.length} labels={STEPS} />
@@ -452,7 +457,7 @@ export function ApplyFlow() {
                         )}
                         <Check label="Send me news about new cohorts (optional)." {...register("newsletter")} />
                       </div>
-                      <input type="text" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -start-[9999px] h-0 w-0 opacity-0" />
+                      <input ref={honeypot} type="text" name={applyCopy.honeypot} tabIndex={-1} autoComplete="off" aria-hidden className="absolute -start-[9999px] h-0 w-0 opacity-0" />
                       <Turnstile onToken={setToken} />
                       {submitError && (
                         <p role="alert" className="text-[13px] text-err">
@@ -477,6 +482,7 @@ export function ApplyFlow() {
               </div>
             </form>
           </div>
+          )}
 
           <aside className="relative hidden lg:col-span-4 lg:col-start-9 lg:block" aria-hidden>
             <div className="sticky top-24">
