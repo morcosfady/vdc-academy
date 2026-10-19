@@ -66,10 +66,10 @@ export default function ContactPage() {
                 ))}
               </dl>
 
-              <figure className="mt-6 rounded-[12px] border p-3" style={rule}>
+              <div className="mt-6 rounded-[12px] border p-3" style={rule}>
                 <Map />
-                <figcaption className="mono mt-2 px-1">{c.mapCaption}</figcaption>
-              </figure>
+                <p className="mono mt-2 px-1">{c.mapCaption}</p>
+              </div>
 
               {booking && (
                 <div className="mt-8 flex flex-col gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between" style={rule}>
