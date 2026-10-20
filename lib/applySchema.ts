@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { CurrentStatus, Profile } from "./db";
 
 export const SKILLS = ["Revit", "AutoCAD", "Navisworks", "Dynamo", "ACC / BIM 360", "Bluebeam"] as const;
 export const LEVELS = ["None", "Beginner", "Intermediate", "Advanced"] as const;
@@ -93,6 +94,153 @@ export function isFreshGrad(gradYear: string, now = new Date()) {
   return months <= 24 && months >= -12;
 }
 
+// Documents go to the private `documents` bucket, which accepts PDF, JPG and PNG up to 5 MB (proof and CV alike).
 export const MAX_FILE = 5 * 1024 * 1024;
 export const PROOF_TYPES = ["application/pdf", "image/jpeg", "image/png"];
-export const CV_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+export const CV_TYPES = PROOF_TYPES;
+export const FILE_EXT: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
+
+// ---- Account mapping. The form keeps its labels; profiles.current_status is an enum checked by the database.
+export const STATUS_ENUM: Record<string, CurrentStatus> = {
+  "Fresh graduate": "fresh_grad",
+  "Current student": "student",
+  "Working professional": "professional",
+  "Career changer": "career_changer",
+  Other: "other",
+};
+export const statusToEnum = (label: string | null | undefined): CurrentStatus | null => (label ? STATUS_ENUM[label] ?? null : null);
+export const enumToStatus = (e: string | null | undefined): string => Object.entries(STATUS_ENUM).find(([, v]) => v === e)?.[0] ?? "";
+
+const str = (x: unknown) => (typeof x === "string" ? x : "");
+
+// Steps 1 and 2 prefilled from the profile (and the account email). Empty profile fields leave the form untouched.
+export function valuesFromProfile(p: Profile | null | undefined, email?: string | null): Partial<ApplyValues> {
+  const out: Partial<ApplyValues> = {};
+  if (email) out.email = email;
+  if (!p) return out;
+  if (p.full_name) out.fullName = p.full_name;
+  if (p.phone) out.phone = p.phone;
+  if (p.whatsapp && p.whatsapp !== p.phone) {
+    out.whatsapp = p.whatsapp;
+    out.whatsappSame = false;
+  }
+  if (p.country) out.country = p.country;
+  if (p.city) out.city = p.city;
+  if (p.age_range) out.ageRange = p.age_range;
+  if (p.language) out.language = p.language;
+  if (p.current_status) out.currentStatus = enumToStatus(p.current_status);
+  if (p.degree) out.degree = p.degree;
+  if (p.university) out.university = p.university;
+  if (p.graduation_year) out.gradYear = String(p.graduation_year);
+  if (p.linkedin_url) out.linkedin = p.linkedin_url;
+  if (p.portfolio_url) out.portfolio = p.portfolio_url;
+  return out;
+}
+
+// What the apply form writes back to profiles: only filled fields, never `role`, never the email (auth owns it).
+export function profilePatch(v: Partial<ApplyValues>): Partial<Profile> {
+  const out: Partial<Profile> = {};
+  const put = <K extends keyof Profile>(k: K, val: Profile[K] | "" | undefined) => {
+    if (val !== "" && val !== undefined && val !== null) out[k] = val;
+  };
+  put("full_name", v.fullName?.trim());
+  put("phone", v.phone?.trim());
+  put("whatsapp", v.whatsappSame ? v.phone?.trim() : v.whatsapp?.trim());
+  put("country", v.country?.trim());
+  put("city", v.city?.trim());
+  put("age_range", v.ageRange);
+  put("language", v.language);
+  put("current_status", statusToEnum(v.currentStatus) ?? undefined);
+  put("degree", v.degree);
+  put("university", v.university?.trim());
+  put("graduation_year", /^\d{4}$/.test(v.gradYear ?? "") ? Number(v.gradYear) : undefined);
+  put("linkedin_url", v.linkedin?.trim());
+  put("portfolio_url", v.portfolio?.trim());
+  return out;
+}
+
+export type ApplicationRow = Record<string, unknown>;
+
+// Form values to an applications row (draft or submitted). Empty strings become null so drafts stay clean.
+export function rowFromValues(v: Partial<ApplyValues>): ApplicationRow {
+  const n = (x: string | undefined) => (x && x.trim() ? x.trim() : null);
+  return {
+    full_name: n(v.fullName),
+    email: n(v.email),
+    phone: n(v.phone),
+    whatsapp: v.whatsappSame === false ? n(v.whatsapp) : n(v.phone),
+    country: n(v.country),
+    city: n(v.city),
+    dob_or_age: n(v.ageRange),
+    language: n(v.language),
+    current_status: n(v.currentStatus),
+    degree: n(v.degree),
+    university: n(v.university),
+    graduation_year: /^\d{4}$/.test(v.gradYear ?? "") ? Number(v.gradYear) : null,
+    gpa: n(v.gpa),
+    experience_years: n(v.experience),
+    job_title: n(v.jobTitle),
+    company: n(v.company),
+    software_skills: v.skills ?? null,
+    career_goal: n(v.goal),
+    linkedin_url: n(v.linkedin),
+    portfolio_url: n(v.portfolio),
+    programs: v.programs ?? [],
+    format: n(v.format),
+    schedule: n(v.schedule),
+    start_pref: n(v.start),
+    has_laptop: n(v.laptop),
+    source: n(v.source),
+    newsletter: Boolean(v.newsletter),
+  };
+}
+
+// A saved row back into form values (resuming a draft from the dashboard or after a reload).
+export function valuesFromRow(r: ApplicationRow): Partial<ApplyValues> {
+  const out: Partial<ApplyValues> = {};
+  const take = (k: keyof ApplyValues, val: unknown) => {
+    if (val !== null && val !== undefined && val !== "") (out as Record<string, unknown>)[k] = val;
+  };
+  take("fullName", str(r.full_name));
+  take("email", str(r.email));
+  take("phone", str(r.phone));
+  if (str(r.whatsapp) && r.whatsapp !== r.phone) {
+    out.whatsapp = str(r.whatsapp);
+    out.whatsappSame = false;
+  }
+  take("country", str(r.country));
+  take("city", str(r.city));
+  take("ageRange", str(r.dob_or_age));
+  take("language", str(r.language));
+  take("currentStatus", str(r.current_status));
+  take("degree", str(r.degree));
+  take("university", str(r.university));
+  take("gradYear", typeof r.graduation_year === "number" ? String(r.graduation_year) : "");
+  take("gpa", str(r.gpa));
+  take("experience", str(r.experience_years));
+  take("jobTitle", str(r.job_title));
+  take("company", str(r.company));
+  if (r.software_skills && typeof r.software_skills === "object" && !Array.isArray(r.software_skills)) {
+    out.skills = { ...defaultValues.skills, ...(r.software_skills as Record<string, string>) };
+  }
+  take("goal", str(r.career_goal));
+  take("linkedin", str(r.linkedin_url));
+  take("portfolio", str(r.portfolio_url));
+  if (Array.isArray(r.programs) && r.programs.length) out.programs = r.programs.filter((p): p is string => typeof p === "string");
+  take("format", str(r.format));
+  take("schedule", str(r.schedule));
+  take("start", str(r.start_pref));
+  take("laptop", str(r.has_laptop));
+  take("source", str(r.source));
+  if (typeof r.newsletter === "boolean") out.newsletter = r.newsletter;
+  return out;
+}
+
+// Which step a saved draft reaches, from what it already holds (the local draft remembers the exact step).
+export function inferStep(r: ApplicationRow) {
+  if (Array.isArray(r.programs) && r.programs.length && r.format) return 4;
+  if (r.experience_years && r.career_goal) return 3;
+  if (r.degree && r.university) return 2;
+  if (r.full_name && r.phone && r.country) return 1;
+  return 0;
+}
