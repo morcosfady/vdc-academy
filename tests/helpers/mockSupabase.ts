@@ -56,7 +56,12 @@ function parseFilters(sp: URLSearchParams) {
       limit = Number(v);
       continue;
     }
-    if (k === "or") continue; // not modelled
+    if (k === "or") continue; // not modelled (treated as match-all)
+    if (v.startsWith("cs.")) {
+      const want = v.slice(3).replace(/^{|}$/g, "").split(",").map((x) => x.replace(/^"|"$/g, ""));
+      f.push((r) => Array.isArray(r[k]) && want.every((w) => (r[k] as unknown[]).includes(w)));
+      continue;
+    }
     const m = v.match(/^(eq|neq|in|is|gte|lte|ilike)\.(.*)$/);
     if (!m) continue;
     const [, op, raw] = m;
@@ -158,6 +163,7 @@ export async function mockSupabase(page: Page, state: MockState = emptyState()) 
 
     // ---- storage
     if (path.startsWith("/storage/v1/object/")) {
+      if (path.includes("/object/sign/") && method === "POST") return json(route, { signedURL: `/object/sign/${path.replace("/storage/v1/object/sign/", "")}?token=mock` });
       if (method === "POST" || method === "PUT") {
         const key = path.replace("/storage/v1/object/", "");
         const size = Number(req.headers()["content-length"] ?? (req.postDataBuffer()?.length ?? 0));
@@ -165,7 +171,6 @@ export async function mockSupabase(page: Page, state: MockState = emptyState()) 
         state.files[key] = size;
         return json(route, { Key: key, Id: key });
       }
-      if (path.includes("/sign/") && method === "POST") return json(route, { signedURL: `/storage/v1/object/sign/x?token=mock` });
       if (method === "DELETE") return json(route, []);
       return route.fulfill({ status: 200, contentType: "application/pdf", body: "%PDF-1.4 mock" });
     }
@@ -190,7 +195,14 @@ export async function mockSupabase(page: Page, state: MockState = emptyState()) 
       if (method === "GET") {
         let list = rows.filter(match);
         if (order) list = [...list].sort((a, b) => (String(a[order!.col]) < String(b[order!.col]) ? -1 : 1) * (order!.asc ? 1 : -1));
-        return reply(list.slice(0, limit));
+        const total = list.length;
+        const range = req.headers()["range"];
+        if (range) {
+          const [a, b] = range.split("-").map(Number);
+          list = list.slice(a, b + 1);
+        } else list = list.slice(0, limit);
+        if (single) return list[0] ? json(route, list[0]) : json(route, { code: "PGRST116", message: "0 rows" }, 406);
+        return route.fulfill({ status: 200, contentType: "application/json", headers: { "content-range": `0-${Math.max(0, list.length - 1)}/${total}` }, body: JSON.stringify(list) });
       }
       if (method === "POST") {
         const incoming = (Array.isArray(body) ? body : [body]) as Row[];
