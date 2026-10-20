@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { AccountMenu } from "./AccountMenu";
 import { Logo } from "@/components/ui/Logo";
 import { MenuOverlay } from "./MenuOverlay";
 
@@ -52,9 +52,7 @@ export function Header() {
               <span className="hidden md:inline">Menu</span>
               <span aria-hidden className="inline-block w-5 border-t-[1.5px] border-current shadow-[0_5px_0_currentColor]" />
             </button>
-            <Button href="/apply" className="!h-10 !px-4 sm:!h-11 sm:!px-5">
-              Apply
-            </Button>
+            <AccountMenu />
           </div>
         </div>
       </header>

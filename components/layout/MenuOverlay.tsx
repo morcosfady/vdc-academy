@@ -7,10 +7,13 @@ import { site } from "@/config/site";
 import { content, shown } from "@/content/site";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/lib/auth";
 
 // Full-screen paper menu, like an index sheet: mono numbers, big titles, hairlines. Focus is trapped, Escape closes.
 export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null);
+  const { enabled, ready, user, isAdmin, signOut } = useAuth();
+  const account = ready && enabled && user ? [{ href: "/account/", label: "Dashboard" }, { href: "/account/profile/", label: "Profile" }, ...(isAdmin ? [{ href: "/admin/", label: "Admin" }] : [])] : ready && enabled ? [{ href: "/login/", label: "Log in" }] : [];
   const email = shown(content.contact.email);
   const rule = { borderColor: "var(--rule)" };
 
@@ -66,7 +69,7 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
             </div>
 
             <ol className="my-auto border-t py-6" style={rule}>
-              {site.menu.map((l, i) => (
+              {[...site.menu, ...account].map((l, i) => (
                 <m.li
                   key={l.href}
                   initial={{ opacity: 0, x: -16 }}
@@ -93,9 +96,16 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
                   </p>
                 )}
               </div>
-              <Button href="/apply" onClick={onClose}>
-                Apply now
-              </Button>
+              <span className="flex flex-wrap items-center gap-4">
+                {ready && enabled && user && (
+                  <button type="button" onClick={async () => { onClose(); await signOut(); window.location.href = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/`; }} className="ul-draw pb-0.5 text-[15px] font-medium text-text">
+                    Sign out
+                  </button>
+                )}
+                <Button href="/apply" onClick={onClose}>
+                  Apply now
+                </Button>
+              </span>
             </div>
           </div>
         </m.div>
