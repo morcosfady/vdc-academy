@@ -42,3 +42,10 @@ next-env.d.ts
 docs/reference/likova/
 assets/raw/
 docs/audit/v4-after/*.webm
+
+# local runs
+/dev.log
+/test-results/
+/tmp-shots/
+/playwright-report/
+/supabase/.temp/
