@@ -6,10 +6,10 @@ import { copy } from "@/content/copy";
 import { discounts, freshGradMonths } from "@/config/discounts";
 import { Photo } from "@/components/ui/Photo";
 import { Button } from "@/components/ui/Button";
-import { CountUp } from "@/components/ui/CountUp";
 import { Slab } from "@/components/ui/Slab";
 import { Modal } from "@/components/ds/Overlays";
 import { Select } from "@/components/ds/Forms";
+import { track } from "@/lib/analytics";
 
 const degrees = ["Architecture", "Civil engineering", "Mechanical engineering", "Electrical engineering", "Construction management", "Other engineering", "Something else"];
 
@@ -32,7 +32,9 @@ export function QualifyQuiz({ className }: { className?: string }) {
   function check(e: React.FormEvent) {
     e.preventDefault();
     const y = Number(gradYear);
-    setResult(Boolean(y) && monthsSince(y) <= freshGradMonths && monthsSince(y) >= -12);
+    const qualified = Boolean(y) && monthsSince(y) <= freshGradMonths && monthsSince(y) >= -12;
+    setResult(qualified);
+    track("fresh_grad_quiz_completed", { qualified });
   }
   function close() {
     setOpen(false);
@@ -95,7 +97,7 @@ export function Grads() {
             <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14 xl:p-20">
               <p className="mono">{c.tag}</p>
               <p className="mt-8 text-[clamp(4.5rem,3rem+6vw,8.5rem)] font-semibold leading-none tracking-[-0.04em] text-ink">
-                <CountUp to={pct} suffix="%" />
+                <span data-discount>{pct}%</span>
               </p>
               <span aria-hidden className="draw-x mt-3 block h-[3px] w-24 bg-brass" />
               <h2 id="grads-title" className="mt-8 !text-[clamp(1.5rem,1.1rem+1.4vw,2rem)]">

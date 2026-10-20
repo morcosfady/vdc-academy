@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { NoScriptNote } from "@/components/ui/NoScript";
 
 // Paper skeleton blocks while the session or the rows load. Paper-2 tone, a slow pulse, no spinners.
 export function Block({ className, style }: { className?: string; style?: React.CSSProperties }) {
@@ -14,6 +15,7 @@ export function AccountSkeleton({ label = "Loading your account" }: { label?: st
           <Block className="h-3 w-40" />
           <Block className="mt-8 h-12 w-[min(100%,420px)]" />
           <Block className="mt-5 h-5 w-[min(100%,520px)]" />
+          <NoScriptNote />
         </div>
         <div className="grid-12 gap-y-6 pb-24 pt-10 lg:pt-14">
           <Block className="col-span-12 h-48 rounded-[12px] lg:col-span-8" />
@@ -30,6 +32,7 @@ export function AccountSkeleton({ label = "Loading your account" }: { label?: st
 export function FormSkeleton() {
   return (
     <div aria-busy="true" className="max-w-[480px]">
+      <NoScriptNote className="!mt-0 mb-8" />
       <Block className="h-3 w-32" />
       <Block className="mt-8 h-12 w-72" />
       <Block className="mt-5 h-5 w-full" />

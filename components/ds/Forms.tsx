@@ -3,9 +3,8 @@
 import { useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-const ruleBorder = { borderColor: "var(--rule)" } as const;
 const control =
-  "peer h-14 w-full rounded-[4px] border bg-transparent px-4 pt-5 text-base text-text outline-none transition-colors duration-200 placeholder-transparent hover:border-[color:var(--text-dim)] focus:border-accent disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-err";
+  "peer h-14 w-full rounded-[4px] border border-rule bg-transparent px-4 pt-5 text-base text-text outline-none transition-colors duration-200 placeholder-transparent hover:border-[color:var(--text-dim)] focus:border-accent disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-err";
 const floating =
   "pointer-events-none absolute start-4 top-4 origin-left text-base text-dim transition-all duration-200 peer-focus:top-2 peer-focus:text-xs peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs";
 
@@ -24,7 +23,7 @@ export function Input({
   const inputType = reveal ? (shown ? "text" : "password") : type;
   return (
     <div className={cn("relative", className)}>
-      <input id={id} type={inputType} placeholder={label} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-e` : undefined} className={cn(control, reveal && "pe-14")} style={ruleBorder} {...rest} />
+      <input id={id} type={inputType} placeholder={label} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-e` : undefined} className={cn(control, reveal && "pe-14")} {...rest} />
       <label htmlFor={id} className={floating}>
         {label}
       </label>
@@ -76,8 +75,8 @@ export function Select({
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-e` : undefined}
-        className="h-14 w-full appearance-none rounded-[4px] border bg-transparent px-4 pt-5 text-base text-text outline-none transition-colors duration-200 hover:border-[color:var(--text-dim)] focus:border-accent disabled:opacity-50 aria-[invalid=true]:border-err"
-        style={ruleBorder}
+        className="h-14 w-full appearance-none rounded-[4px] border border-rule bg-transparent px-4 pt-5 text-base text-text outline-none transition-colors duration-200 hover:border-[color:var(--text-dim)] focus:border-accent disabled:opacity-50 aria-[invalid=true]:border-err"
+       
         {...rest}
       >
         {options.map((o) => (
@@ -107,8 +106,8 @@ export function FileDrop({ label, hint, className }: { label: string; hint: stri
       <button
         type="button"
         onClick={() => input.current?.click()}
-        className="flex min-h-28 w-full flex-col items-center justify-center gap-1 rounded-[4px] border border-dashed px-6 py-6 text-center transition-colors duration-200 hover:border-accent"
-        style={ruleBorder}
+        className="flex min-h-28 w-full flex-col items-center justify-center gap-1 rounded-[4px] border border-dashed border-rule px-6 py-6 text-center transition-colors duration-200 hover:border-accent"
+       
       >
         <span className="text-[15px] font-medium text-text">{name || label}</span>
         <span className="mono">{hint}</span>

@@ -1,3 +1,7 @@
+// Floors the hero grid bubbles 1, 2, 3 isolate (ground, middle, top). Lives here, not in StudyModel.tsx, so the hero
+// can use it without pulling three.js into the first-load bundle.
+export const BUBBLE_FLOORS = [0, 3, 6];
+
 export type Isolate = "all" | "architecture" | "structure" | "mep" | "lowvoltage" | "clash" | "4d";
 
 // Mutable values the 3D building reads every frame. GSAP, sliders and buttons write to it directly,

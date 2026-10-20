@@ -223,10 +223,12 @@ test("Continue writes a draft, the profile is updated, and a reload resumes at t
   expect(drafts).toHaveLength(1);
   expect(drafts[0].status).toBe("draft");
   expect(drafts[0].submitted_at).toBeNull();
-  // the profile took the new city, and never a role
+  // the profile took the new city, and never a role. The profile sync runs after "Draft saved" (not awaited by the
+  // form on purpose), so wait for it instead of reading the row at once: this was the source of the flake.
   const profile = state.tables.profiles.find((p) => p.id === id)!;
-  expect(profile.city).toBe("Fort Worth");
+  await expect.poll(() => profile.city, { timeout: 5000 }).toBe("Fort Worth");
   expect(profile.role).toBe("student");
+  await expect.poll(() => state.requests.some((r) => r.path === "/rest/v1/profiles" && r.method === "POST"), { timeout: 5000 }).toBe(true);
   const profileWrite = state.requests.find((r) => r.path === "/rest/v1/profiles" && r.method === "POST");
   expect(Object.keys((profileWrite?.body ?? {}) as object)).not.toContain("role");
 
@@ -236,6 +238,8 @@ test("Continue writes a draft, the profile is updated, and a reload resumes at t
   await expect(page.getByText("Experience and goals.")).toBeVisible();
   expect(state.tables.applications.filter((a) => a.user_id === id)).toHaveLength(1);
   expect(appWrites(state).at(-1)?.method).toBe("PATCH");
+  // the local draft remembers step 3 before we reload (written right after the save resolves)
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("vdc-apply-draft") ?? "{}").step), { timeout: 5000 }).toBe(2);
 
   await page.reload();
   await page.waitForLoadState("networkidle");

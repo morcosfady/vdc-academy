@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { NoScriptNote } from "@/components/ui/NoScript";
 
 // Paper skeletons: paper-2 blocks that breathe while a query runs. Always aria-busy on the wrapper.
 export function Skeleton({ className }: { className?: string }) {
@@ -54,6 +55,7 @@ export function ShellSkeleton() {
         <div className="rule-b pb-8 pt-10 lg:pb-10 lg:pt-14">
           <Skeleton className="h-3 w-40" />
           <Skeleton className="mt-7 h-10 w-72" />
+          <NoScriptNote />
         </div>
         <div className="flex gap-7 border-b py-4" style={{ borderColor: "var(--rule)" }}>
           <Skeleton className="h-3 w-24" />

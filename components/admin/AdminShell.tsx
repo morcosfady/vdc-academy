@@ -52,7 +52,7 @@ export function AdminShell({
 function AdminNav() {
   const path = usePathname() ?? "";
   return (
-    <nav aria-label={adminCopy.navLabel} className="-mx-5 overflow-x-auto border-y px-5 md:mx-0 md:px-0" style={rule}>
+    <nav aria-label={adminCopy.navLabel} className="-mx-5 overflow-x-auto overflow-y-hidden border-y px-5 md:mx-0 md:px-0" style={rule}>
       <ul className="flex gap-x-8">
         {adminCopy.nav.map((it, i) => {
           const active = it.match.test(path);

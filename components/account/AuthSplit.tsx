@@ -1,8 +1,9 @@
 import { SheetTag, GridBubble, DimensionString } from "@/components/ds/Devices";
 import { SteppedPoster } from "@/components/three/SteppedPoster";
 
-// Auth pages: form on the left (max 480px), the white study model still on a paper-2 panel with grid bubbles on
-// the right. The panel is decorative; on phones it sits below the form, smaller, so the form always comes first.
+// Auth pages: form on the left (max 480px), the white study model still (the pre-rendered AVIF, never WebGL) on a
+// paper-2 panel on the right. The grid marks are drawn, not buttons: small, faint, and never styled like the hero's
+// controls. The still loads eagerly so the panel is never an empty grey box. On phones the panel sits below the form.
 export function AuthSplit({ sheet, name, title, lead, children, panelLabel }: { sheet: string; name: string; title: string; lead?: string; children: React.ReactNode; panelLabel: string }) {
   return (
     <section className="theme-light pt-[72px]">
@@ -17,19 +18,19 @@ export function AuthSplit({ sheet, name, title, lead, children, panelLabel }: { 
             </div>
           </div>
           <aside aria-hidden className="col-span-12 lg:col-span-6 lg:col-start-7 xl:col-span-6 xl:col-start-7">
-            <div className="relative flex h-full min-h-[340px] flex-col justify-center rounded-[12px] bg-paper-2 px-8 py-12 text-slate lg:min-h-[560px] lg:px-14 lg:py-16">
-              <div className="absolute inset-x-[16%] top-8 flex justify-between">
+            <div className="relative flex h-full min-h-[340px] flex-col justify-center rounded-[12px] bg-paper-2 px-8 py-12 text-slate lg:min-h-[560px] lg:px-14 lg:py-16" data-testid="auth-panel">
+              <div className="pointer-events-none absolute inset-x-[16%] top-8 flex justify-between opacity-50 select-none">
                 {["A", "B", "C"].map((l) => (
-                  <GridBubble key={l} label={l} size={32} />
+                  <GridBubble key={l} label={l} size={22} />
                 ))}
               </div>
-              <div className="absolute inset-y-[22%] end-8 flex flex-col justify-between">
+              <div className="pointer-events-none absolute inset-y-[22%] end-8 flex flex-col justify-between opacity-50 select-none">
                 {["1", "2", "3"].map((l) => (
-                  <GridBubble key={l} label={l} size={32} />
+                  <GridBubble key={l} label={l} size={22} />
                 ))}
               </div>
               <div className="mx-auto w-[78%]">
-                <SteppedPoster className="block aspect-[5/4] w-full" />
+                <SteppedPoster priority className="block aspect-[5/4] w-full" />
               </div>
               <DimensionString label={panelLabel} className="mx-auto mt-8 w-[78%]" />
             </div>

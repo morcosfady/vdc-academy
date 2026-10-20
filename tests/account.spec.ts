@@ -313,3 +313,26 @@ test.describe("screenshots", () => {
     });
   }
 });
+
+// "Log in" depends on keys: hidden when this build has none and the mock is off, shown as soon as a client exists.
+test("header: no Log in link without keys, Log in appears once a Supabase client exists", async ({ browser }) => {
+  const base = process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/";
+  // 1. No keys baked into the test build, no mock: logged-out chrome is Apply only (the honest "accounts open soon" state).
+  const off = await browser.newContext({ baseURL: base });
+  const a = await off.newPage();
+  await a.goto("about/");
+  await a.waitForLoadState("networkidle");
+  await a.waitForTimeout(600);
+  expect(await a.evaluate(() => localStorage.getItem("vdc-mock"))).toBeNull();
+  await expect(a.getByRole("link", { name: "Log in" })).toHaveCount(0);
+  await expect(a.getByRole("link", { name: "Apply" }).first()).toBeVisible();
+  await off.close();
+  // 2. A client exists (here the mock stands in for real keys): the link appears with nothing else changed.
+  const on = await browser.newContext({ baseURL: base });
+  const b = await on.newPage();
+  await mockSupabase(b);
+  await open(b, "about/");
+  await expect(b.getByRole("link", { name: "Log in" })).toBeVisible();
+  await expect(b.getByRole("link", { name: "Log in" })).toHaveAttribute("href", /\/login\/$/);
+  await on.close();
+});

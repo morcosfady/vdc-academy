@@ -46,7 +46,7 @@ export function ProgramCard({
   return (
     <article className={cn("group card flex h-full flex-col overflow-hidden transition-[border-color] duration-300 focus-within:border-accent hover:border-accent", className)}>
       <Link prefetch={false} href={href} className={cn("flex flex-1 flex-col outline-none", featured && "md:flex-row")}>
-        <div className={cn("relative overflow-hidden", featured ? "aspect-[16/10] md:aspect-auto md:w-1/2" : "aspect-[16/10]")}>
+        <div className={cn("relative overflow-hidden", featured ? "aspect-[16/10] md:aspect-auto md:w-1/2" : "aspect-[16/10]", "[&>picture]:block [&>picture]:h-full")}>
           <Photo photo={photo} alt={alt ?? ""} sizes={featured ? "(min-width: 1024px) 44vw, 100vw" : "(min-width: 1024px) 30vw, (min-width: 768px) 50vw, 100vw"} className="transition-transform duration-[900ms] ease-[cubic-bezier(.2,.7,.1,1)] group-hover:scale-[1.03]" style={pos ? { objectPosition: pos } : undefined} />
         </div>
         <div className={cn("flex flex-1 flex-col p-6 pb-0 md:p-7 md:pb-0", featured && "md:w-1/2 md:p-9 md:pb-0")}>

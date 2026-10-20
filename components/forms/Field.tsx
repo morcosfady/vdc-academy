@@ -4,9 +4,8 @@ import { cn } from "@/lib/utils";
 // floating label), but with stable ids (f-<name>) so react-hook-form, labels and tests can address them.
 // The error is absolutely positioned so it never shifts the layout.
 
-const ruleBorder = { borderColor: "var(--rule)" } as const;
 const control =
-  "peer h-14 w-full rounded-[4px] border bg-transparent px-4 pt-5 text-base text-text outline-none transition-colors duration-200 placeholder-transparent hover:border-[color:var(--text-dim)] focus:border-accent disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-err";
+  "peer h-14 w-full rounded-[4px] border border-rule bg-transparent px-4 pt-5 text-base text-text outline-none transition-colors duration-200 placeholder-transparent hover:border-[color:var(--text-dim)] focus:border-accent disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-err";
 const floating =
   "pointer-events-none absolute start-4 top-4 origin-left text-base text-dim transition-all duration-200 peer-focus:top-2 peer-focus:text-xs peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs";
 const fixed = "pointer-events-none absolute start-4 top-2 text-xs text-dim";
@@ -40,7 +39,7 @@ export function Field({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-err` : undefined}
         className={control}
-        style={ruleBorder}
+       
         {...rest}
       />
       <label htmlFor={id} className={floating}>
@@ -86,7 +85,7 @@ export function SelectField({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-err` : undefined}
         className={cn(control, "appearance-none pe-10")}
-        style={ruleBorder}
+       
         {...rest}
       >
         <option value="" className="bg-white text-[#0a1d23]">
@@ -137,7 +136,7 @@ export function TextareaField({
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-err` : undefined}
         className={cn(control, "h-auto resize-y pb-3 pt-7")}
-        style={ruleBorder}
+       
         {...rest}
       />
       <label htmlFor={id} className={fixed}>

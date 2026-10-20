@@ -5,7 +5,6 @@ import { pages } from "@/content/copy-pages";
 import { discounts, freshGradMonths } from "@/config/discounts";
 import { Photo } from "@/components/ui/Photo";
 import { Button } from "@/components/ui/Button";
-import { CountUp } from "@/components/ui/CountUp";
 import { Slab } from "@/components/ui/Slab";
 import { GridBubble, SheetTag } from "@/components/ds/Devices";
 import { Tag } from "@/components/ds/Chips";
@@ -13,11 +12,10 @@ import { Faq } from "@/components/ds/Faq";
 import { Timeline } from "@/components/ds/Timeline";
 import { QualifyQuiz } from "@/components/home/Grads";
 import { DiscountTable, discountRows } from "@/components/programs/DiscountTable";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = {
-  title: "Fresh Graduates",
-  description: "Graduated in the last 24 months? Save up to 40% on VDC Academy BIM and VDC programs.",
-};
+export const metadata: Metadata = pageMeta({ title: "BIM Course for Fresh Graduates: Up to 40% Off", description: "Graduated in the last 24 months? Save up to 40% on BIM and VDC training at VDC Academy: Revit, Navisworks, clash detection and more.", path: "/fresh-graduates/", og: "fresh-graduates" });
 
 const c = pages.grads;
 const rule = { borderColor: "var(--rule)" } as const;
@@ -47,7 +45,8 @@ export default function FreshGradsPage() {
   const rows = discountRows(c.eligibility.auto);
   return (
     <>
-      {/* The offer. The 40 is real text in the HTML; the count-up only decorates it. The photo is the LCP image. */}
+      <JsonLd data={breadcrumbLd([{ name: "Fresh graduates", path: "/fresh-graduates/" }])} />
+      {/* The offer. The 40% is static text: a discount must never be seen lower than it is, so only the brass underline animates. The photo is the LCP image. */}
       <section id="ch-5" aria-labelledby="grads-title" className="theme-light pt-[72px]">
         <div className="wrap">
           <div className="grid-12 items-center gap-y-12 pb-16 pt-14 lg:pb-24 lg:pt-24">
@@ -55,7 +54,7 @@ export default function FreshGradsPage() {
               <SheetTag sheet={c.sheet} name={c.name} />
               <Slab>
                 <p className="mt-8 flex items-baseline py-1 pe-2 text-[clamp(4.5rem,2.5rem+9vw,10rem)] font-semibold leading-none tracking-[-0.04em] text-ink">
-                  <CountUp to={pct} />
+                  <span data-discount>{pct}</span>
                   <span>%</span>
                 </p>
                 <span aria-hidden className="draw-x mt-3 block h-[3px] w-28 bg-brass" />

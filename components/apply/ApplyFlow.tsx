@@ -26,11 +26,13 @@ import { useAuth } from "@/lib/auth";
 import { authEnabled, getSupabase } from "@/lib/supabase";
 import { insertRow } from "@/lib/submit";
 import { readUtm } from "@/lib/utm";
+import { track, trackOnce } from "@/lib/analytics";
 import {
   CV_TYPES, FILE_EXT, LEVELS, PROOF_TYPES, SKILLS, defaultValues, fullSchema, inferStep, isFreshGrad, options, profilePatch,
   rowFromValues, stepFields, valuesFromProfile, valuesFromRow, type ApplicationRow, type ApplyValues,
 } from "@/lib/applySchema";
 import { cn } from "@/lib/utils";
+import { NoScriptNote } from "@/components/ui/NoScript";
 
 const c = pages.apply;
 const STEPS = c.steps;
@@ -158,6 +160,11 @@ export function ApplyFlow() {
     return () => clearTimeout(t);
   }, [v, step, draftId, userId, loaded]);
 
+  // The form itself (not the gate or the fallback) is in front of a logged-in user.
+  useEffect(() => {
+    if (loaded && userId && enabled && !fallback) trackOnce("apply_started");
+  }, [loaded, userId, enabled, fallback]);
+
   // The building gains one floor per completed step.
   useEffect(() => {
     state.current.sim = (step + 1) / 6;
@@ -244,6 +251,7 @@ export function ApplyFlow() {
       setDupe(d);
       if (d) return;
     }
+    track("apply_step_completed", { step: step + 1 });
     const to = Math.min(4, step + 1);
     setSending(true);
     await saveDraft(to);
@@ -352,6 +360,7 @@ export function ApplyFlow() {
       await sb.functions.invoke("on-application-submitted", { body: { application_id: id } });
     } catch {}
     setSending(false);
+    track("apply_submitted", { programs_count: d.programs.length, discount: discountType ?? "none" });
     finish(d, id);
   }
 
@@ -365,6 +374,7 @@ export function ApplyFlow() {
           <div className="grid-12 pb-24 pt-14 lg:pb-32 lg:pt-20">
             <div className="col-span-12 min-h-[60vh] lg:col-span-7">
               <SheetTag sheet={c.sheet} name={c.name} />
+              <NoScriptNote className="!mt-8" />
             </div>
           </div>
         </div>
@@ -429,6 +439,7 @@ export function ApplyFlow() {
               className="mt-12"
               onSubmit={(ev) => {
                 ev.preventDefault();
+                if (!loaded) return; // the profile and draft are still loading: a click now would validate empty fields
                 if (sending) return;
                 if (step === 4) submit();
                 else next();
@@ -666,7 +677,7 @@ export function ApplyFlow() {
                   </svg>
                   {c.back}
                 </button>
-                <Button type="submit" disabled={sending || Boolean(dupe && step === 3)}>
+                <Button type="submit" disabled={!loaded || sending || Boolean(dupe && step === 3)}>
                   {step === 4 ? (sending ? c.sending : c.submit) : sending ? applyCopy.draft.saving : c.next}
                 </Button>
               </div>

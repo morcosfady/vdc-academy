@@ -47,7 +47,7 @@ const CLASH_FLOOR = 2;
 const widths = [W, W, W, W - 1.2, W - 2.4, W - 3.6, W - 4.8];
 const slabWidth = (level: number) => widths[Math.max(0, level - 1)];
 // Floors the 1, 2, 3 grid bubbles isolate: ground, middle, top
-export const BUBBLE_FLOORS = [0, 3, 6];
+export { BUBBLE_FLOORS } from "@/lib/modelState";
 
 type Box = [number, number, number, number, number, number]; // x y z sx sy sz
 
