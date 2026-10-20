@@ -204,18 +204,23 @@ export function ApplyFlow() {
     [userId, refreshProfile],
   );
 
-  const saveDraft = useCallback(async (): Promise<string | null> => {
-    if (!userId) return null;
-    setSave("saving");
-    const values = getValues();
-    const id = await writeRow({ ...rowFromValues(values), status: "draft" });
-    setSave(id ? "saved" : "failed");
-    if (id) {
-      writeDraft({ values, step, id, userId });
-      void syncProfile(values);
-    }
-    return id;
-  }, [userId, getValues, writeRow, step, syncProfile]);
+  // `at` is the step the local draft should remember (Continue passes the step it advances to, so a reload right
+  // after lands there even before the debounced autosave runs).
+  const saveDraft = useCallback(
+    async (at: number = step): Promise<string | null> => {
+      if (!userId) return null;
+      setSave("saving");
+      const values = getValues();
+      const id = await writeRow({ ...rowFromValues(values), status: "draft" });
+      setSave(id ? "saved" : "failed");
+      if (id) {
+        writeDraft({ values, step: at, id, userId });
+        void syncProfile(values);
+      }
+      return id;
+    },
+    [userId, getValues, writeRow, step, syncProfile],
+  );
 
   // One live application per program: anything submitted and not rejected blocks a second one.
   const findDuplicate = useCallback(
@@ -239,10 +244,11 @@ export function ApplyFlow() {
       setDupe(d);
       if (d) return;
     }
+    const to = Math.min(4, step + 1);
     setSending(true);
-    await saveDraft();
+    await saveDraft(to);
     setSending(false);
-    setStep((s) => Math.min(4, s + 1));
+    setStep(to);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step, trigger, findDuplicate, getValues, saveDraft]);
 
