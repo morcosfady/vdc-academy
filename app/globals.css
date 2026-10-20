@@ -421,3 +421,14 @@ html.comfort *::after {
   border-inline: 1px solid rgba(42, 99, 196, 0.25);
 }
 }
+
+/* Client demo mode (/demo/): a 40px strip sits above the fixed header, so the header and the page move down. */
+html.demo header.fixed {
+  top: 40px;
+}
+html.demo body {
+  padding-top: 40px;
+}
+html.demo .theme-light.fixed.inset-0 {
+  top: 40px;
+}

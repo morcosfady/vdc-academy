@@ -2,8 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import type { Session, User } from "@supabase/supabase-js";
-import { authEnabled, getSupabase } from "./supabase";
+import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
+import { authEnabled, getSupabase, loadSupabase } from "./supabase";
 import type { Profile } from "./db";
 
 // Session + profile for the whole app. `ready` turns true once the client has checked storage (before that,
@@ -40,27 +40,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const on = authEnabled();
     setEnabled(on);
-    const sb = getSupabase();
-    if (!on || !sb) {
+    if (!on) {
       setReady(true);
       return;
     }
     let active = true;
-    sb.auth.getSession().then(async ({ data }) => {
+    let unsubscribe = () => {};
+    loadSupabase().then((sb) => {
       if (!active) return;
-      setSession(data.session);
-      await loadProfile(data.session?.user.id);
-      setReady(true);
+      if (!sb) return setReady(true);
+      subscribe(sb);
     });
-    const { data: sub } = sb.auth.onAuthStateChange(async (_event, s) => {
-      if (!active) return;
-      setSession(s);
-      await loadProfile(s?.user.id);
-      setReady(true);
-    });
+    const subscribe = (sb: SupabaseClient) => {
+      sb.auth.getSession().then(async ({ data }) => {
+        if (!active) return;
+        setSession(data.session);
+        await loadProfile(data.session?.user.id);
+        setReady(true);
+      });
+      const { data: sub } = sb.auth.onAuthStateChange(async (_event, s) => {
+        if (!active) return;
+        setSession(s);
+        await loadProfile(s?.user.id);
+        setReady(true);
+      });
+      unsubscribe = () => sub.subscription.unsubscribe();
+    };
     return () => {
       active = false;
-      sub.subscription.unsubscribe();
+      unsubscribe();
     };
   }, [loadProfile]);
 

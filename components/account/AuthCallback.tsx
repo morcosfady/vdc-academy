@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authEnabled, getSupabase } from "@/lib/supabase";
+import { authEnabled, loadSupabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/Button";
 import { account } from "@/content/copy-account";
 import { AuthSplit } from "./AuthSplit";
@@ -20,14 +20,14 @@ export function AuthCallback() {
   const [failed, setFailed] = useState("");
 
   useEffect(() => {
-    const sb = getSupabase();
-    if (!authEnabled() || !sb) {
+    if (!authEnabled()) {
       setFailed(c.failed);
       return;
     }
     const next = safeNext(new URLSearchParams(window.location.search).get("next"));
     let active = true;
-    finishAuthFromUrl(sb).then((r) => {
+    // This effect runs before the provider's, so load the client here rather than reading getSupabase().
+    loadSupabase().then((sb) => (sb ? finishAuthFromUrl(sb) : { ok: false as const, message: "" })).then((r) => {
       if (!active) return;
       if (!r.ok) return setFailed(r.message || c.failed);
       cleanAuthUrl();

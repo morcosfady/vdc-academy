@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 import { programs } from "@/content/programs";
 import { discounts, type DiscountId } from "@/config/discounts";
 
@@ -23,7 +24,10 @@ export function unwrap<T>(r: { data: T | null; error: { message: string } | null
 export const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 // Load once per dependency change, with a loading flag, a calm error and a retry.
-export function useLoad<T>(fn: () => Promise<T>, deps: unknown[], enabled = true) {
+// Waits for the auth provider: supabase-js loads lazily (lib/supabase.ts), so the client exists only once `ready`.
+export function useLoad<T>(fn: () => Promise<T>, deps: unknown[], when = true) {
+  const { ready } = useAuth();
+  const enabled = when && ready;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

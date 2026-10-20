@@ -25,7 +25,7 @@ export async function insertRow(table: "leads" | "contact_messages" | "newslette
   const c = supabaseConfig();
   if (!c) return { ok: false, reason: "disabled", message: "Submissions are not connected yet." };
   try {
-    const res = await fetch(`${c.url}/rest/v1/${table}`, {
+    const res = await (c.fetch ?? fetch)(`${c.url}/rest/v1/${table}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: c.key, Authorization: `Bearer ${c.key}`, Prefer: "return=minimal" },
       body: JSON.stringify(row),
