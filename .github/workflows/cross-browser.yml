@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      grep:
+        description: "Only run tests whose title matches (optional)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -37,7 +42,7 @@ jobs:
         env:
           GITHUB_PAGES: "true"
       - run: pnpm exec playwright install --with-deps ${{ matrix.project }}
-      - run: pnpm exec playwright test --project=${{ matrix.project }} --reporter=line
+      - run: pnpm exec playwright test --project=${{ matrix.project }} --reporter=line ${{ inputs.grep && format('-g "{0}"', inputs.grep) || '' }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

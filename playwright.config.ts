@@ -14,6 +14,7 @@ export default defineConfig({
   workers: 2,
   use: {
     baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/",
+    trace: process.env.CI ? "retain-on-failure" : "off",
   },
   projects: [
     {
