@@ -6,6 +6,7 @@ import { SceneSlot } from "@/components/three/SceneSlot";
 import { SheetTag } from "@/components/ds/Devices";
 import { newState } from "@/lib/modelState";
 import { pages } from "@/content/copy-pages";
+import { applyCopy } from "@/content/copy-apply";
 
 const c = pages.success;
 
@@ -41,7 +42,8 @@ export function Success() {
                 </li>
               ))}
             </ol>
-            <div className="mt-12">
+            <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <Button href="/account/">{applyCopy.success.dashboard}</Button>
               <Button href="/" variant="link">
                 {c.home}
               </Button>
