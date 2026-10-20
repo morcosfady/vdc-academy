@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import type { CurrentStatus, Profile } from "./db";
 
 export const SKILLS = ["Revit", "AutoCAD", "Navisworks", "Dynamo", "ACC / BIM 360", "Bluebeam"] as const;

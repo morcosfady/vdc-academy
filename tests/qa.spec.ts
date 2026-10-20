@@ -170,7 +170,10 @@ test("keyboard: apply moves to step 2 with Tab and Enter only", async ({ page })
   await expect(page.getByText("Your education.")).toBeVisible();
 });
 
-test("keyboard: dashboard and admin table are reachable and open with Enter", async ({ page }) => {
+test("keyboard: dashboard and admin table are reachable and open with Enter", async ({ page, browserName }) => {
+  // Safari's default (and Playwright's WebKit) moves Tab between form controls only; links take Option+Tab, which
+  // is an OS shortcut on Windows. Chromium and Firefox cover link navigation; WebKit runs the form-field tests above.
+  test.skip(browserName === "webkit", "Safari does not Tab to links by default");
   const state = emptyState();
   const admin = seedUser(state, "admin@example.com", "demo-password-1", { full_name: "Sample Admin" }, "admin");
   const s1 = seedUser(state, "student01@example.com", "demo-password-1", { full_name: "Sample Student 01" });

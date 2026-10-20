@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { Check, Field, SelectField } from "@/components/forms/Field";
 import { Button } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";

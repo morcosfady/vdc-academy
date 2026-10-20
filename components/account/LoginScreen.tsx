@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { useAuth } from "@/lib/auth";
 import { authCallbackUrl, getSupabase, siteUrl } from "@/lib/supabase";
 import { Input } from "@/components/ds/Forms";

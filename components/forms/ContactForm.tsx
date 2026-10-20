@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { Field, TextareaField } from "./Field";
 import { Turnstile } from "./Turnstile";
 import { Button } from "@/components/ui/Button";

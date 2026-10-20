@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { useAuth } from "@/lib/auth";
 import { authCallbackUrl, getSupabase } from "@/lib/supabase";
 import { track } from "@/lib/analytics";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { Field, SelectField, TextareaField } from "./Field";
 import { Turnstile } from "./Turnstile";
 import { FormDone, FormFailed, FormFallback, Honeypot, issuesToErrors, type FormState } from "./Fallback";

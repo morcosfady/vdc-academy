@@ -54,7 +54,8 @@ const csp = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "upgrade-insecure-requests",
+  // No upgrade-insecure-requests: GitHub Pages already forces HTTPS and every asset URL is relative, and WebKit
+  // applies the directive to http://localhost too, so local and CI test servers lost every script.
 ].join("; ");
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

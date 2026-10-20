@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { currentStatusLabel, initials, type CurrentStatus, type Profile } from "@/lib/db";
