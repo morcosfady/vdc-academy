@@ -165,6 +165,13 @@ export function ApplyFlow() {
     if (loaded && userId && enabled && !fallback) trackOnce("apply_started");
   }, [loaded, userId, enabled, fallback]);
 
+  // Only a change of step plays the entrance (not the first render, not a re-render of the same step).
+  const shownStep = useRef<number | null>(null);
+  const enterStep = shownStep.current !== null && shownStep.current !== step;
+  useEffect(() => {
+    shownStep.current = step;
+  }, [step]);
+
   // The building gains one floor per completed step.
   useEffect(() => {
     state.current.sim = (step + 1) / 6;
@@ -446,9 +453,10 @@ export function ApplyFlow() {
               }}
               noValidate
             >
-              {/* initial={false}: Motion's features load after the first interaction, so the first step must render visible without an entrance. */}
-              <AnimatePresence mode="wait" initial={false}>
-                <m.div key={step} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="space-y-7">
+              {/* A CSS entrance, not Motion: Motion's features load after the first interaction, and with AnimatePresence
+                  mode="wait" a click on Continue as that first interaction left the old step on screen forever (its exit never
+                  finished) while the stepper already said the next step. The first step renders without an entrance. */}
+              <div key={step} className={cn("space-y-7", enterStep && "step-in")}>
                   {step === 0 && (
                     <>
                       <h1 className={stepTitle}>Tell us about you.</h1>
@@ -667,8 +675,7 @@ export function ApplyFlow() {
                       )}
                     </>
                   )}
-                </m.div>
-              </AnimatePresence>
+              </div>
 
               <div className="mt-12 flex items-center justify-between gap-4 border-t pt-8" style={rule}>
                 <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="mono inline-flex min-h-11 items-center gap-2 px-1 hover:!text-text disabled:opacity-30">
