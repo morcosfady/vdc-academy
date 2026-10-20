@@ -27,9 +27,9 @@ PageSpeed Insights on the live site, after v8 (the numbers the brief asks for):
 |---|---|---|---|---|---|
 | Home | 84 | **98** | 2.3 s | 0 ms | 0 |
 | Programs | n/a | **99** | 2.3 s | 30 ms | 0 |
-| Apply | n/a | **94** | 3.2 s | 20 ms | 0.022 |
+| Apply | n/a | **93** | 3.2 s | 40 ms | 0 |
 
-Apply's Best Practices was 96 in that run because of zod's eval probe under the CSP; fixed in `lib/zod.ts` after the measurement (local Lighthouse: 100).
+Apply was 94 with Best Practices 96 in the first run (zod's eval probe under the CSP). After `lib/zod.ts`: Best Practices 100, Accessibility 100, SEO 100.
 
 Local static build, this machine (`docs/audit/v8/lh/`, `node scripts/lh-v8.mjs`; noisy, see v5):
 

@@ -12,7 +12,7 @@ Update this table every time the runbook runs.
 | --- | --- |
 | 1 Project | **Blocked, needs owner.** Creation refused: the free plan allows 2 active projects per owner and `morcosfady` already has `pharaohs-bites` (org Pharaoh's Bites) and `kanisa-checkin` (org Kanisa) active. Tried through the MCP and the CLI. |
 | 2 to 9 | Not started: they all need the project. |
-| 10 | This table. |
+| 10 | This table and `docs/HANDOFF.md` (v8). |
 
 ## Before you start (Owner)
 
