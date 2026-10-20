@@ -30,12 +30,19 @@ jobs:
       - run: pnpm build
         env:
           GITHUB_PAGES: "true"
+          # "/vdc-academy" on morcosfady.github.io; set the repository variable to "/" on a custom domain (docs/CUSTOM-DOMAIN.md).
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH || '/vdc-academy' }}
           # Repository secrets win; repository variables work too (Settings > Secrets and variables > Actions).
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || vars.NEXT_PUBLIC_SITE_URL || 'https://morcosfady.github.io/vdc-academy' }}
           NEXT_PUBLIC_AUTH_GOOGLE: ${{ secrets.NEXT_PUBLIC_AUTH_GOOGLE || vars.NEXT_PUBLIC_AUTH_GOOGLE }}
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY || vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+          # Optional, cookieless analytics (docs/ANALYTICS.md). Unset = off.
+          NEXT_PUBLIC_ANALYTICS_PROVIDER: ${{ secrets.NEXT_PUBLIC_ANALYTICS_PROVIDER || vars.NEXT_PUBLIC_ANALYTICS_PROVIDER }}
+          NEXT_PUBLIC_ANALYTICS_SCRIPT: ${{ secrets.NEXT_PUBLIC_ANALYTICS_SCRIPT || vars.NEXT_PUBLIC_ANALYTICS_SCRIPT }}
+          NEXT_PUBLIC_ANALYTICS_WEBSITE_ID: ${{ secrets.NEXT_PUBLIC_ANALYTICS_WEBSITE_ID || vars.NEXT_PUBLIC_ANALYTICS_WEBSITE_ID }}
+          NEXT_PUBLIC_ANALYTICS_DOMAIN: ${{ secrets.NEXT_PUBLIC_ANALYTICS_DOMAIN || vars.NEXT_PUBLIC_ANALYTICS_DOMAIN }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

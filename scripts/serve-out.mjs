@@ -6,7 +6,7 @@ import zlib from "node:zlib";
 
 const port = Number(process.argv[2] ?? 4173);
 const root = path.resolve("out");
-const base = "/vdc-academy";
+const base = (process.env.NEXT_PUBLIC_BASE_PATH ?? "/vdc-academy").replace(/\/$/, "");
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".woff2": "font/woff2", ".txt": "text/plain", ".webp": "image/webp" };
 
 http
