@@ -26,9 +26,32 @@ export const metadata: Metadata = {
     "Hands-on BIM and VDC training in Revit, Navisworks, clash detection and virtual construction, from the team at Bay BIM Designs.",
 };
 
+// Security headers for static hosting go in <meta>. Next's static export needs inline scripts, so script-src keeps
+// 'unsafe-inline'; everything else is pinned: Supabase (data, auth, storage, functions), Cloudflare Turnstile,
+// Google Fonts are self-hosted by next/font, images and workers from the site itself.
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://*.supabase.co",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://mock.supabase.local",
+  "frame-src https://challenges.cloudflare.com",
+  "worker-src 'self' blob:",
+  "media-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${logo.variable} ${mono.variable} ${body.variable}`}>
+      <head>
+        <meta httpEquiv="Content-Security-Policy" content={csp} />
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
+      </head>
       <body>
         <JsonLd data={orgLd} />
         <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('vdc-intro'))document.documentElement.classList.add('intro-seen')}catch(e){}" }} />
