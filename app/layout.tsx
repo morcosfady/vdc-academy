@@ -10,6 +10,7 @@ import { SceneHostLoader } from "@/components/three/SceneHostLoader";
 import { UtmCapture } from "@/components/layout/UtmCapture";
 import { JsonLd, orgLd } from "@/components/seo/JsonLd";
 import { MotionProvider } from "@/components/layout/MotionProvider";
+import { AuthProvider } from "@/lib/auth";
 import { PageTransition } from "@/components/layout/PageTransition";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={orgLd} />
         <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('vdc-intro'))document.documentElement.classList.add('intro-seen')}catch(e){}" }} />
         <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
+          <AuthProvider>
           <MotionProvider>
           <a href="#main" className="skip-link">
             Skip to content
@@ -45,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <GridOverlay />
           <PageTransition />
           </MotionProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
