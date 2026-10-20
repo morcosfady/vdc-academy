@@ -30,7 +30,7 @@ export function PasswordInput({
       <Input label={label} reveal value={value} onChange={(e) => onChange(e.target.value)} error={error} autoComplete={rest.autoComplete ?? "new-password"} {...rest} />
       {strength && (
         <div className="mt-2 flex items-center gap-3" aria-hidden={!showHint}>
-          <div className="flex flex-1 gap-1">
+          <div className={cn("flex flex-1 gap-1 transition-opacity duration-300", !showHint && "opacity-0")}>
             {[0, 1, 2].map((i) => (
               <span
                 key={i}

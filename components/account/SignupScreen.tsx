@@ -103,7 +103,6 @@ export function SignupScreen() {
   if (phase === "done")
     return shell(
       <div className="grid gap-6">
-        <Notice tone="ok">{c.check.lead(email.trim())}</Notice>
         <div className="flex flex-wrap items-center gap-6">
           <Button type="button" variant="secondary" onClick={resend} disabled={resent}>
             {c.check.resend}

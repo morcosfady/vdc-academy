@@ -2,7 +2,7 @@ import { SheetTag, GridBubble, DimensionString } from "@/components/ds/Devices";
 import { SteppedPoster } from "@/components/three/SteppedPoster";
 
 // Auth pages: form on the left (max 480px), the white study model still on a paper-2 panel with grid bubbles on
-// the right. The panel is decorative and hidden below lg, so phones get the form first and nothing else.
+// the right. The panel is decorative; on phones it sits below the form, smaller, so the form always comes first.
 export function AuthSplit({ sheet, name, title, lead, children, panelLabel }: { sheet: string; name: string; title: string; lead?: string; children: React.ReactNode; panelLabel: string }) {
   return (
     <section className="theme-light pt-[72px]">
@@ -16,8 +16,8 @@ export function AuthSplit({ sheet, name, title, lead, children, panelLabel }: { 
               <div className="mt-10">{children}</div>
             </div>
           </div>
-          <aside aria-hidden className="hidden lg:col-span-6 lg:col-start-7 lg:block xl:col-span-6 xl:col-start-7">
-            <div className="relative flex h-full min-h-[560px] flex-col justify-center rounded-[12px] bg-paper-2 px-14 py-16 text-slate">
+          <aside aria-hidden className="col-span-12 lg:col-span-6 lg:col-start-7 xl:col-span-6 xl:col-start-7">
+            <div className="relative flex h-full min-h-[340px] flex-col justify-center rounded-[12px] bg-paper-2 px-8 py-12 text-slate lg:min-h-[560px] lg:px-14 lg:py-16">
               <div className="absolute inset-x-[16%] top-8 flex justify-between">
                 {["A", "B", "C"].map((l) => (
                   <GridBubble key={l} label={l} size={32} />

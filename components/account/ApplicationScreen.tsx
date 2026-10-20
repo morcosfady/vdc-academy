@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { discountStatusLabel, statusLabel, type Application, type ApplicationEvent } from "@/lib/db";
 import { Tag } from "@/components/ds/Chips";
+import { discounts } from "@/config/discounts";
 import { SheetTag } from "@/components/ds/Devices";
 import { Button } from "@/components/ui/Button";
 import { account } from "@/content/copy-account";
@@ -29,6 +30,10 @@ const groups: { label: string; keys: Key[] }[] = [
   { label: c.groups.discount, keys: ["discount_type", "discount_percent", "discount_status"] },
 ];
 
+// The apply flow stores the discount id ("freshGrad"); older rows may hold "fresh_grad". Both map to the label.
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+const discountLabel = (v: string) => Object.values(discounts).find((d) => norm(d.id) === norm(v))?.label ?? v;
+
 function show(app: Application, k: Key): React.ReactNode {
   const v = app[k as keyof Application];
   if (v === null || v === undefined || v === "" || (Array.isArray(v) && v.length === 0)) return <span className="text-dim">{c.empty}</span>;
@@ -45,6 +50,7 @@ function show(app: Application, k: Key): React.ReactNode {
       );
   }
   if (k === "discount_status") return discountStatusLabel[v as Application["discount_status"]] ?? String(v);
+  if (k === "discount_type") return discountLabel(String(v));
   if (k === "discount_percent") return `${v}%`;
   if (k === "linkedin_url" || k === "portfolio_url")
     return (

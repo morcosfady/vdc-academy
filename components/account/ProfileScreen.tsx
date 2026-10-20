@@ -230,7 +230,7 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
         </div>
       </div>
 
-      <aside className="col-span-12 self-start lg:col-span-4 lg:sticky lg:top-24">
+      <aside className="order-first col-span-12 self-start lg:order-none lg:col-span-4 lg:sticky lg:top-24">
         <CompletenessMeter profile={profile} className="card p-6" />
       </aside>
     </div>
