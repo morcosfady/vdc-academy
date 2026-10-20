@@ -1,7 +1,14 @@
 # Supabase CLI config (only what this project needs). `supabase link --project-ref <ref>` fills project_id.
 project_id = "vdc-academy"
 
-# The notify function is called by Database Webhooks with "Authorization: Bearer <WEBHOOK_SECRET>",
-# not with a user JWT, so the gateway must not require one. The function checks the secret itself.
-[functions.notify]
-verify_jwt = false
+# All three functions are called from the browser with `supabase.functions.invoke(name, { body })`, which sends
+# the caller's JWT (a signed-in user's session, or the anon key for public forms). The gateway checks that the
+# token is valid; each function then decides who may do what (see the comment at the top of each index.ts).
+[functions.on-application-submitted]
+verify_jwt = true
+
+[functions.on-status-changed]
+verify_jwt = true
+
+[functions.notify-lead]
+verify_jwt = true
