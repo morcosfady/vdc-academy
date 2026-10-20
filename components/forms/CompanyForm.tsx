@@ -8,6 +8,7 @@ import { FormDone, FormFailed, FormFallback, Honeypot, issuesToErrors, type Form
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ds/Chips";
 import { insertRow } from "@/lib/submit";
+import { track } from "@/lib/analytics";
 import { pages } from "@/content/copy-pages";
 
 const c = pages.companies.form;
@@ -48,6 +49,7 @@ export function CompanyForm() {
       .filter(Boolean)
       .join(" · ");
     const r = await insertRow("leads", { name: x.name, email: x.email, topic, turnstile_token: token || null });
+    if (r.ok) track("company_form_submitted", { size: x.size });
     setState(r.ok ? "done" : r.reason === "disabled" ? "fallback" : "failed");
   }
 

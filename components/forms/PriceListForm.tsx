@@ -8,6 +8,7 @@ import { FormDone, FormFailed, FormFallback, Honeypot, issuesToErrors, type Form
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ds/Chips";
 import { insertRow } from "@/lib/submit";
+import { track } from "@/lib/analytics";
 import { programs } from "@/content/programs";
 import { pages } from "@/content/copy-pages";
 
@@ -45,6 +46,7 @@ export function PriceListForm() {
       topic: `${c.topic} · ${parsed.data.program} · ${status}`,
       turnstile_token: token || null,
     });
+    if (r.ok) track("price_list_requested");
     setState(r.ok ? "done" : r.reason === "disabled" ? "fallback" : "failed");
   }
 

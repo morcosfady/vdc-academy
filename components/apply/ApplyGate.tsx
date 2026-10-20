@@ -13,6 +13,7 @@ import { pages } from "@/content/copy-pages";
 import { applyCopy } from "@/content/copy-apply";
 import { authCallbackUrl, getSupabase } from "@/lib/supabase";
 import { options, statusToEnum } from "@/lib/applySchema";
+import { track } from "@/lib/analytics";
 
 const c = pages.apply;
 const g = applyCopy.gate;
@@ -58,6 +59,7 @@ export function ApplyGate({ note }: { note?: string }) {
     });
     setBusy(false);
     if (error) return setErrors({ form: /registered|exists/i.test(error.message) ? g.errors.exists : g.errors.generic });
+    track("signup_completed", { status: statusToEnum(parsed.data.status) });
     // With email confirmation on there is no session yet: the user confirms, lands on /auth/callback and comes back here.
     if (!data.session) setSent({ kind: "confirm", email: parsed.data.email });
   }

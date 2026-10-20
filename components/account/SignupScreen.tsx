@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth";
 import { authCallbackUrl, getSupabase } from "@/lib/supabase";
+import { track } from "@/lib/analytics";
 import type { CurrentStatus } from "@/lib/db";
 import { Input, Select } from "@/components/ds/Forms";
 import { Tag } from "@/components/ds/Chips";
@@ -76,6 +77,7 @@ export function SignupScreen() {
       setFailure(/already|exists|registered/i.test(error.message) ? c.errors.exists : c.errors.generic);
       return;
     }
+    track("signup_completed", { status: statusValue[parsed.data.status] });
     // Some projects confirm automatically; then there is a session and we can go straight in.
     if (data.session) {
       router.replace(next ?? "/account/");
