@@ -4,7 +4,37 @@ Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, re
 Repo (public): https://github.com/morcosfady/vdc-academy
 Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
-## v7: live backend + student accounts (2026-10-20), IN PROGRESS, continue here
+## v8: launch ready (2026-10-20), continue here
+
+Everything below is on `main` and deployed. The design did not change. Supabase is still not connected (step 1 of `docs/GO-LIVE.md` is blocked), so accounts, apply and admin run on the in-memory mock in tests and on the client demo for presenting.
+
+### Present it to the client: https://morcosfady.github.io/vdc-academy/demo/
+Five tour cards (apply as a new student, student dashboard, profile, admin overview and table, admin detail), a banner on every page ("Demo mode · sample data, nothing is saved", Reset, Exit), 16 fictional applications ("Sample Student 01", `student01@example.com`), password `demo-password-1`. Runs entirely in the browser (`lib/demo/`): supabase-js gets an in-page fetch, anything aimed at `*.supabase.co` is refused, so it never touches real data even after keys exist. noindex, disallowed in robots, not in the sitemap. The five-minute script is on the page.
+
+### What changed (files)
+- **Fixes**: static 40% on /fresh-graduates and the home (`data-discount`, only the brass rule animates); auth pages use the pre-rendered still with faint, non-clickable grid marks (`components/account/AuthSplit.tsx`); header Log in hidden without keys and shown once a client exists (test in `tests/account.spec.ts`); repo hygiene (`dev.log`, `test-results/` untracked and ignored).
+- **Performance** (live PageSpeed mobile: home 84 to **98**, programs **99**, apply **93** with Best Practices 100): three.js was in the home first-load bundle through one constant (`BUBBLE_FLOORS` moved to `lib/modelState.ts`), supabase-js now loads lazily (`loadSupabase()` in `lib/supabase.ts`; `AuthProvider`, the auth callback and the admin loader wait for it), mono font not preloaded. Inline CSS measured and rejected.
+- **Bugs found by QA**: invisible focus border on every field (`components/ds/Forms.tsx`, `components/forms/Field.tsx`), apply stuck on the old step when Continue was the first interaction (CSS `.step-in` instead of AnimatePresence wait), Continue before the draft loaded, featured card cover not filling (`components/ds/Cards.tsx`), CSP `upgrade-insecure-requests` broke WebKit on localhost (removed), zod eval probe under the CSP (`lib/zod.ts`, jitless; import z from there), rejected badge and admin alerts contrast (`--err`), WebKit losing a program choice (controlled checkboxes), a sent application coming back as a draft (autosave stops after submit). Details: `docs/audit/v8/qa.md`.
+- **SEO**: per-page titles and descriptions, canonicals from `SITE_URL` (`config/site.ts`), JSON-LD (organization, Course per program without offers until prices are confirmed, ItemList, FAQPage, BreadcrumbList), 21 OG images (`scripts/og.mjs`, `public/og/`), robots and sitemap from `PRIVATE_ROUTES`. `docs/SEO.md`. Test: `tests/seo.spec.ts`.
+- **Analytics**: Umami or Plausible behind `NEXT_PUBLIC_ANALYTICS_*`, off by default, events only (`lib/analytics.ts`, `docs/ANALYTICS.md`).
+- **Custom domain**: `NEXT_PUBLIC_BASE_PATH` (workflow default `/vdc-academy`, set the repo variable to `/` on a domain); `docs/CUSTOM-DOMAIN.md` (DNS, CNAME step, what to update, Vercel later).
+- **Go-live runbook**: `docs/GO-LIVE.md` with a status log. Project creation retried through the MCP and the CLI: refused, `morcosfady` has two active free projects (`pharaohs-bites`, `kanisa-checkin`).
+- **Client content**: `docs/CLIENT-INPUT.md` (questionnaire, where each answer goes, what shows until then) and `/content-status/` (noindex): 2 approved, 85 draft, 11 missing today; six items block launch.
+- **No JavaScript**: forms show "This form needs JavaScript" in place of their fields (noscript style in `app/layout.tsx`, also stops a native submit from putting data in the URL); client screens say why they are empty (`components/ui/NoScript.tsx`).
+- **Tests**: Chromium, Firefox, WebKit projects (`playwright.config.ts`); `tests/qa.spec.ts` (widths, 40% sampling, dialog, inputs, Comfort, keyboard, JS off, axe on every remaining page and the signed-in screens); `tests/demo.spec.ts`; `tests/analytics.spec.ts`; the mock is now `lib/demo/engine.ts` shared with the demo. CI: `.github/workflows/cross-browser.yml` (Firefox and WebKit on Ubuntu, every push).
+- **v7 leftovers done**: screenshots `docs/audit/v7-after/` (13 screens at 1440 and 390), Lighthouse `docs/audit/v8/lh/`, `docs/audit/v7-scores.md`, the flaky draft test (root cause: the apply transition, plus the test read the profile before its background sync), merged worktrees and branches removed (two empty folders under `.claude/worktrees/` were locked by another process and remain; delete them when nothing holds them).
+
+### Tested live vs not
+- Live: the deploy, the demo, canonicals, OG image, noindex, sitemap, PageSpeed on home, programs, apply.
+- Not live: anything against a real Supabase project, emails, Turnstile. Real iPhone and Android. Firefox on this Windows machine (the binary is blocked; CI covers Firefox).
+
+### Open items
+1. Owner: free a Supabase slot, then run `docs/GO-LIVE.md` from step 1 (Claude can do every step except the owner-only ones listed at its end).
+2. Owner: Resend domain (ideally the client's), Turnstile keys, optional Google OAuth.
+3. Owner: send `docs/CLIENT-INPUT.md` to the client; `/content-status/` shows what is still blocking.
+4. Optional: the apply fresh-graduate notice still uses Motion's height animation; it only appears after user input, when Motion has loaded.
+
+## v7: live backend + student accounts (2026-10-20), see v8 above for what was left
 
 Everything below is merged on `main` and pushed (last code commit `ee4e299`). Built and tested against the in-memory Supabase mock (`tests/helpers/mockSupabase.ts`, pages opened with `?mock=1`), NOT against a live project yet.
 
