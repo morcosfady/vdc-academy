@@ -6,8 +6,10 @@ import { Slab } from "@/components/ui/Slab";
 import { TeachForm } from "@/components/forms/TeachForm";
 import { content, hasInstructors } from "@/content/site";
 import { pages } from "@/content/copy-pages";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = { title: "Instructors", robots: hasInstructors() ? undefined : { index: false } };
+export const metadata: Metadata = pageMeta({ title: "BIM and VDC Instructors", description: "VDC Academy instructors are working BIM coordinators and VDC engineers from Bay BIM Designs. They teach what they did on real jobs that week.", path: "/instructors/", robots: hasInstructors() ? undefined : { index: false } });
 
 const c = pages.instructors;
 const rule = { borderColor: "var(--rule)" } as const;
@@ -156,5 +158,10 @@ function Profile() {
 }
 
 export default function InstructorsPage() {
-  return hasInstructors() ? <RealProfiles /> : <Profile />;
+  return (
+    <>
+      <JsonLd data={breadcrumbLd([{ name: "Instructors", path: "/instructors/" }])} />
+      {hasInstructors() ? <RealProfiles /> : <Profile />}
+    </>
+  );
 }

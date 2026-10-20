@@ -9,8 +9,10 @@ import { FactRow } from "@/components/ds/Sections";
 import { Map } from "@/components/ds/Map";
 import { pages } from "@/content/copy-pages";
 import { site } from "@/config/site";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = { title: "About", description: "VDC Academy is the training academy of Bay BIM Designs in Fort Worth, TX." };
+export const metadata: Metadata = pageMeta({ title: "About VDC Academy by Bay BIM Designs", description: "VDC Academy is the BIM and VDC training academy of Bay BIM Designs in Fort Worth, TX, taught by working BIM and VDC professionals.", path: "/about/", og: "about" });
 
 const c = pages.about;
 const rule = { borderColor: "var(--rule)" } as const;
@@ -37,6 +39,7 @@ function Row({ id, title, lead, children, className = "!pt-0" }: { id: string; t
 export default function AboutPage() {
   return (
     <>
+      <JsonLd data={breadcrumbLd([{ name: "About", path: "/about/" }])} />
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} className="[&_.rule-b]:border-b-0 [&_.rule-b]:!pb-10 lg:[&_.rule-b]:!pb-14" />
 
       {/* Hero visual: the dusk tower in a 16:9 frame, eager so it never paints as a grey box */}

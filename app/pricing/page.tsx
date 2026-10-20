@@ -9,11 +9,10 @@ import { DiscountTable, discountRows } from "@/components/programs/DiscountTable
 import { earlyBirdStacksWithFreshGrad } from "@/config/discounts";
 import { plans, pricesKnown } from "@/content/plans";
 import { pages } from "@/content/copy-pages";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = {
-  title: "Pricing",
-  description: "VDC Academy plans and discounts. Fresh graduates get the biggest discount.",
-};
+export const metadata: Metadata = pageMeta({ title: "Pricing and Discounts for BIM Courses", description: "VDC Academy plans and discounts for BIM and VDC training: up to 40% off for fresh graduates, 25% for students and 15% for company groups.", path: "/pricing/", og: "pricing" });
 
 const c = pages.pricing;
 const u = c.unknown;
@@ -129,5 +128,10 @@ function UnknownPrices() {
 }
 
 export default function PricingPage() {
-  return pricesKnown() ? <KnownPrices /> : <UnknownPrices />;
+  return (
+    <>
+      <JsonLd data={breadcrumbLd([{ name: "Pricing", path: "/pricing/" }])} />
+      {pricesKnown() ? <KnownPrices /> : <UnknownPrices />}
+    </>
+  );
 }

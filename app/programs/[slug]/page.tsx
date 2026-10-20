@@ -12,11 +12,27 @@ import { ProgramCard } from "@/components/ds/Cards";
 import { Software } from "@/components/ds/Chips";
 import { Accordion } from "@/components/ds/Controls";
 import { Button } from "@/components/ui/Button";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, breadcrumbLd, courseLd } from "@/components/seo/JsonLd";
+import { pageMeta } from "@/components/seo/meta";
 
 type Props = { params: Promise<{ slug: string }> };
 const c = pages.program;
 const rule = { borderColor: "var(--rule)" } as const;
+
+// Search titles (<= 46 chars before the " | VDC Academy" suffix) and descriptions (<= 155 chars), one per program.
+const seo: Record<string, { title: string; description: string }> = {
+  "vdc-professional-bootcamp": { title: "VDC Professional Bootcamp: BIM Training", description: "The flagship VDC training path: Revit modeling, Navisworks clash detection, 4D simulation, a capstone project and career support." },
+  "bim-fundamentals-revit": { title: "BIM Fundamentals with Revit: Beginner Course", description: "A beginner BIM course in Autodesk Revit. Start from zero, learn BIM and LOD basics, and build your first model with views, schedules and sheets." },
+  "revit-architecture": { title: "Revit Architecture Course", description: "An intermediate Revit course for architectural modeling: curtain walls, stairs, roofs, detailed drawing sets, worksets and design options." },
+  "revit-structure": { title: "Revit Structure Course", description: "An intermediate Revit course for structural framing, foundations and slabs, with structural documentation and coordination with architecture." },
+  "revit-mep": { title: "Revit MEP Course: Ducts, Pipes and Electrical", description: "An intermediate Revit MEP course: model ducts, pipes and electrical systems, size and tag them, and coordinate above ceilings on a commercial floor." },
+  "low-voltage-bim": { title: "Low Voltage and Technology Systems BIM", description: "Model data, security, AV and fire alarm systems in Revit, with custom device families, device schedules and clash checks against MEP." },
+  "revit-family-creation": { title: "Revit Family Creation Course", description: "An advanced Revit course on parametric families: reference planes, parameters and formulas, type catalogs, nested families and MEP connectors." },
+  "navisworks-clash-detection": { title: "Navisworks Clash Detection Course", description: "A Navisworks clash detection course: federate multi-discipline models, set up clash tests and rules, and write and track clash reports." },
+  "4d-5d-simulation": { title: "4D/5D Construction Simulation Course", description: "An advanced VDC course: link a model to the schedule in Navisworks, build a 4D construction simulation and extract quantities for 5D cost." },
+  "dynamo-for-revit": { title: "Dynamo for Revit Course: BIM Automation", description: "An advanced Dynamo course for Revit users: build visual scripts, read and write Revit data, exchange with Excel and automate checks and tagging." },
+  "bim-management-iso-19650": { title: "BIM Management and ISO 19650 Course", description: "An advanced BIM management course: ISO 19650 concepts, BIM execution plans, a common data environment, model audits and handover data." },
+};
 
 export function generateStaticParams() {
   return programs.map((p) => ({ slug: p.slug }));
@@ -24,7 +40,9 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = getProgram((await params).slug);
-  return p ? { title: p.title, description: p.summary } : {};
+  if (!p) return {};
+  const s = seo[p.slug] ?? { title: p.title, description: p.summary };
+  return pageMeta({ ...s, path: `/programs/${p.slug}/`, og: `program-${p.slug}`, ogAlt: `${p.title}, a VDC Academy program` });
 }
 
 export default async function ProgramPage({ params }: Props) {
@@ -40,15 +58,12 @@ export default async function ProgramPage({ params }: Props) {
 
   return (
     <>
+      <JsonLd data={courseLd(p)} />
       <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "Course",
-          name: p.title,
-          description: p.summary,
-          provider: { "@type": "EducationalOrganization", name: "VDC Academy", sameAs: "https://baybimdesigns.com/" },
-          ...(p.priceFull !== null ? { offers: { "@type": "Offer", price: p.priceFull, priceCurrency: "USD" } } : {}),
-        }}
+        data={breadcrumbLd([
+          { name: "Programs", path: "/programs/" },
+          { name: p.title, path: `/programs/${p.slug}/` },
+        ])}
       />
       <ProgramHero slug={p.slug} sheet={sheetOf(p)} level={p.level} title={p.title} summary={p.summary} facts={facts} />
 

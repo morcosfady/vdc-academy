@@ -7,8 +7,10 @@ import { Map } from "@/components/ds/Map";
 import { content, shown } from "@/content/site";
 import { pages } from "@/content/copy-pages";
 import { site } from "@/config/site";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = { title: "Contact", description: "Talk to a VDC Academy advisor." };
+export const metadata: Metadata = pageMeta({ title: "Contact a VDC Academy Advisor", description: "Questions about BIM and VDC training at VDC Academy? Send a message to an advisor in Fort Worth, TX. We reply within two working days.", path: "/contact/", og: "contact" });
 
 const c = pages.contact;
 const rule = { borderColor: "var(--rule)" } as const;
@@ -44,6 +46,7 @@ export default function ContactPage() {
 
   return (
     <>
+      <JsonLd data={breadcrumbLd([{ name: "Contact", path: "/contact/" }])} />
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} />
       <section className="theme-light section !pt-12 lg:!pt-16">
         <div className="wrap">

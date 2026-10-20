@@ -4,16 +4,18 @@ import { Button } from "@/components/ui/Button";
 import { FaqBrowser } from "@/components/ds/FaqBrowser";
 import { faqs } from "@/content/faqs";
 import { pages } from "@/content/copy-pages";
-import { JsonLd } from "@/components/seo/JsonLd";
+import { JsonLd, breadcrumbLd, faqLd } from "@/components/seo/JsonLd";
+import { pageMeta } from "@/components/seo/meta";
 
-export const metadata: Metadata = { title: "FAQ", description: "Answers about VDC Academy programs, discounts and applying." };
+export const metadata: Metadata = pageMeta({ title: "BIM Training FAQ: Programs, Pricing, Applying", description: "Answers about VDC Academy BIM and VDC programs, fresh graduate and student discounts, applying, the laptop you need for Revit and team training.", path: "/faq/", og: "faq" });
 
 const c = pages.faq;
 
 export default function FaqPage() {
   return (
     <>
-      <JsonLd data={{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map((x) => ({ "@type": "Question", name: x.q, acceptedAnswer: { "@type": "Answer", text: x.a } })) }} />
+      <JsonLd data={faqLd(faqs)} />
+      <JsonLd data={breadcrumbLd([{ name: "FAQ", path: "/faq/" }])} />
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead}>
         <Button href="/contact" variant="link">
           {c.ask}

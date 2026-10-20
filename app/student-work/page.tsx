@@ -10,8 +10,10 @@ import { content, hasStudentWork } from "@/content/site";
 import { cover } from "@/content/media";
 import { getProgram } from "@/content/programs";
 import { pages } from "@/content/copy-pages";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = { title: "Student Work", robots: hasStudentWork() ? undefined : { index: false } };
+export const metadata: Metadata = pageMeta({ title: "Student Work: BIM and VDC Projects", description: "The projects VDC Academy students build: coordinated Revit models, Navisworks clash reports, family libraries and 4D construction simulations.", path: "/student-work/", robots: hasStudentWork() ? undefined : { index: false } });
 
 const c = pages.studentWork;
 const rule = { borderColor: "var(--rule)" } as const;
@@ -48,6 +50,7 @@ export default function StudentWorkPage() {
   const real = hasStudentWork();
   return (
     <>
+      <JsonLd data={breadcrumbLd([{ name: "Student work", path: "/student-work/" }])} />
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[real ? c.title : c.emptyTitle]} subtitle={real ? undefined : c.emptyLead}>
         <Button href="/apply">{pages.empty.primary}</Button>
         <Button href="/programs" variant="link">

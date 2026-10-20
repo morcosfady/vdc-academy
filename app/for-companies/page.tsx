@@ -11,8 +11,10 @@ import { approvedQuotes } from "@/content/site";
 import { media } from "@/content/media";
 import { pages } from "@/content/copy-pages";
 import { discounts } from "@/config/discounts";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = { title: "For Companies", description: "Team BIM and VDC training from Bay BIM Designs." };
+export const metadata: Metadata = pageMeta({ title: "BIM and VDC Team Training for Companies", description: "Train your team in Revit, Navisworks and VDC workflows with Bay BIM Designs: on site in Dallas Fort Worth, live online or both.", path: "/for-companies/", og: "for-companies" });
 
 const c = pages.companies;
 const rule = { borderColor: "var(--rule)" } as const;
@@ -67,6 +69,7 @@ export default function CompaniesPage() {
   const quotes = approvedQuotes();
   return (
     <>
+      <JsonLd data={breadcrumbLd([{ name: "For companies", path: "/for-companies/" }])} />
       {/* Hero: headline in columns 1 to 6, the team photo in a 16:10 frame in 7 to 12 (the LCP image, eager) */}
       <section className="theme-light pt-[72px]" aria-labelledby="companies-title">
         <div className="wrap">

@@ -9,8 +9,10 @@ import { programs } from "@/content/programs";
 import { cover } from "@/content/media";
 import { pages } from "@/content/copy-pages";
 import { money } from "@/lib/pricing";
+import { pageMeta } from "@/components/seo/meta";
+import { JsonLd, breadcrumbLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = { title: "Learning Path", description: "From BIM trainee to VDC manager in five steps." };
+export const metadata: Metadata = pageMeta({ title: "BIM Career Path: Trainee to VDC Manager", description: "From BIM trainee to VDC manager in five steps. See which VDC Academy BIM and VDC program fits each level of your career.", path: "/learning-path/", og: "learning-path" });
 
 const c = pages.path;
 const rule = { borderColor: "var(--rule)" } as const;
@@ -18,6 +20,7 @@ const rule = { borderColor: "var(--rule)" } as const;
 export default function LearningPathPage() {
   return (
     <>
+      <JsonLd data={breadcrumbLd([{ name: "Learning path", path: "/learning-path/" }])} />
       <PageHero sheet={c.sheet} eyebrow={c.name} title={[c.title]} subtitle={c.lead} />
 
       {/* The home page section drawing. Its own header and its link back to this page are hidden here. */}
