@@ -32,9 +32,9 @@ async function grade(buf, w, h, position = "attention") {
   return sharp(out, { raw: { width: info.width, height: info.height, channels: 3 } });
 }
 
-async function save(img, name) {
-  await img.clone().avif({ quality: 50, effort: 6 }).toFile(`assets/images/${name}.avif`);
-  await img.clone().webp({ quality: 74 }).toFile(`assets/images/${name}.webp`);
+async function save(img, name, q = 50) {
+  await img.clone().avif({ quality: q, effort: 6 }).toFile(`assets/images/${name}.avif`);
+  await img.clone().webp({ quality: q <= 42 ? 54 : 72 }).toFile(`assets/images/${name}.webp`);
   const a = fs.statSync(`assets/images/${name}.avif`).size;
   const w = fs.statSync(`assets/images/${name}.webp`).size;
   console.log(name, `avif ${(a / 1024) | 0} KB`, `webp ${(w / 1024) | 0} KB`);
@@ -46,7 +46,7 @@ const jobs = [
   ["grad", "pexels/8960944", 1200, 1500, "right"],
   ["team", "pexels/8470778", 1600, 1000, "left"],
   ["screen", "pexels/8961073", 1600, 900, "centre"],
-  ["hero-glass", "glass-tower", 2000, 1125, "centre"],
+  ["hero-glass", "glass-tower", 1800, 1013, "centre", 40],
   ["panel-steel", "steel-crane", 1200, 900, "centre"],
   ["panel-glass", "glass-tower", 1200, 900, "centre"],
   ["panel-facade", "dusk-facade", 1200, 900, "centre"],
@@ -56,11 +56,11 @@ const jobs = [
   ["light-crane", "steel-crane", 1400, 1100, "centre"],
 ];
 
-for (const [name, file, w, h, pos] of jobs) {
+for (const [name, file, w, h, pos, q] of jobs) {
   const src = fs.existsSync(`assets/raw/${file}.jpg`) ? `assets/raw/${file}.jpg` : null;
   if (!src) {
     console.log("skip", name, "(raw missing)");
     continue;
   }
-  await save(await grade(fs.readFileSync(src), w, h, pos), name);
+  await save(await grade(fs.readFileSync(src), w, h, pos), name, q);
 }

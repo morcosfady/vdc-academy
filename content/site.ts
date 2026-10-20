@@ -9,6 +9,12 @@ export type Quote = { quote: string; who: string; approved: boolean };
 export type Instructor = { name: string; role: string; years?: number; bio?: string; linkedin?: string; photo?: string };
 export type StudentWork = { title: string; image: string; program?: string };
 
+// Commercial switches. Flip to true when the owner confirms the real values in content/programs.ts and content/plans.ts.
+export const confirmed = {
+  prices: false, // program and plan prices
+  schedules: false, // durations, hours, formats, schedules, seats, cohort dates
+};
+
 export const content = {
   contact: {
     email: f<string>(),
@@ -20,7 +26,7 @@ export const content = {
     bookingUrl: f<string>(), // a scheduling link; shows "Book a 15-minute advisor call" on /contact when set
   },
   social: { linkedin: f<string>() },
-  nextCohort: f<string>("January 12, 2027", true), // DRAFT, owner to confirm
+  nextCohort: f<string>("January 12, 2027", false), // DRAFT, hidden until approved
   domain: f<string>(),
   testimonials: [
     {

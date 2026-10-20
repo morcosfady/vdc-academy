@@ -27,25 +27,26 @@ import modelPaperAvif from "./model-paper.avif";
 import modelPaperWebp from "./model-paper.webp";
 import modelNightAvif from "./model-night.avif";
 import modelNightWebp from "./model-night.webp";
+import { blur } from "./blur";
 
-export type Photo = { avif: string; webp: string; width: number; height: number; avifSm?: string; webpSm?: string };
-const p = (a: { src: string; width: number; height: number }, w: { src: string }): Photo => ({ avif: a.src, webp: w.src, width: a.width, height: a.height });
+export type Photo = { avif: string; webp: string; width: number; height: number; avifSm?: string; webpSm?: string; blur?: string };
+const p = (a: { src: string; width: number; height: number }, w: { src: string }, name?: string): Photo => ({ avif: a.src, webp: w.src, width: a.width, height: a.height, blur: name ? blur[name] : undefined });
 
 export const photos = {
-  hero: p(heroAvif, heroWebp),
-  steel: p(steelAvif, steelWebp),
-  glass: p(glassAvif, glassWebp),
-  facade: p(facadeAvif, facadeWebp),
-  crane: p(craneAvif, craneWebp),
-  cardSteel: p(cardSteelAvif, cardSteelWebp),
-  cardGlass: p(cardGlassAvif, cardGlassWebp),
-  cardFacade: p(cardFacadeAvif, cardFacadeWebp),
+  hero: p(heroAvif, heroWebp, "hero-glass"),
+  steel: p(steelAvif, steelWebp, "panel-steel"),
+  glass: p(glassAvif, glassWebp, "panel-glass"),
+  facade: p(facadeAvif, facadeWebp, "panel-facade"),
+  crane: p(craneAvif, craneWebp, "light-crane"),
+  cardSteel: p(cardSteelAvif, cardSteelWebp, "card-steel"),
+  cardGlass: p(cardGlassAvif, cardGlassWebp, "card-glass"),
+  cardFacade: p(cardFacadeAvif, cardFacadeWebp, "card-facade"),
   // People on site (Pexels license)
-  site: p(siteAvif, siteWebp),
-  grad: p(gradAvif, gradWebp),
-  team: p(teamAvif, teamWebp),
+  site: p(siteAvif, siteWebp, "site"),
+  grad: p(gradAvif, gradWebp, "grad"),
+  team: p(teamAvif, teamWebp, "team"),
   // Model screen (our own render stands in until a real BIM screen photo is supplied)
-  screen: p(screenAvif, screenWebp),
+  screen: p(screenAvif, screenWebp, "screen"),
   // Rendered stills of the study model (scripts/poster.mjs), transparent
   modelPaper: p(modelPaperAvif, modelPaperWebp),
   modelNight: p(modelNightAvif, modelNightWebp),

@@ -238,12 +238,23 @@ const DRAFT: Record<string, Partial<Program>> = {
   "bim-management-iso-19650": { priceFull: 2200, durationWeeks: 6, hours: 48, format: "Online live", schedule: "Sat mornings", nextCohortDate: "April 13, 2027", seats: 12 },
 };
 
-// Prices stay hidden ("Price on request") until the owner confirms them. Flip this to true once the DRAFT prices are real.
-export const pricesConfirmed = false;
+import { confirmed } from "./site";
+
+// Prices and schedules stay hidden until the owner confirms them (content/site.ts `confirmed`).
+export const pricesConfirmed = confirmed.prices;
+export const schedulesConfirmed = confirmed.schedules;
 
 export const programs: Program[] = base.map((p) => {
   const d = { ...(DRAFT[p.slug] ?? {}) };
   if (!pricesConfirmed) delete d.priceFull;
+  if (!schedulesConfirmed) {
+    delete d.durationWeeks;
+    delete d.hours;
+    delete d.format;
+    delete d.schedule;
+    delete d.seats;
+    delete d.nextCohortDate;
+  }
   return { ...p, ...d };
 });
 

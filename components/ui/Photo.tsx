@@ -18,7 +18,7 @@ export function Photo({
   sizes?: string;
 }) {
   return (
-    <picture>
+    <picture style={photo.blur ? { backgroundImage: `url(${photo.blur})`, backgroundSize: "cover", backgroundPosition: style?.objectPosition ?? "center" } : undefined}>
       <source srcSet={photo.avifSm ? `${photo.avifSm} ${Math.round(photo.width / 2)}w, ${photo.avif} ${photo.width}w` : photo.avif} sizes={photo.avifSm ? sizes : undefined} type="image/avif" />
       {photo.webpSm && <source srcSet={`${photo.webpSm} ${Math.round(photo.width / 2)}w, ${photo.webp} ${photo.width}w`} sizes={sizes} type="image/webp" />}
       <img
