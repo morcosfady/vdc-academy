@@ -51,7 +51,7 @@ export type Application = {
   experience_years: string | null;
   job_title: string | null;
   company: string | null;
-  software_skills: string[] | null;
+  software_skills: Record<string, string> | string[] | null; // { tool: level } from the apply form
   career_goal: string | null;
   linkedin_url: string | null;
   portfolio_url: string | null;
