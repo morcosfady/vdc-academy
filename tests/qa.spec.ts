@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { emptyState, loginAs, mockSupabase, seedUser } from "./helpers/mockSupabase";
 
 // v8 cross-browser QA (runs in every project of playwright.config.ts: Chromium, Firefox, WebKit).
@@ -219,4 +220,43 @@ test("JavaScript off: every page is readable and forms say they need JavaScript"
     }
   }
   await ctx.close();
+});
+
+// ---- axe on the pages tests/site.spec.ts does not scan, plus the signed-in screens through the demo
+
+const serious = async (page: Page) => (await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id} (${v.nodes.length})`);
+
+for (const r of ["learning-path/", "for-companies/", "about/", "privacy/", "terms/", "accessibility/", "instructors/", "student-work/", "apply/success/", "nothing-here/", "login/", "signup/", "demo/", "content-status/"]) {
+  test(`axe: no serious or critical issues on /${r}`, async ({ page }) => {
+    await page.goto(r);
+    await page.waitForTimeout(1500);
+    expect(await serious(page)).toEqual([]);
+  });
+}
+
+test("axe: no serious or critical issues on the dashboard, profile, application and the admin screens (demo)", async ({ page }) => {
+  const open = async (card: string, url: RegExp) => {
+    await page.goto("demo/");
+    await page.getByRole("button", { name: card }).click();
+    await page.waitForURL(url);
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(800);
+  };
+  await open("Open the dashboard", /account\/$/);
+  expect(await serious(page), "dashboard").toEqual([]);
+  await open("Open the profile", /profile/);
+  expect(await serious(page), "profile").toEqual([]);
+  await page.goto("account/application/?id=aaaaaaaa-0000-4000-8000-000000000001");
+  await page.waitForTimeout(1200);
+  expect(await serious(page), "application").toEqual([]);
+  await open("Open the admin", /admin\/$/);
+  expect(await serious(page), "admin overview").toEqual([]);
+  await page.goto("admin/applications/");
+  await page.locator('[data-testid="app-row"]').first().waitFor();
+  expect(await serious(page), "admin table").toEqual([]);
+  await open("Open the application", /admin\/application\//);
+  expect(await serious(page), "admin detail").toEqual([]);
+  await page.goto("admin/leads/");
+  await page.waitForTimeout(1200);
+  expect(await serious(page), "admin leads").toEqual([]);
 });

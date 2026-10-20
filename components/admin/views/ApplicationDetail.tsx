@@ -312,7 +312,7 @@ function Body({ d, id, refreshEvents, refreshAll, patchApp }: { d: Loaded; id: s
         {/* Controls */}
         <aside className="order-first grid content-start gap-6 lg:order-none lg:col-span-4 lg:sticky lg:top-24 lg:self-start">
           {err && (
-            <p role="alert" className="rounded-[4px] border px-4 py-3 text-[15px]" style={{ borderColor: "var(--clash)", color: "var(--clash)" }}>
+            <p role="alert" className="rounded-[4px] border px-4 py-3 text-[15px]" style={{ borderColor: "var(--err)", color: "var(--err)" }}>
               {err}
             </p>
           )}

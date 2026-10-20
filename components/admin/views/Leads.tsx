@@ -155,7 +155,7 @@ export function Leads() {
 
       {tab === "deletions" && <p className="t-small mt-4 text-dim">{c.deletionHint}</p>}
       {err && (
-        <p role="alert" className="mt-4 rounded-[4px] border px-4 py-3 text-[15px]" style={{ borderColor: "var(--clash)", color: "var(--clash)" }}>
+        <p role="alert" className="mt-4 rounded-[4px] border px-4 py-3 text-[15px]" style={{ borderColor: "var(--err)", color: "var(--err)" }}>
           {err}
         </p>
       )}

@@ -2,7 +2,7 @@ import { type ApplicationStatus, type DiscountStatus, discountStatusLabel, statu
 import { cn } from "@/lib/utils";
 
 // Status and discount badges in the Tag voice: mono, 4px radius. Blueprint for verified or moving forward,
-// brass for anything waiting on someone, ink fill for enrolled, clash red text only for a rejection.
+// brass for anything waiting on someone, ink fill for enrolled, danger red text only for a rejection (--err: the clash red is under 4.5:1 on paper).
 type Tone = "outline" | "blueprint" | "brass" | "ink" | "clash";
 
 const toneStyle: Record<Tone, React.CSSProperties> = {
@@ -10,7 +10,7 @@ const toneStyle: Record<Tone, React.CSSProperties> = {
   blueprint: { background: "var(--mist)", color: "#1c4a96" },
   brass: { background: "rgba(184,146,90,0.16)", color: "var(--warm)" },
   ink: { background: "var(--ink)", color: "#eef3f6" },
-  clash: { border: "1px solid var(--rule)", color: "var(--clash)" },
+  clash: { border: "1px solid var(--rule)", color: "var(--err)" },
 };
 
 const statusTone: Record<ApplicationStatus, Tone> = {
