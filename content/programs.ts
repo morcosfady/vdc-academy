@@ -238,6 +238,9 @@ const DRAFT: Record<string, Partial<Program>> = {
   "bim-management-iso-19650": { priceFull: 2200, durationWeeks: 6, hours: 48, format: "Online live", schedule: "Sat mornings", nextCohortDate: "April 13, 2027", seats: 12 },
 };
 
+// Read-only view of the drafts for the dev /content-status/ page. The site itself reads `programs`.
+export const draftDetails: Readonly<Record<string, Readonly<Partial<Program>>>> = DRAFT;
+
 import { confirmed } from "./site";
 
 // Prices and schedules stay hidden until the owner confirms them (content/site.ts `confirmed`).

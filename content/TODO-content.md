@@ -1,5 +1,7 @@
 # Content the owner must provide
 
+Send `docs/CLIENT-INPUT.md` to the client to collect everything below; the dev page `/content-status/` shows what is approved, draft or missing today.
+
 Nothing here shows as a placeholder on the site. Items marked DRAFT are shown with studio-written values so every page is complete; replace them with the real ones. Edit `content/site.ts`, `content/programs.ts`, `content/plans.ts`, `content/copy.ts` (home copy) and `content/copy-pages.ts` (inner pages).
 
 ## Replace the drafts

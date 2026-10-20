@@ -10,6 +10,8 @@ const draft: Plan[] = [
 
 // Plan prices follow the same switch as program prices (content/programs.ts).
 import { pricesConfirmed } from "./programs";
+// The studio drafts, for the owner's /content-status/ page only (never rendered as prices on public pages).
+export const draftPlans: readonly Plan[] = draft;
 export const plans: Plan[] = draft.map((p) => (pricesConfirmed ? p : { ...p, price: null }));
 
 export const pricesKnown = () => plans.some((p) => p.price !== null);
