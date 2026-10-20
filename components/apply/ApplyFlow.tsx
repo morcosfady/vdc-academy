@@ -94,7 +94,11 @@ export function ApplyFlow() {
   const email = shown(content.contact.email);
 
   const form = useForm<ApplyValues>({ resolver: zodResolver(fullSchema), defaultValues, mode: "onBlur" });
-  const { register, watch, trigger, getValues, reset, formState: { errors } } = form;
+  const { register, watch, trigger, getValues, setValue, reset, formState: { errors } } = form;
+  // programs is set by hand (controlled checkboxes below); register it once so validation and watch include it
+  useEffect(() => {
+    register("programs");
+  }, [register]);
   const v = watch();
 
   const userId = user?.id ?? null;
@@ -541,7 +545,21 @@ export function ApplyFlow() {
                             const on = v.programs.includes(p.slug);
                             return (
                               <label key={p.slug} className={cn("flex cursor-pointer items-start gap-3 rounded-[4px] border p-4 text-[15px] transition-colors duration-200", on ? "border-accent bg-mist/40" : "hover:border-[color:var(--text-dim)]")} style={on ? undefined : rule}>
-                                <input type="checkbox" value={p.slug} className="mt-1 size-4 shrink-0 accent-[var(--accent)]" {...register("programs", { onChange: () => setDupe(null) })} />
+                                {/* Controlled: the list is written explicitly on every change. Letting React Hook Form collect the
+                                    group from the DOM lost a change in WebKit after an uncheck then a check. */}
+                                <input
+                                  type="checkbox"
+                                  name="programs"
+                                  value={p.slug}
+                                  checked={on}
+                                  className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
+                                  onChange={(ev) => {
+                                    const cur = getValues("programs") ?? [];
+                                    const nextList = ev.target.checked ? Array.from(new Set([...cur, p.slug])) : cur.filter((x) => x !== p.slug);
+                                    setValue("programs", nextList, { shouldDirty: true, shouldValidate: Boolean(errors.programs) });
+                                    setDupe(null);
+                                  }}
+                                />
                                 <span className="text-text">
                                   {p.title}
                                   <span className="mono mt-1 block">{p.level}</span>
