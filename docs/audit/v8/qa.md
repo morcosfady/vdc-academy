@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Chromium | Windows, local, against the static export | 3 full runs in a row green: 149 passed, 3 skipped each (the `SHOTS=1` capture tests). Later runs with the new axe scans also green. |
 | WebKit (Safari engine) | Windows, local | 130 passed, 1 failed (a test bug, fixed), 6 skipped. QA and admin specs rerun green after the fixes. |
-| WebKit | GitHub Actions, Ubuntu (`.github/workflows/cross-browser.yml`) | Green: 144 passed, 7 skipped. Its earlier failures were real bugs (items 9 and 10 below) and a lazy-image wait in a test; all fixed. CI allows one retry and reports it as flaky. |
+| WebKit | GitHub Actions, Ubuntu (`.github/workflows/cross-browser.yml`) | Green, no retries: 145 passed, 7 skipped. Its earlier failures were real bugs (items 9 and 10 below) and a lazy-image wait in a test; all fixed. CI allows one retry and reports it as flaky. |
 | Firefox | GitHub Actions, Ubuntu | Green: 146 passed, 6 skipped (all specs except the Chromium-only perf and lod). |
 | Firefox | Windows, local | **Not run**: Windows refuses to execute the downloaded Playwright Firefox binary ("Permission denied", a security policy on this machine). Firefox is covered by CI instead. |
 
