@@ -9,6 +9,8 @@ const chromiumOnly = [/perf\.spec\.ts/, /lod\.spec\.ts/];
 export default defineConfig({
   testDir: "tests",
   timeout: 90_000,
+  // CI runners are slower and shared: one retry there, reported as "flaky" in the summary (never locally).
+  retries: process.env.CI ? 1 : 0,
   workers: 2,
   use: {
     baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/",

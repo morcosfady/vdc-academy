@@ -18,7 +18,10 @@ for (const r of routes) {
     await page.waitForTimeout(3000);
     const report = await page.evaluate(async () => {
       const imgs = [...document.querySelectorAll("img")];
-      await Promise.all(imgs.map((i) => (i.complete ? Promise.resolve() : new Promise((res) => { i.onload = i.onerror = res; }))));
+      // WebKit may never start a lazy image that scrolled past quickly: ask for it now, and never wait forever.
+      for (const i of imgs) if (!i.complete) i.loading = "eager";
+      const loaded = (i: HTMLImageElement) => (i.complete ? Promise.resolve() : new Promise((res) => { i.onload = i.onerror = res; }));
+      await Promise.race([Promise.all(imgs.map(loaded)), new Promise((res) => setTimeout(res, 15000))]);
       const broken = imgs.filter((i) => !(i.naturalWidth > 0)).map((i) => i.currentSrc || i.src || "(no src)");
       const emptyFrames = [...document.querySelectorAll("figure, picture")].filter((f) => !f.querySelector("img, svg, canvas")).map((f) => f.className.slice(0, 60));
       const counts = [...document.querySelectorAll("[data-countup]")].filter((e) => e.textContent?.trim() !== e.getAttribute("data-final")).map((e) => `${e.textContent} != ${e.getAttribute("data-final")}`);
