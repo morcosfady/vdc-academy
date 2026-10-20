@@ -90,6 +90,7 @@ export function ApplyFlow() {
   const [dupe, setDupe] = useState<Dupe | null>(null);
   const honeypot = useRef<HTMLInputElement>(null);
   const lastSubmit = useRef(0);
+  const submitted = useRef(false);
   const state = useRef(newState({ lod: 300, sim: 1 / 6, mood: 0 }));
   const email = shown(content.contact.email);
 
@@ -156,9 +157,12 @@ export function ApplyFlow() {
   }, [ready, enabled, preview, userId, profileId, profileWaited, loaded, profile, user, sp, reset]);
 
   // Local autosave (never throws, storage can be blocked). Only after the load, so an empty form never overwrites a draft.
+  // `submitted` stops it for good once the application is sent: a timer that fired between clearDraft() and the
+  // route change wrote the sent answers back as a draft, and the next visit to /apply offered to "restore" them.
   useEffect(() => {
     if (!loaded) return;
     const t = setTimeout(() => {
+      if (submitted.current) return;
       if (v.email || v.fullName) writeDraft({ values: v, step, id: draftId, userId });
     }, 500);
     return () => clearTimeout(t);
@@ -292,6 +296,7 @@ export function ApplyFlow() {
   }
 
   function finish(d: ApplyValues, id: string | null) {
+    submitted.current = true;
     state.current.sim = 1;
     clearDraft();
     try {
