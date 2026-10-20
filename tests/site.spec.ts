@@ -134,7 +134,8 @@ for (const r of ["programs/", "pricing/", "apply/?preview=1", "fresh-graduates/"
 
 // Visual regression: the static states (reduced motion, no WebGL, so the stills show) at three widths.
 for (const w of [1440, 1024, 390]) {
-  test(`visual: home at ${w}`, async ({ browser }) => {
+  test(`visual: home at ${w}`, async ({ browser, browserName }) => {
+    test.skip(browserName !== "chromium", "pixel snapshots are recorded in Chromium only");
     const ctx = await browser.newContext({ viewport: { width: w, height: w > 800 ? 900 : 844 }, reducedMotion: "reduce", baseURL: BASE });
     await ctx.addInitScript(() => {
       const orig = HTMLCanvasElement.prototype.getContext;
