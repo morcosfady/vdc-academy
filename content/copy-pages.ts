@@ -2,6 +2,12 @@
 // Rules: confident and specific, short sentences, "you" focused, no hype, no em dashes.
 // Headlines 8 words or fewer, leads 22 words or fewer, buttons 1 to 3 words.
 
+// A legal page: sheet number, title, date and sections. Each section has a heading, optional paragraphs (p),
+// an optional bullet list (items) and optional paragraphs after the list (after).
+export type LegalSection = { h: string; p?: string[]; items?: string[]; after?: string[] };
+export type LegalDoc = { sheet: string; title: string; updated: string; sections: LegalSection[] };
+const legal = (d: LegalDoc) => d;
+
 export const pages = {
   programs: {
     sheet: "A-300",
@@ -355,6 +361,153 @@ export const pages = {
   },
 
   legal: { name: "Legal", updated: (d: string) => `Last updated ${d}` },
+
+  // Legal copy in plain language. Each section: a heading, paragraphs (p), an optional bullet list (items) and
+  // optional paragraphs after the list (after). Items the lawyer must confirm are listed in content/TODO-content.md.
+  privacy: legal({
+    sheet: "L-001",
+    title: "Privacy policy",
+    updated: "October 2026",
+    sections: [
+      {
+        h: "Who we are",
+        p: [
+          "VDC Academy is run by Bay BIM Designs in Fort Worth, Texas. This policy explains what we collect when you visit the site, create an account or apply to a program, and what we do with it. Questions go through the contact page or by replying to any email from us.",
+        ],
+      },
+      {
+        h: "What we collect",
+        p: ["We collect only what the academy needs to review you, run your account and keep in touch:"],
+        items: [
+          "Account: your name, email and password. The password is stored hashed by Supabase Auth; we never see it. If you sign in with Google, we receive your name, email and the Google account identifier.",
+          "Profile: phone, WhatsApp, country, city, age range, language, degree, university, graduation year, LinkedIn and portfolio links, and an optional profile photo.",
+          "Application: the programs you choose, format, schedule, experience, software skills, career goal, the discount you ask for, and the files you upload (proof of graduation or student status, and optionally a CV).",
+          "Messages and interest forms: your name, email and the message or topic.",
+          "Technical: a hashed version of your network address and a bot-check result on each form. We run no analytics that store personal data.",
+        ],
+      },
+      {
+        h: "Why we collect it",
+        items: [
+          "To review your application and contact you about it.",
+          "To check discount eligibility (fresh graduate, student, group).",
+          "To run your account: show your application status, your documents and your timeline.",
+          "To plan cohorts and tell you about start dates you asked about.",
+          "To send the emails described below.",
+        ],
+      },
+      {
+        h: "Emails we send",
+        p: [
+          "Transactional emails are always sent: confirming your email, resetting a password, confirming an application, and telling you when its status changes. Marketing emails (new programs, cohort dates, offers) are sent only if you tick the box for them. You can stop them at any time on your profile page or by replying to the email.",
+        ],
+      },
+      {
+        h: "Who helps us",
+        p: ["We do not sell your data and we share it with nobody except the services that run the site for us:"],
+        items: [
+          "Supabase hosts the database, the sign-in service and the private file storage (servers in the United States, us-east-1 region).",
+          "Resend sends our emails and sees the address and content of each email it delivers.",
+          "Cloudflare Turnstile runs the bot check on forms and may process your network address for that purpose.",
+          "GitHub Pages serves the site. It stores no personal data from forms.",
+        ],
+        after: ["Each of these processes data on our instructions under its own privacy terms. We would disclose data beyond this only when the law requires it."],
+      },
+      {
+        h: "How we protect it",
+        p: [
+          "Every table uses row level security: your account can read and change only your own rows. Only staff with an admin role can see applications. Uploaded files sit in private buckets and are opened through short-lived links. Passwords are never visible to us. Network addresses are hashed before they are stored.",
+        ],
+      },
+      {
+        h: "How long we keep it",
+        items: [
+          "Documents (CVs, proofs, profile photos): while your application is open and for 12 months after a decision, unless you ask us to delete them earlier.",
+          "Account and application records: while your account exists.",
+          "Messages and interest forms: 24 months.",
+        ],
+        after: ["After these periods the data is deleted or anonymised."],
+      },
+      {
+        h: "Your choices",
+        items: [
+          "See and correct your data on your profile page and in your application.",
+          "Ask for a copy of everything we hold about you through the contact page.",
+          "Delete your account with the button on your profile page. We handle the request within 30 days and confirm by email. Your rows and files are removed together.",
+          "Stop marketing emails on your profile page or by replying to one.",
+        ],
+        after: ["For anything else, use the contact page. We reply within two working days."],
+      },
+      {
+        h: "Changes to this policy",
+        p: ["When this policy changes we update the date at the top. If the change matters to you, account holders get an email first."],
+      },
+    ],
+  }),
+
+  terms: legal({
+    sheet: "L-002",
+    title: "Terms of use",
+    updated: "October 2026",
+    sections: [
+      {
+        h: "These terms",
+        p: ["Using the site, creating an account or applying to a program means you accept these terms. VDC Academy is run by Bay BIM Designs."],
+      },
+      {
+        h: "Your account",
+        items: [
+          "One account per person, with accurate information. You must be at least 16 years old.",
+          "Keep your password private. What happens in your account is your responsibility; tell us right away if you think someone else used it.",
+          "We can suspend an account that abuses the site, submits false documents or tries to reach other people's data.",
+          "You can delete your account at any time from your profile page.",
+        ],
+      },
+      {
+        h: "Applications",
+        items: [
+          "Applying does not guarantee a seat. We review each application and reply within two working days. An advisor may contact you before enrollment.",
+          "A submitted application can no longer be edited. If something changes, contact us and we update it with you.",
+          "Your dashboard shows the status of your application: submitted, under review, interview, accepted, enrolled, waitlist, or not this time.",
+          "Everything you tell us and every document you upload must be true and yours.",
+        ],
+      },
+      {
+        h: "Discounts",
+        p: [
+          "Discounts are pending until we verify your document. Fresh graduate: graduated within the last 24 months. Student: currently enrolled. Group: three or more people from the same company. Early bird: applying 30 or more days before the cohort starts. Discounts do not combine, except early bird with the fresh graduate discount. We can withdraw a discount if the document does not match the application.",
+        ],
+      },
+      {
+        h: "Documents you upload",
+        p: [
+          "You confirm you have the right to share each file. We use them only to check eligibility and review your application, and we keep them as described in the privacy policy. Files must be PDF, JPG or PNG up to 5 MB; profile photos up to 2 MB.",
+        ],
+      },
+      {
+        h: "Enrollment and payment",
+        p: ["Prices, payment options and cohort dates are confirmed in your acceptance message before you pay anything. Nothing is charged until you have read that message and confirmed."],
+      },
+      {
+        h: "Refunds",
+        p: ["Refund terms are shared with your acceptance message, before payment."],
+      },
+      {
+        h: "Certificates",
+        p: ["A certificate of completion from VDC Academy by Bay BIM Designs is issued when you finish a program."],
+      },
+      {
+        h: "Acceptable use",
+        p: ["Do not use bots or scripts on the site, do not scrape it, and do not try to read or change data that is not yours. The forms have a bot check; repeated abuse is blocked."],
+      },
+      {
+        h: "Changes and liability",
+        p: [
+          "We can change programs, schedules and prices before you enroll; what you agreed to in your acceptance message stands. The site is provided as is. When these terms change we update the date at the top. These terms are governed by the laws of the State of Texas.",
+        ],
+      },
+    ],
+  }),
 
   instructors: {
     sheet: "A-802",

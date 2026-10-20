@@ -43,3 +43,15 @@ Nothing here shows as a placeholder on the site. Items marked DRAFT are shown wi
 - [ ] Instructor names, roles and photos (`content.instructors`); until then /instructors shows the role profile and the teach-with-us form
 - [ ] First cohort projects (`content.studentWork`); until then /student-work shows four example projects from the program covers
 - [ ] FAQ: confirm the new answers in `content/faqs.ts` (software list, laptop check, group discount approval, on-site training)
+
+## From v7 (legal review)
+The privacy policy and terms now live in `content/copy-pages.ts` (`pages.privacy`, `pages.terms`) and cover accounts, stored documents, retention, deletion, emails and third parties. These lines were written by the studio and need a lawyer's confirmation before launch:
+- [ ] Retention periods (privacy, "How long we keep it"): documents 12 months after a decision, account records while the account exists, messages and leads 24 months
+- [ ] Deletion handling time: "within 30 days" after the profile page button (privacy, "Your choices")
+- [ ] Governing law: "the laws of the State of Texas" (terms, "Changes and liability")
+- [ ] Legal entity name and address in "Who we are" (currently "Bay BIM Designs in Fort Worth, Texas")
+- [ ] Minimum age for an account (terms, "Your account": 16)
+- [ ] Refund terms and payment or installment policy: the terms still say they are sent with the acceptance message
+- [ ] Data location statement (Supabase, United States, us-east-1) and the list of processors (Supabase, Resend, Cloudflare Turnstile, GitHub Pages); add Google if Google sign-in is turned on
+- [ ] Marketing consent wording (opt-in checkbox) and the unsubscribe route (profile page or reply)
+- [ ] Whether a Texas or US-wide privacy notice needs extra disclosures (for example a "do not sell" statement) for the expected audience
