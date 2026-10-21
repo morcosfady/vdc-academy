@@ -14,6 +14,7 @@ export type Sheet = {
   rows?: Row[];
   steps?: string[];
   button?: { label: string; href: string };
+  links?: { label: string; href: string }[]; // quieter text links under the button
   outro?: string[];
 };
 
@@ -48,6 +49,12 @@ function buttonHtml(b: { label: string; href: string }) {
     `<a href="${esc(b.href)}" style="display:inline-block;padding:12px 22px;font-family:${FONT};font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none">${esc(b.label)}</a></td></tr></table>`;
 }
 
+function linksHtml(links: { label: string; href: string }[]) {
+  return links
+    .map((l) => `<p style="margin:0 0 10px;font-size:14px;line-height:1.6"><a href="${esc(l.href)}" style="color:${C.blueprint};font-weight:600;text-decoration:underline">${esc(l.label)}</a></p>`)
+    .join("");
+}
+
 export function render(sheet: Sheet): { html: string; text: string } {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"><title>${esc(sheet.title)}</title></head>
@@ -61,6 +68,7 @@ ${sheet.intro.map(p).join("")}
 ${sheet.steps ? stepsHtml(sheet.steps) : ""}
 ${sheet.rows ? rowsHtml(sheet.rows) : ""}
 ${sheet.button ? buttonHtml(sheet.button) : ""}
+${sheet.links ? linksHtml(sheet.links) : ""}
 ${(sheet.outro ?? []).map(p).join("")}
 </td></tr>
 <tr><td style="padding:16px 32px 24px;border-top:1px solid ${C.line}">
@@ -74,6 +82,7 @@ ${(sheet.outro ?? []).map(p).join("")}
   if (sheet.steps) lines.push(...sheet.steps.map((s, i) => `${i + 1}. ${s}`), "");
   if (sheet.rows) lines.push(...sheet.rows.filter(([, v]) => v !== "").map(([k, v]) => `${k}: ${v}`), "");
   if (sheet.button) lines.push(`${sheet.button.label}: ${sheet.button.href}`, "");
+  if (sheet.links) lines.push(...sheet.links.map((l) => `${l.label}: ${l.href}`), "");
   if (sheet.outro) lines.push(...sheet.outro.flatMap((t) => [t, ""]));
   lines.push("--", FOOTER);
   return { html, text: lines.join("\n") };
@@ -207,4 +216,120 @@ export function adminLead(a: { table: "leads" | "contact_messages"; name: string
     outro: ["Reply to this email to answer directly."],
   };
   return { subject: isMessage ? `Contact message from ${a.name || "a visitor"}` : `New lead: ${a.name || "a visitor"}`, ...render(sheet) };
+}
+
+// v9 account emails ------------------------------------------------------------------------------------------
+// Labels for the stored recruiter keys (the same as lib/signupSchema.ts; the functions cannot import the site).
+export const COMPANY_TYPE_LABEL: Record<string, string> = {
+  ae_firm: "AE design firm",
+  general_contractor: "General contractor",
+  subcontractor: "Subcontractor (MEP, low voltage, etc.)",
+  owner_developer: "Owner / developer",
+  bim_consultancy: "BIM consultancy",
+  other: "Other",
+};
+export const COMPANY_SIZE_LABEL: Record<string, string> = { "1-10": "1 to 10", "11-50": "11 to 50", "51-200": "51 to 200", "201-1000": "201 to 1000", "1000+": "1000+" };
+export const HIRING_ROLE_LABEL: Record<string, string> = {
+  bim_modeler: "BIM Modeler",
+  bim_coordinator: "BIM Coordinator",
+  vdc_engineer: "VDC Engineer",
+  bim_manager: "BIM Manager",
+  revit_drafter: "Revit Drafter",
+  other: "Other",
+};
+export const EXPECTED_HIRES_LABEL: Record<string, string> = { "1": "1", "2-5": "2 to 5", "6-10": "6 to 10", "10+": "10+" };
+export const labelOf = (map: Record<string, string>, v: unknown) => {
+  const k = v === null || v === undefined ? "" : String(v);
+  return map[k] ?? k;
+};
+
+// 5. Student: welcome after the email is confirmed.
+export function welcomeStudent(a: { firstName: string; programsUrl: string; applyUrl: string; accountUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-010 · WELCOME",
+    title: `Welcome, ${a.firstName}. Your account is open.`,
+    intro: ["Your email is confirmed and your VDC Academy account is ready. Here is how to start."],
+    steps: [
+      "Look through the programs and pick the one that fits where you want to work.",
+      "Apply in five short steps. Your answers save as you go, so you can stop and come back.",
+      "Follow your application on your dashboard. We reply within two working days.",
+    ],
+    button: { label: "See the programs", href: a.programsUrl },
+    links: [
+      { label: "Start your application", href: a.applyUrl },
+      { label: "Open your dashboard", href: a.accountUrl },
+    ],
+    outro: ["Questions before you apply? Reply to this email and an advisor answers."],
+  };
+  return { subject: "Welcome to VDC Academy", ...render(sheet) };
+}
+
+// 6. Recruiter: welcome, the company account is under review.
+export function welcomeRecruiter(a: { firstName: string; company: string; accountUrl: string }): Email {
+  const company = a.company || "your company";
+  const sheet: Sheet = {
+    tag: "S-020 · COMPANY ACCOUNT",
+    title: `Welcome, ${a.firstName}. Your company account is under review.`,
+    intro: [`Your email is confirmed. We check every company account by hand before it is verified, and we are looking at ${company} now.`],
+    steps: [
+      "We review your company details, usually within one or two working days.",
+      "You get an email as soon as the account is verified.",
+      "Your dashboard shows the review status and your company details in the meantime.",
+    ],
+    button: { label: "Open your dashboard", href: a.accountUrl },
+    outro: ["If we need anything else to verify the company, we email you. You can also reply to this email."],
+  };
+  return { subject: "Your VDC Academy company account is under review", ...render(sheet) };
+}
+
+// 7. Academy team (admin or super admin): access is active.
+export function welcomeTeam(a: { firstName: string; adminUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-030 · TEAM ACCESS",
+    title: `${a.firstName}, your team access is active.`,
+    intro: ["Your email is confirmed and your account has VDC Academy team access: applications, recruiters, leads and messages are in the admin."],
+    button: { label: "Open the admin", href: a.adminUrl },
+    outro: ["If you did not expect team access, reply to this email right away."],
+  };
+  return { subject: "Your VDC Academy team access is active", ...render(sheet) };
+}
+
+// 8. Admin: a recruiter confirmed their email and waits for verification.
+export function adminNewRecruiter(a: { company: string; name: string; rows: Row[]; adminUrl: string }): Email {
+  const company = a.company || "a company";
+  const sheet: Sheet = {
+    tag: "S-120 · NEW RECRUITER",
+    title: `New recruiter to review: ${company}`,
+    intro: [`${a.name || "A recruiter"} confirmed their email. Check the company before you approve or reject the account.`],
+    rows: a.rows,
+    button: { label: "Review recruiters", href: a.adminUrl },
+    outro: ["Reply to this email to write to the recruiter directly."],
+  };
+  return { subject: `New recruiter to review: ${company}`, ...render(sheet) };
+}
+
+// 9. Recruiter: the company account is verified.
+export function recruiterApproved(a: { firstName: string; company: string; accountUrl: string }): Email {
+  const company = a.company || "Your company";
+  const sheet: Sheet = {
+    tag: "S-130 · VERIFIED",
+    title: `${a.firstName}, your company account is verified.`,
+    intro: [`${company} is now verified on VDC Academy. You can send hiring requests from your dashboard, and we match them with our graduates.`],
+    button: { label: "Open your dashboard", href: a.accountUrl },
+    outro: ["Reply to this email if you want to talk through a role before you send it."],
+  };
+  return { subject: "Your company account is verified", ...render(sheet) };
+}
+
+// 10. Recruiter: the company account could not be verified. The admin's note is shown when there is one.
+export function recruiterRejected(a: { firstName: string; note: string; contactUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-140 · DECISION",
+    title: `${a.firstName}, we could not verify your company account.`,
+    intro: ["We review every company account by hand, and we could not verify this one."],
+    rows: a.note ? [["Note from the team", a.note]] : undefined,
+    button: { label: "Contact us", href: a.contactUrl },
+    outro: ["If something is missing or has changed, contact us or reply to this email and we look again."],
+  };
+  return { subject: "About your VDC Academy company account", ...render(sheet) };
 }
