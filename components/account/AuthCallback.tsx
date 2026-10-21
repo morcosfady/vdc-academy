@@ -27,7 +27,18 @@ export function AuthCallback() {
     const next = safeNext(new URLSearchParams(window.location.search).get("next"));
     let active = true;
     // This effect runs before the provider's, so load the client here rather than reading getSupabase().
-    loadSupabase().then((sb) => (sb ? finishAuthFromUrl(sb) : { ok: false as const, message: "" })).then((r) => {
+    loadSupabase().then(async (sb) => {
+      if (!sb) return { ok: false as const, message: "" };
+      const r = await finishAuthFromUrl(sb);
+      if (r.ok) {
+        // Welcome email (and the recruiter alert) once per account, server side. Failures are ignored and a slow
+        // function never holds the redirect for more than 3 seconds.
+        try {
+          await Promise.race([sb.functions.invoke("on-account-verified"), new Promise((done) => setTimeout(done, 3000))]);
+        } catch {}
+      }
+      return r;
+    }).then((r) => {
       if (!active) return;
       if (!r.ok) return setFailed(r.message || c.failed);
       cleanAuthUrl();
