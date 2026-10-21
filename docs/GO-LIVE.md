@@ -12,7 +12,7 @@ Update this table every time the runbook runs.
 | --- | --- |
 | 1 Project | **Blocked, needs owner.** Creation refused: the free plan allows 2 active projects per owner and `morcosfady` already has `pharaohs-bites` (org Pharaoh's Bites) and `kanisa-checkin` (org Kanisa) active. Tried through the MCP and the CLI. |
 | 2 to 9 | Not started: they all need the project. |
-| 10 | This table and `docs/HANDOFF.md` (v8). |
+| 10 | This table and `docs/HANDOFF.md` (v9). |
 
 ## Before you start (Owner)
 
@@ -82,7 +82,7 @@ gh secret set NEXT_PUBLIC_SITE_URL -R morcosfady/vdc-academy            # https:
 2. Owner: open the confirmation email and click the link. The `apply_role_grant` trigger makes the account `super_admin` the moment the email is confirmed; no SQL needed. The welcome email that follows is the "team access is active" one.
 3. Owner: the account menu shows **Admin**. Claude can confirm with `select id, onboarding_complete from public.profiles where role = 'super_admin';` (one row).
 
-Fallback for colleagues (no grant): they sign up and confirm, then a super admin promotes them from the site, or Claude runs `update public.profiles set role = 'admin' where id = (select id from auth.users where email = '<colleague email>');` through `execute_sql` (the email is typed in the session, never written to a file). They sign out and in to see **Admin**.
+Fallback for colleagues (no grant): they sign up and confirm, then Claude runs (there is no promote button on the site yet; it is the first planned super-admin-only screen, `manage_admins` in `lib/roles.ts`) `update public.profiles set role = 'admin' where id = (select id from auth.users where email = '<colleague email>');` through `execute_sql` (the email is typed in the session, never written to a file). They sign out and in to see **Admin**.
 
 ## 9. Live smoke test (Claude drives, Owner opens the inbox)
 

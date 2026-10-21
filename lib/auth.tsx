@@ -118,7 +118,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSuperAdmin: superRole(profile),
       isRecruiter: recruiterRole(profile),
       isStudent: Boolean(profile) && studentRole(profile),
-      needsOnboarding: Boolean(enabled && user && (!profile || !profile.onboarding_complete)),
+      // only a loaded, incomplete profile: a profile that is briefly missing (a session change, a slow request) must
+      // never bounce a signed-in user through /onboarding/
+      needsOnboarding: Boolean(enabled && user && profile && !profile.onboarding_complete),
       refreshProfile: () => loadProfile(session?.user.id),
       signOut: async () => {
         await getSupabase()?.auth.signOut();
