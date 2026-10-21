@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Stat } from "@/components/ds/Sections";
 import { Button } from "@/components/ui/Button";
 import { adminCopy } from "@/content/copy-admin";
-import { PIPELINE, type ApplicationStatus } from "@/lib/db";
+import { PIPELINE, type ApplicationStatus, type HiringStatus, type VerificationStatus } from "@/lib/db";
+import { isRecruiter, isStudent, type RoleHolder } from "@/lib/roles";
 import { AdminSection, AdminShell } from "../AdminShell";
 import { StatSkeleton, BlockSkeleton } from "../Skeleton";
 import { EmptyState, ErrorState } from "../States";
@@ -14,16 +15,20 @@ import { sb, unwrap, useLoad } from "../util";
 const c = adminCopy.overview;
 const rule = { borderColor: "var(--rule)" } as const;
 const STATUSES: ApplicationStatus[] = [...PIPELINE, "waitlist", "rejected"];
+const OPEN_HIRING: HiringStatus[] = ["new", "in_review"];
 
 type Lite = { id: string; status: ApplicationStatus; submitted_at: string | null; created_at: string; discount_type: string | null; discount_status: string };
 
 async function load() {
   const s = sb();
-  const [apps, leads, msgs, dels] = await Promise.all([
+  const [apps, leads, msgs, dels, people, recruiters, hiring] = await Promise.all([
     s.from("applications").select("id,status,submitted_at,created_at,discount_type,discount_status").neq("status", "draft").then((r) => unwrap<Lite[]>(r)),
     s.from("leads").select("id,handled").eq("handled", false).then((r) => unwrap<{ id: string }[]>(r)),
     s.from("contact_messages").select("id,handled").eq("handled", false).then((r) => unwrap<{ id: string }[]>(r)),
     s.from("account_deletion_requests").select("id,handled").eq("handled", false).then((r) => unwrap<{ id: string }[]>(r)),
+    s.from("profiles").select("id,role,account_type,created_at").then((r) => unwrap<(RoleHolder & { id: string; created_at: string })[]>(r)),
+    s.from("recruiter_profiles").select("id,verification_status").eq("verification_status", "pending").then((r) => unwrap<{ id: string; verification_status: VerificationStatus }[]>(r)),
+    s.from("hiring_requests").select("id,status").in("status", OPEN_HIRING).then((r) => unwrap<{ id: string; status: HiringStatus }[]>(r)),
   ]);
   const weekAgo = Date.now() - 7 * 86400_000;
   const byStatus = Object.fromEntries(STATUSES.map((st) => [st, 0])) as Record<ApplicationStatus, number>;
@@ -32,7 +37,10 @@ async function load() {
   const week = apps.filter((a) => new Date(a.submitted_at ?? a.created_at).getTime() >= weekAgo).length;
   const fresh = apps.filter((a) => a.discount_type === "freshGrad").length;
   const pending = apps.filter((a) => a.discount_status === "pending").length;
-  return { total, week, fresh, freshPct: total ? Math.round((fresh / total) * 100) : 0, pending, byStatus, leads: leads.length, messages: msgs.length, deletions: dels.length };
+  const newThisWeek = people.filter((p) => new Date(p.created_at).getTime() >= weekAgo);
+  const studentsWeek = newThisWeek.filter((p) => isStudent(p)).length;
+  const recruitersWeek = newThisWeek.filter((p) => isRecruiter(p)).length;
+  return { studentsWeek, recruitersWeek, recruitersPending: recruiters.length, hiringOpen: hiring.length, total, week, fresh, freshPct: total ? Math.round((fresh / total) * 100) : 0, pending, byStatus, leads: leads.length, messages: msgs.length, deletions: dels.length };
 }
 
 export function Overview() {
@@ -58,6 +66,25 @@ export function Overview() {
                 <StatCard testId="stat-week" value={d.week} label={c.stats.week} href="/admin/applications/?status=submitted" />
                 <StatCard testId="stat-fresh" value={`${d.freshPct}%`} label={c.stats.fresh} />
                 <StatCard testId="stat-pending" value={d.pending} label={c.stats.pending} href="/admin/applications/?discount=pending" />
+              </>
+            )}
+          </div>
+
+          <p className="mono mt-10">{c.people}</p>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {q.loading || !d ? (
+              <>
+                <StatSkeleton />
+                <StatSkeleton />
+                <StatSkeleton />
+                <StatSkeleton />
+              </>
+            ) : (
+              <>
+                <StatCard testId="stat-students-week" value={d.studentsWeek} label={c.peopleStats.students} href="/admin/users/?type=student" />
+                <StatCard testId="stat-recruiters-week" value={d.recruitersWeek} label={c.peopleStats.recruiters} href="/admin/users/?type=recruiter" />
+                <StatCard testId="stat-recruiters-pending" value={d.recruitersPending} label={c.peopleStats.pending} href="/admin/recruiters/" />
+                <StatCard testId="stat-hiring-open" value={d.hiringOpen} label={c.peopleStats.hiring} href="/admin/hiring/" />
               </>
             )}
           </div>
