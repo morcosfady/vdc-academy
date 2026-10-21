@@ -1,0 +1,43 @@
+name: Database tests
+
+# Starts a local Supabase stack (Postgres, Auth, Storage, the REST gateway) on the runner, applies
+# supabase/migrations in order, applies them a second time to prove they are idempotent, then runs
+# supabase/tests/rls_accounts.sql and fails if any check reports FAIL. No project or keys needed.
+on:
+  push:
+    branches: [main]
+    paths: ["supabase/**", ".github/workflows/db-tests.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DB: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start Supabase (migrations 0001 to 0005 run on start)
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta,mailpit
+      - name: Apply every migration a second time (idempotent)
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "== $f"
+            psql "$DB" -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+      - name: Row Level Security checks
+        run: |
+          psql "$DB" -v ON_ERROR_STOP=1 -f supabase/tests/rls_accounts.sql | tee rls.txt
+          echo "----"
+          grep -E "^\s*[0-9]+ \| (PASS|FAIL)" rls.txt | sed 's/  */ /g'
+          if grep -qE "\| FAIL \|" rls.txt; then echo "Some RLS checks failed"; exit 1; fi
+          test "$(grep -cE '\| PASS \|' rls.txt)" -ge 30
+      - name: Supabase logs on failure
+        if: failure()
+        run: docker ps -a && docker logs $(docker ps -aqf "name=supabase_db") 2>&1 | tail -80
