@@ -5,7 +5,7 @@ import { SheetTag } from "@/components/ds/Devices";
 import { Tag } from "@/components/ds/Chips";
 import { Button } from "@/components/ui/Button";
 import { demo, demoOn } from "@/lib/demo/browser";
-import { DEMO_ADMIN_EMAIL, DEMO_APP_ID, DEMO_PASSWORD, DEMO_STUDENT_EMAIL } from "@/lib/demo/seed";
+import { DEMO_ADMIN_EMAIL, DEMO_APP_ID, DEMO_PASSWORD, DEMO_RECRUITER_EMAIL, DEMO_STUDENT_EMAIL, DEMO_SUPER_EMAIL } from "@/lib/demo/seed";
 
 const rule = { borderColor: "var(--rule)" } as const;
 
@@ -14,14 +14,30 @@ const rule = { borderColor: "var(--rule)" } as const;
 const cards = [
   {
     n: "01",
+    title: "Register as a student",
+    text: "The role question first, then the account, every required detail, a review with Edit links and the consents. Use Fill sample data to move fast.",
+    hint: "Sign-ups confirm instantly in the demo. The real site sends a confirmation email first.",
+    action: "Register as a student",
+    go: () => demo.asGuest("/signup/?as=student"),
+  },
+  {
+    n: "02",
+    title: "Register as a recruiter",
+    text: "Work email, company details, roles they hire for and the authorisation checkbox. The account starts pending verification.",
+    hint: "Fill sample data fills a fictional company.",
+    action: "Register as a recruiter",
+    go: () => demo.asGuest("/signup/?as=recruiter"),
+  },
+  {
+    n: "03",
     title: "Apply as a new student",
-    text: "The apply gate asks for an account first. Sign up with any made-up email, land in the five steps, submit, see the success sheet.",
-    hint: "Sign-ups confirm instantly in the demo. The real site sends a confirmation email.",
+    text: "The apply gate asks for an account first, then the five application steps and the success sheet.",
+    hint: "Logged out. Create an account from the gate or log in.",
     action: "Open the apply gate",
     go: () => demo.asGuest("/apply/"),
   },
   {
-    n: "02",
+    n: "04",
     title: "Student dashboard",
     text: "Sample Student 01 has a submitted application: the timeline sits at Under review and the fresh graduate discount is pending a check.",
     hint: `Logged in as ${DEMO_STUDENT_EMAIL}.`,
@@ -29,29 +45,46 @@ const cards = [
     go: () => demo.asStudent("/account/"),
   },
   {
-    n: "03",
+    n: "05",
     title: "Profile page",
-    text: "Contact details, education, links and the account settings a student keeps up to date. Edits are kept in this browser only.",
+    text: "Contact details, education and the account settings a student keeps up to date. Edits stay in this browser.",
     hint: `Logged in as ${DEMO_STUDENT_EMAIL}.`,
     action: "Open the profile",
     go: () => demo.asStudent("/account/profile/"),
   },
   {
-    n: "04",
+    n: "06",
+    title: "Recruiter dashboard",
+    text: "Sample Company A is pending verification: the banner, the company card, a hiring request form and the talent pool teaser.",
+    hint: `Logged in as ${DEMO_RECRUITER_EMAIL}.`,
+    action: "Open the recruiter dashboard",
+    go: () => demo.asRecruiter("/account/"),
+  },
+  {
+    n: "07",
     title: "Admin overview and applications",
-    text: "Sixteen sample applications across every status and most programs. Filters, search, paging, CSV export and the leads inbox.",
+    text: "Sixteen sample applications across every status and most programs. Filters, search, paging, CSV export and the inbox.",
     hint: `Logged in as ${DEMO_ADMIN_EMAIL}.`,
     action: "Open the admin",
     go: () => demo.asAdmin("/admin/"),
     second: { label: "Applications table", go: () => demo.asAdmin("/admin/applications/") },
   },
   {
-    n: "05",
+    n: "08",
     title: "Admin application detail",
-    text: "Verify the discount, change the status, add a note. Then open card 02 again: the student's timeline shows the change.",
+    text: "Verify the discount, change the status, add a note. Then open card 04 again: the student's timeline shows the change.",
     hint: "Sample Student 01's application.",
     action: "Open the application",
     go: () => demo.asAdmin(`/admin/application/?id=${DEMO_APP_ID}`),
+  },
+  {
+    n: "09",
+    title: "Super admin: users and recruiters",
+    text: "The owner's view with the Super admin badge. Approve Sample Company A, then open card 06: the banner says Approved.",
+    hint: `Logged in as ${DEMO_SUPER_EMAIL}. Same screens as an admin for now.`,
+    action: "Open as super admin",
+    go: () => demo.asSuperAdmin("/admin/recruiters/"),
+    second: { label: "Users table", go: () => demo.asSuperAdmin("/admin/users/") },
   },
 ];
 
@@ -67,16 +100,18 @@ export function DemoTour() {
             <SheetTag sheet="D-000" name="Client demo" />
             <h1 className="t-h1 mt-8 max-w-[16ch]">The full experience, before the backend is live.</h1>
             <p className="t-lead mt-6 max-w-[52ch]">
-              Five short scenes: a student applies, follows their status, and the academy team reviews it. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
+              Nine short scenes: a student and a recruiter register, a student applies and follows their status, and the academy team reviews it all. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
             </p>
           </div>
           <div className="lg:col-span-4 lg:col-start-9">
             <dl className="border-t text-[15px]" style={rule}>
               {[
-                ["Student", `${DEMO_STUDENT_EMAIL}`],
-                ["Admin", `${DEMO_ADMIN_EMAIL}`],
+                ["Student", DEMO_STUDENT_EMAIL],
+                ["Recruiter", DEMO_RECRUITER_EMAIL],
+                ["Admin", DEMO_ADMIN_EMAIL],
+                ["Super admin", DEMO_SUPER_EMAIL],
                 ["Password", DEMO_PASSWORD],
-                ["Data", "16 applications, 3 leads, 2 messages"],
+                ["Data", "16 applications, 4 recruiters, 3 hiring requests"],
               ].map(([k, v]) => (
                 <div key={k} className="grid grid-cols-[88px_1fr] gap-4 border-b py-3" style={rule}>
                   <dt className="mono pt-1">{k}</dt>
@@ -146,10 +181,10 @@ export function DemoTour() {
             <ol className="mt-5 grid gap-3 text-[15px] text-muted">
               {[
                 "Start on the home page with the demo off: the drawing-set design, the model, the programs.",
-                "Card 01: apply as a new student. Sign up with any made-up email, go through the five steps, submit.",
-                "Card 02: the student dashboard. Point at the timeline, the pending discount, the documents panel.",
-                "Card 04 and 05: switch to the admin. Verify the discount and move the status to Interview.",
-                "Card 02 again: the student sees the change. Finish with Reset demo data, then Exit demo.",
+                "Cards 01 and 02: register a student and a recruiter. Fill sample data, show the review and the consents.",
+                "Card 04: the student dashboard. Point at the timeline, the pending discount, the documents panel.",
+                "Card 06: the recruiter dashboard, pending verification, then send a hiring request.",
+                "Card 09: approve the company as super admin, then card 06 again: Approved. Finish with Reset demo data, then Exit demo.",
               ].map((s, i) => (
                 <li key={s} className="grid grid-cols-[2.5rem_1fr] gap-x-2 border-t py-3" style={rule}>
                   <span className="mono pt-0.5 !text-accent-text">{String(i + 1).padStart(2, "0")}</span>

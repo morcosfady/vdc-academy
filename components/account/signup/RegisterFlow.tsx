@@ -160,6 +160,13 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
       if (typeof d.step === "number") setStepIndex(Math.max(0, Math.min(d.step, 3)));
       setRestored(Boolean(d.v.full_name || d.v.email || d.kind));
     } else setV(base);
+    // /signup/?as=student|recruiter preselects the role (the demo tour cards use it)
+    if (mode === "signup" && !d?.kind) {
+      try {
+        const as = new URLSearchParams(window.location.search).get("as");
+        if (as === "student" || as === "recruiter") setKind(as);
+      } catch {}
+    }
     setLoaded(true);
   }, [ready, loaded, mode, user, profile, recruiter, key, lockedKind]);
 

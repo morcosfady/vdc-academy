@@ -1,7 +1,7 @@
 "use client";
 
 import { handle, sessionJson, type MockState } from "./engine";
-import { demoAdminId, demoStudentId, seedDemo } from "./seed";
+import { demoAdminId, demoRecruiterId, demoStudentId, demoSuperId, seedDemo } from "./seed";
 
 // Client demo mode (/demo/): the in-memory Supabase from lib/demo/engine.ts runs inside the page. supabase-js is
 // given `demoFetch` instead of the network, so nothing leaves the browser, even when real keys are baked into the
@@ -14,7 +14,7 @@ import { demoAdminId, demoStudentId, seedDemo } from "./seed";
 export const DEMO_KEY = "vdc-demo";
 const STATE_KEY = "vdc-demo-state";
 const MOCK_KEY = "vdc-mock";
-const DRAFT_KEYS = ["vdc-apply-draft", "vdc-applied"];
+const DRAFT_KEYS = ["vdc-apply-draft", "vdc-applied", "vdc-signup-draft", "vdc-onboarding-draft"];
 
 export function demoOn(): boolean {
   if (typeof window === "undefined") return false;
@@ -170,6 +170,16 @@ export const demo = {
   asAdmin(path: string) {
     demo.enable();
     setSession(demoAdminId(demoState()));
+    go(path);
+  },
+  asRecruiter(path: string) {
+    demo.enable();
+    setSession(demoRecruiterId(demoState()));
+    go(path);
+  },
+  asSuperAdmin(path: string) {
+    demo.enable();
+    setSession(demoSuperId(demoState()));
     go(path);
   },
 };
