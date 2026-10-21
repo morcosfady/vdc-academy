@@ -82,7 +82,7 @@ create table if not exists public.recruiter_profiles (
   expected_hires text check (expected_hires is null or expected_hires in ('1','2-5','6-10','10+')),
   authorised_confirmed boolean not null default false,
   verification_status text not null default 'pending' check (verification_status in ('pending','approved','rejected')),
-  verified_by uuid references auth.users (id) on delete set null,
+  verified_by uuid, -- the admin who decided (audit only: no foreign key, so deleting users never rewrites this row)
   verified_at timestamptz,
   rejection_note text check (rejection_note is null or char_length(rejection_note) <= 1000),
   verify_notified_at timestamptz,
@@ -95,6 +95,7 @@ create table if not exists public.recruiter_profiles (
   )
 );
 create index if not exists recruiter_profiles_status_idx on public.recruiter_profiles (verification_status);
+alter table public.recruiter_profiles drop constraint if exists recruiter_profiles_verified_by_fkey;
 
 create table if not exists public.hiring_requests (
   id uuid primary key default gen_random_uuid(),
