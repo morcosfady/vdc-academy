@@ -54,6 +54,16 @@ export function validateLeadBody(b: Record<string, unknown>): Validation<{ table
   return { ok: true, value: { table: b.table, id: b.id } };
 }
 
+export const VERIFY_DECISIONS = ["approved", "rejected"] as const;
+export type VerifyDecision = (typeof VERIFY_DECISIONS)[number];
+export const isVerifyDecision = (v: unknown): v is VerifyDecision => typeof v === "string" && (VERIFY_DECISIONS as readonly string[]).includes(v);
+
+export function validateRecruiterVerifiedBody(b: Record<string, unknown>): Validation<{ recruiter_id: string; status: VerifyDecision }> {
+  if (!isUuid(b.recruiter_id)) return { ok: false, error: "recruiter_id must be a uuid" };
+  if (!isVerifyDecision(b.status)) return { ok: false, error: "status must be approved or rejected" };
+  return { ok: true, value: { recruiter_id: b.recruiter_id, status: b.status } };
+}
+
 // Text helpers used when building emails from database rows.
 export const str = (v: unknown): string => (Array.isArray(v) ? v.map(String).join(", ") : v === null || v === undefined ? "" : String(v));
 export const firstName = (full: unknown): string => str(full).trim().split(/\s+/)[0] || "there";
