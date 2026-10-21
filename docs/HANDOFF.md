@@ -42,7 +42,7 @@ Nine cards: register as a student, register as a recruiter, apply, student dashb
 
 ### Tests
 - Chromium full suite: 203 passed, 6 skipped (screenshot captures), 1 perf timing blip under load that passes 28 of 28 when repeated.
-- CI: Firefox 186 passed. WebKit 184 passed with one gate login test failing; its cause (a brief onboarding redirect) is fixed and the test passes locally on WebKit and Chromium. Database: 33 of 33.
+- CI on the final commit: Firefox 186 passed, WebKit 185 passed (no failures, no retries). Database: 33 of 33.
 - New: `tests/signup.spec.ts` (13), `tests/recruiter.spec.ts` (10), `tests/admin-v9.spec.ts`, `tests/v9-shots.spec.ts` (`SHOTS=1`, writes `docs/audit/v9/`), helpers in `tests/helpers/register.ts`.
 - Screenshots: `docs/audit/v9/` (role choice, student details, recruiter details and errors, review, verify email, recruiter dashboard pending, admin users, recruiter approval, super admin badge; 1440 and 390).
 
