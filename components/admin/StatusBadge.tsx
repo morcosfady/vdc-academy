@@ -1,4 +1,4 @@
-import { type ApplicationStatus, type DiscountStatus, discountStatusLabel, statusLabel } from "@/lib/db";
+import { type ApplicationStatus, type DiscountStatus, type HiringStatus, type VerificationStatus, discountStatusLabel, hiringStatusLabel, statusLabel, verificationLabel } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
 // Status and discount badges in the Tag voice: mono, 4px radius. Blueprint for verified or moving forward,
@@ -25,6 +25,8 @@ const statusTone: Record<ApplicationStatus, Tone> = {
 };
 
 const discountTone: Record<DiscountStatus, Tone> = { none: "outline", pending: "brass", verified: "blueprint", rejected: "clash" };
+const verificationTone: Record<VerificationStatus, Tone> = { pending: "brass", approved: "blueprint", rejected: "clash" };
+const hiringTone: Record<HiringStatus, Tone> = { new: "blueprint", in_review: "brass", matched: "ink", closed: "outline" };
 
 function Badge({ tone, children, className }: { tone: Tone; children: React.ReactNode; className?: string }) {
   return (
@@ -56,6 +58,33 @@ export function HandledBadge({ handled, openLabel, handledLabel, className }: { 
   return (
     <Badge tone={handled ? "outline" : "brass"} className={className}>
       {handled ? handledLabel : openLabel}
+    </Badge>
+  );
+}
+
+export function VerificationBadge({ status, className }: { status: VerificationStatus | string; className?: string }) {
+  const s = status as VerificationStatus;
+  return (
+    <Badge tone={verificationTone[s] ?? "outline"} className={className}>
+      {verificationLabel[s] ?? status}
+    </Badge>
+  );
+}
+
+export function HiringBadge({ status, className }: { status: HiringStatus | string; className?: string }) {
+  const s = status as HiringStatus;
+  return (
+    <Badge tone={hiringTone[s] ?? "outline"} className={className}>
+      {hiringStatusLabel[s] ?? status}
+    </Badge>
+  );
+}
+
+// A neutral outline label, for the academy team marker in the users table.
+export function PlainBadge({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <Badge tone="outline" className={className}>
+      {children}
     </Badge>
   );
 }
