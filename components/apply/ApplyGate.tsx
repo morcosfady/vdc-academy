@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { z } from "@/lib/zod";
-import { Check, Field, SelectField } from "@/components/forms/Field";
+import { Field } from "@/components/forms/Field";
 import { Button } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";
 import { Tabs } from "@/components/ds/Controls";
@@ -12,22 +12,12 @@ import { photos } from "@/assets/images";
 import { pages } from "@/content/copy-pages";
 import { applyCopy } from "@/content/copy-apply";
 import { authCallbackUrl, getSupabase } from "@/lib/supabase";
-import { options, statusToEnum } from "@/lib/applySchema";
-import { track } from "@/lib/analytics";
 
 const c = pages.apply;
 const g = applyCopy.gate;
 const rule = { borderColor: "var(--rule)" } as const;
 const NEXT = "/apply/";
 
-const signupSchema = z.object({
-  name: z.string().trim().min(2, g.errors.name),
-  email: z.string().trim().email(g.errors.email),
-  password: z.string().min(8, g.errors.password),
-  status: z.string().min(1, g.errors.status),
-  consent: z.literal(true, { message: g.errors.consent }),
-  marketing: z.boolean(),
-});
 const loginSchema = z.object({ email: z.string().trim().email(g.errors.email), password: z.string().min(1, g.errors.wrong) });
 
 type Errors = Record<string, string | undefined>;
@@ -40,29 +30,6 @@ export function ApplyGate({ note }: { note?: string }) {
   const [errors, setErrors] = useState<Errors>({});
   const [sent, setSent] = useState<{ kind: "confirm" | "magic"; email: string } | null>(null);
 
-  async function signUp(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const parsed = signupSchema.safeParse({ name: f.get("name"), email: f.get("email"), password: f.get("password"), status: f.get("status"), consent: f.get("consent") === "on", marketing: f.get("marketing") === "on" });
-    if (!parsed.success) return setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])));
-    setErrors({});
-    const sb = getSupabase();
-    if (!sb) return setErrors({ form: g.errors.generic });
-    setBusy(true);
-    const { data, error } = await sb.auth.signUp({
-      email: parsed.data.email,
-      password: parsed.data.password,
-      options: {
-        data: { full_name: parsed.data.name, current_status: statusToEnum(parsed.data.status), marketing_opt_in: parsed.data.marketing },
-        emailRedirectTo: authCallbackUrl(NEXT),
-      },
-    });
-    setBusy(false);
-    if (error) return setErrors({ form: /registered|exists/i.test(error.message) ? g.errors.exists : g.errors.generic });
-    track("signup_completed", { status: statusToEnum(parsed.data.status) });
-    // With email confirmation on there is no session yet: the user confirms, lands on /auth/callback and comes back here.
-    if (!data.session) setSent({ kind: "confirm", email: parsed.data.email });
-  }
 
   async function logIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -132,56 +99,21 @@ export function ApplyGate({ note }: { note?: string }) {
                 />
 
                 {tab === "signup" ? (
-                  <form key="signup" role="tabpanel" aria-label={g.tabs.signup} onSubmit={signUp} noValidate className="mt-10 space-y-7">
-                    <Field label={g.fields.name} name="name" required autoComplete="name" error={errors.name} />
-                    <Field label={g.fields.email} name="email" type="email" required autoComplete="email" error={errors.email} />
-                    <div>
-                      <Field label={g.fields.password} name="password" type="password" required autoComplete="new-password" minLength={8} error={errors.password} />
-                      {!errors.password && <p className="mono mt-2">{g.passwordHint}</p>}
-                    </div>
-                    <SelectField label={g.fields.status} name="status" required options={options.status} error={errors.status} />
-                    <div className="space-y-1">
-                      <Check
-                        name="consent"
-                        label={
-                          <>
-                            I agree to the{" "}
-                            <a href="/privacy/" target="_blank" className="underline underline-offset-4">
-                              Privacy Policy
-                            </a>{" "}
-                            and{" "}
-                            <a href="/terms/" target="_blank" className="underline underline-offset-4">
-                              Terms
-                            </a>
-                            . *
-                          </>
-                        }
-                      />
-                      {errors.consent && (
-                        <p role="alert" className="text-[13px] text-err">
-                          {errors.consent}
-                        </p>
-                      )}
-                      <Check name="marketing" label={g.marketing} />
-                    </div>
-                    {errors.form && (
-                      <p role="alert" className="text-[13px] text-err">
-                        {errors.form}
-                      </p>
-                    )}
+                  <div key="signup" role="tabpanel" aria-label={g.tabs.signup} className="mt-10 grid gap-7" data-testid="gate-signup">
+                    <p className="t-lead !text-[1.0625rem]">{g.register.lead}</p>
+                    <ul className="divide-y border-y" style={rule}>
+                      {g.register.points.map((pt, i) => (
+                        <li key={pt} className="flex items-center gap-5 py-3 text-[15px] text-text" style={rule}>
+                          <span className="mono w-8 shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                          {pt}
+                        </li>
+                      ))}
+                    </ul>
                     <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-8" style={rule}>
-                      <p className="t-small text-dim">
-                        {g.fullPages.before}{" "}
-                        <Link prefetch={false} href={`/signup/?next=${encodeURIComponent(NEXT)}`} className="underline underline-offset-4 hover:text-text">
-                          {g.fullPages.signup}
-                        </Link>{" "}
-                        {g.fullPages.after}
-                      </p>
-                      <Button type="submit" disabled={busy}>
-                        {busy ? g.creating : g.create}
-                      </Button>
+                      <p className="t-small text-dim">{g.register.note}</p>
+                      <Button href={`/signup/?next=${encodeURIComponent(NEXT)}`}>{g.create}</Button>
                     </div>
-                  </form>
+                  </div>
                 ) : (
                   <form key="login" role="tabpanel" aria-label={g.tabs.login} onSubmit={logIn} noValidate className="mt-10 space-y-7">
                     <Field label={g.fields.email} name="email" type="email" required autoComplete="email" error={errors.email} />

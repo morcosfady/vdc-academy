@@ -9,6 +9,14 @@ export const applyCopy = {
   },
   honeypot: "website",
 
+  // Recruiters who open /apply.
+  recruiter: {
+    title: "Applications are for students.",
+    lead: "Looking to hire? Send a hiring request from your dashboard and our team will match you with graduates.",
+    cta: "Send a hiring request",
+    secondary: "Team training for companies",
+  },
+
   // The gate: /apply when the visitor has no account yet. Sign up and log in inline, no page jump.
   gate: {
     title: "Create an account to apply and track your status.",
@@ -32,6 +40,11 @@ export const applyCopy = {
     modelAlt: "White study model of the stepped office building",
     modelCaption: "Your application, built floor by floor",
     submitFirst: "Create an account or log in to submit your application. Your answers are kept.",
+    register: {
+      lead: "Creating an account takes about three minutes. We ask everything once, so your application starts prefilled.",
+      points: ["Choose Student", "Your email and a password", "Your details and studies", "Review and confirm your email"],
+      note: "Your answers here are kept while you sign up.",
+    },
     errors: {
       name: "Please enter your full name.",
       email: "Please enter a valid email address.",

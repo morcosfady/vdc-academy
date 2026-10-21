@@ -26,7 +26,7 @@ export type AnalyticsEvents = {
   apply_started: Record<string, never>;
   apply_step_completed: { step: number };
   apply_submitted: { programs_count: number; discount: Discount };
-  signup_completed: { status: CurrentStatus | null };
+  signup_completed: { status: CurrentStatus | null; account_type?: "student" | "recruiter" | "team" };
   price_list_requested: Record<string, never>;
   fresh_grad_quiz_completed: { qualified: boolean };
   company_form_submitted: { size?: string };
@@ -46,7 +46,7 @@ const rules: Record<AnalyticsEvent, Record<string, Rule>> = {
   apply_started: {},
   apply_step_completed: { step: int(1, 5) },
   apply_submitted: { programs_count: int(0, 50), discount: oneOf("freshGrad", "student", "none") },
-  signup_completed: { status: oneOf("fresh_grad", "student", "professional", "career_changer", "other") },
+  signup_completed: { status: oneOf("fresh_grad", "student", "professional", "career_changer", "other"), account_type: oneOf("student", "recruiter", "team") },
   price_list_requested: {},
   fresh_grad_quiz_completed: { qualified: bool },
   company_form_submitted: { size: pattern(/^[0-9A-Za-z ]{1,24}$/) }, // a team size bucket like "6 to 10"
