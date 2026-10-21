@@ -35,9 +35,11 @@ jobs:
         run: |
           psql "$DB" -v ON_ERROR_STOP=1 -f supabase/tests/rls_accounts.sql | tee rls.txt
           echo "----"
-          grep -E "^\s*[0-9]+ \| (PASS|FAIL)" rls.txt | sed 's/  */ /g'
-          if grep -qE "\| FAIL \|" rls.txt; then echo "Some RLS checks failed"; exit 1; fi
-          test "$(grep -cE '\| PASS \|' rls.txt)" -ge 30
+          # psql pads the columns ("  3 | PASS   | ..."), so match with optional spaces
+          if grep -qE "^\s*[0-9]+ \|\s*FAIL\s*\|" rls.txt; then echo "Some RLS checks failed"; exit 1; fi
+          passed=$(grep -cE "^\s*[0-9]+ \|\s*PASS\s*\|" rls.txt || true)
+          echo "RLS checks passed: $passed"
+          test "$passed" -ge 30
       - name: Supabase logs on failure
         if: failure()
         run: docker ps -a && docker logs $(docker ps -aqf "name=supabase_db") 2>&1 | tail -80
