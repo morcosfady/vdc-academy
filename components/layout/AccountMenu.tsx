@@ -62,14 +62,13 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     };
   }, [open]);
 
+  // "Log in" is always there when logged out; without keys the login page explains that accounts open soon
   if (!ready || !enabled || !user) {
     return (
       <>
-        {enabled && ready && (
-          <Link prefetch={false} href="/login/" className="ul-draw hidden pb-1 text-[15px] font-medium text-text/80 hover:text-text sm:inline">
-            {m.login}
-          </Link>
-        )}
+        <Link prefetch={false} href="/login/" className="ul-draw hidden pb-1 text-[15px] font-medium text-text/80 hover:text-text sm:inline">
+          {m.login}
+        </Link>
         <Button href="/apply" className={cn("!h-10 !px-4 sm:!h-11 sm:!px-5", compact && "!h-10")}>
           {m.apply}
         </Button>

@@ -300,18 +300,20 @@ test.describe("screenshots", () => {
   }
 });
 
-// "Log in" depends on keys: hidden when this build has none and the mock is off, shown as soon as a client exists.
-test("header: no Log in link without keys, Log in appears once a Supabase client exists", async ({ browser }) => {
+// "Log in" is always in the header. Without keys it leads to an honest notice with the demo and the lead form.
+test("header: Log in shows without keys and the login page explains accounts open soon", async ({ browser }) => {
   const base = process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/";
-  // 1. No keys baked into the test build, no mock: logged-out chrome is Apply only (the honest "accounts open soon" state).
-  const off = await browser.newContext({ baseURL: base });
+  // 1. No keys baked into the test build, no mock: Log in and Apply both show; Log in opens the notice.
+  const off = await browser.newContext({ baseURL: base, viewport: { width: 1280, height: 800 } });
   const a = await off.newPage();
   await a.goto("about/");
   await a.waitForLoadState("networkidle");
-  await a.waitForTimeout(600);
   expect(await a.evaluate(() => localStorage.getItem("vdc-mock"))).toBeNull();
-  await expect(a.getByRole("link", { name: "Log in" })).toHaveCount(0);
   await expect(a.getByRole("link", { name: "Apply" }).first()).toBeVisible();
+  await a.getByRole("link", { name: "Log in" }).click();
+  await a.waitForURL(/\/login\/$/);
+  await expect(a.getByRole("heading", { name: "Accounts open soon." })).toBeVisible();
+  await expect(a.getByRole("link", { name: "Try sign-up in the demo" })).toHaveAttribute("href", /\/demo\/$/);
   await off.close();
   // 2. A client exists (here the mock stands in for real keys): the link appears with nothing else changed.
   const on = await browser.newContext({ baseURL: base });
@@ -321,4 +323,17 @@ test("header: no Log in link without keys, Log in appears once a Supabase client
   await expect(b.getByRole("link", { name: "Log in" })).toBeVisible();
   await expect(b.getByRole("link", { name: "Log in" })).toHaveAttribute("href", /\/login\/$/);
   await on.close();
+});
+
+// Phone: the header has no room for Log in, so the full-screen menu carries Log in and Create account.
+test("phone menu: Log in and Create account when logged out", async ({ browser }) => {
+  const ctx = await browser.newContext({ baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/", viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  await page.goto("about/");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Menu" });
+  await expect(dialog.getByRole("link", { name: "Log in" })).toHaveAttribute("href", /\/login\/$/);
+  await expect(dialog.getByRole("link", { name: "Create account" })).toHaveAttribute("href", /\/signup\/$/);
+  await ctx.close();
 });

@@ -16,7 +16,12 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
   const panel = useRef<HTMLDivElement>(null);
   const { enabled, ready, user, isAdmin, isSuperAdmin, isRecruiter, signOut } = useAuth();
   const signedIn = ready && enabled && Boolean(user);
-  const account = signedIn ? accountLinks({ isAdmin, isRecruiter }) : ready && enabled ? [{ href: "/login/", label: copy.menu.login }] : [];
+  const account = signedIn
+    ? accountLinks({ isAdmin, isRecruiter })
+    : [
+        { href: "/login/", label: copy.menu.login },
+        { href: "/signup/", label: copy.menu.signup },
+      ];
   const hire = signedIn && isRecruiter;
   const email = shown(content.contact.email);
   const rule = { borderColor: "var(--rule)" };

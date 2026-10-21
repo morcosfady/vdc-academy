@@ -4,7 +4,8 @@
 export const account = {
   notice: {
     title: "Accounts open soon.",
-    lead: "Leave your email and we will tell you.",
+    lead: "Log in and Create account switch on when the academy opens accounts. You can try the full sign-up now in the demo, or leave your email and we will tell you when it opens.",
+    demo: "Try sign-up in the demo",
     topic: "Tell me when accounts open",
     button: "Tell me",
   },
@@ -362,6 +363,7 @@ export const account = {
     apply: "Apply",
     applyNow: "Apply now",
     hire: "Hire talent",
+    signup: "Create account",
     superAdmin: "Super admin",
   },
 
