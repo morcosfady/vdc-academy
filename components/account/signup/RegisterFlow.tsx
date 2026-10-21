@@ -119,6 +119,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
   const [announce, setAnnounce] = useState("");
   const [loaded, setLoaded] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null); // the step's top: focus lands here when the step changes
   const honeypot = useRef<HTMLInputElement>(null);
 
   // onboarding: an account type set at sign-up is locked; admins take the short team step
@@ -236,6 +237,8 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
     const s = steps[i];
     setAnnounce(`Step ${i + 1} of ${steps.length}: ${c.steps[s === "details" && effectiveKind === "team" ? "owner" : s]}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
+    // keyboard and screen reader users start the new step at its top (the button they pressed may be far below)
+    setTimeout(() => topRef.current?.focus({ preventScroll: true }), 0);
   }
 
   function attempt(): boolean {
@@ -400,7 +403,9 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
         else onContinue();
       }}
     >
-      <Stepper step={stepIndex + 1} total={steps.length} labels={steps.map((s) => c.steps[s === "details" && effectiveKind === "team" ? "owner" : s])} />
+      <div ref={topRef} tabIndex={-1} className="outline-none">
+        <Stepper step={stepIndex + 1} total={steps.length} labels={steps.map((s) => c.steps[s === "details" && effectiveKind === "team" ? "owner" : s])} />
+      </div>
 
       {restored && step !== "review" && (
         <p className="t-small -mt-3 text-dim" role="status">
