@@ -16,10 +16,17 @@ import { Recommended } from "./Recommended";
 import { EmptyModel } from "./EmptyModel";
 import { Notice } from "./Notice";
 import { Block } from "./Skeleton";
+import { RecruiterDashboard } from "./RecruiterDashboard";
 
 const c = account.dashboard;
 
+// /account/ by role: recruiters get their own sheet (R-100); students (and the team) keep the student dashboard.
 export function Dashboard() {
+  const { isRecruiter } = useAuth();
+  return isRecruiter ? <RecruiterDashboard /> : <StudentDashboard />;
+}
+
+function StudentDashboard() {
   const { user, profile } = useAuth();
   const name = firstName(profile?.full_name ?? (user?.user_metadata?.full_name as string | undefined));
   return (

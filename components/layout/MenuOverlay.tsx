@@ -8,12 +8,16 @@ import { content, shown } from "@/content/site";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
+import { account as copy } from "@/content/copy-account";
+import { accountLinks, SuperAdminBadge } from "./AccountMenu";
 
 // Full-screen paper menu, like an index sheet: mono numbers, big titles, hairlines. Focus is trapped, Escape closes.
 export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null);
-  const { enabled, ready, user, isAdmin, signOut } = useAuth();
-  const account = ready && enabled && user ? [{ href: "/account/", label: "Dashboard" }, { href: "/account/profile/", label: "Profile" }, ...(isAdmin ? [{ href: "/admin/", label: "Admin" }] : [])] : ready && enabled ? [{ href: "/login/", label: "Log in" }] : [];
+  const { enabled, ready, user, isAdmin, isSuperAdmin, isRecruiter, signOut } = useAuth();
+  const signedIn = ready && enabled && Boolean(user);
+  const account = signedIn ? accountLinks({ isAdmin, isRecruiter }) : ready && enabled ? [{ href: "/login/", label: copy.menu.login }] : [];
+  const hire = signedIn && isRecruiter;
   const email = shown(content.contact.email);
   const rule = { borderColor: "var(--rule)" };
 
@@ -60,8 +64,9 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
         >
           <div className="wrap flex min-h-full flex-col py-5">
             <div className="flex h-[52px] items-center justify-between">
-              <span className="text-ink">
+              <span className="flex items-center gap-4 text-ink">
                 <Logo />
+                {signedIn && isSuperAdmin && <SuperAdminBadge />}
               </span>
               <button type="button" onClick={onClose} aria-label="Close menu" className="mono grid h-11 place-items-center rounded-[4px] border px-4 !text-text hover:border-accent" style={rule}>
                 Close
@@ -97,13 +102,13 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
                 )}
               </div>
               <span className="flex flex-wrap items-center gap-4">
-                {ready && enabled && user && (
+                {signedIn && (
                   <button type="button" onClick={async () => { onClose(); await signOut(); window.location.href = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/`; }} className="ul-draw pb-0.5 text-[15px] font-medium text-text">
-                    Sign out
+                    {copy.menu.signOut}
                   </button>
                 )}
-                <Button href="/apply" onClick={onClose}>
-                  Apply now
+                <Button href={hire ? "/account/#hiring" : "/apply"} onClick={onClose}>
+                  {hire ? copy.menu.hire : copy.menu.applyNow}
                 </Button>
               </span>
             </div>
