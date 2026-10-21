@@ -4,12 +4,37 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "@/lib/zod";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
-import { currentStatusLabel, initials, type CurrentStatus, type Profile } from "@/lib/db";
+import { initials, verificationLabel, type Profile, type RecruiterProfile } from "@/lib/db";
+import { roleLabel } from "@/lib/roles";
 import { options } from "@/lib/applySchema";
+import {
+  ACCOUNT_TYPES,
+  CAREER_GOALS,
+  COMPANY_SIZES,
+  COMPANY_TYPES,
+  DEGREE_FIELDS,
+  DEGREE_LEVELS,
+  EXPECTED_HIRES,
+  EXPERIENCE,
+  FORMATS,
+  HEARD_FROM,
+  HIRING_ROLES,
+  MIN_AGE,
+  REVIT_LEVELS,
+  STUDENT_STATUS,
+  labelOf,
+  ownerSchema,
+  phoneRule,
+  recruiterSchema,
+  studentSchema,
+  type Opt,
+} from "@/lib/signupSchema";
 import { Input, Select } from "@/components/ds/Forms";
 import { SheetTag } from "@/components/ds/Devices";
+import { Tag } from "@/components/ds/Chips";
 import { Check, TextareaField } from "@/components/forms/Field";
 import { Button } from "@/components/ui/Button";
+import { CheckGroup, DateField, OptSelect } from "./signup/fields";
 import { account } from "@/content/copy-account";
 import { AccountShell, Panel } from "./AccountShell";
 import { CompletenessMeter } from "./CompletenessMeter";
@@ -17,11 +42,14 @@ import { PasswordInput } from "./PasswordInput";
 import { Notice, LiveStatus } from "./Notice";
 import { Block } from "./Skeleton";
 import { extOf } from "./format";
+import { useHashScroll } from "./useHashScroll";
 
 const c = account.profile;
 const CHOOSE = "Select one";
-const statusLabels = Object.values(currentStatusLabel);
-const statusByLabel = Object.fromEntries(Object.entries(currentStatusLabel).map(([k, v]) => [v, k as CurrentStatus])) as Record<string, CurrentStatus>;
+
+// Three shapes of the same screen. Every field required at sign-up stays required here: the database refuses to
+// clear one on a completed profile (profiles_guard / profile_complete in 0005), so the form checks first.
+type Variant = "student" | "recruiter" | "team";
 
 type Values = {
   full_name: string;
@@ -29,59 +57,138 @@ type Values = {
   whatsapp: string;
   country: string;
   city: string;
-  age_range: string;
   language: string;
+  date_of_birth: string;
   current_status: string;
-  degree: string;
+  degree_field: string;
+  degree_level: string;
   university: string;
   graduation_year: string;
+  experience_years: string;
+  revit_level: string;
+  career_goal: string;
+  preferred_format: string;
+  heard_from: string;
   linkedin_url: string;
   portfolio_url: string;
   marketing_opt_in: boolean;
+  // recruiters: the company row (recruiter_profiles)
+  job_title: string;
+  company_name: string;
+  company_website: string;
+  company_type: string;
+  company_size: string;
+  company_linkedin: string;
+  hiring_roles: string[];
+  expected_hires: string;
 };
 
-const url = z.string().trim().refine((v) => v === "" || /^https?:\/\/.+\..+/.test(v), c.errors.url);
-const schema = z.object({
-  full_name: z.string().trim().min(2, c.errors.name),
-  phone: z.string().trim().refine((v) => v === "" || v.replace(/\D/g, "").length >= 7, c.errors.phone),
-  whatsapp: z.string().trim().refine((v) => v === "" || v.replace(/\D/g, "").length >= 7, c.errors.phone),
-  country: z.string().trim(),
-  city: z.string().trim(),
-  age_range: z.string(),
-  language: z.string(),
-  current_status: z.string(),
-  degree: z.string(),
-  university: z.string().trim(),
-  graduation_year: z.string().trim().refine((v) => v === "" || (/^\d{4}$/.test(v) && Number(v) >= 1950 && Number(v) <= 2100), c.errors.year),
-  linkedin_url: url,
-  portfolio_url: url,
-  marketing_opt_in: z.boolean(),
-});
+const s = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
-const fromProfile = (p: Profile): Values => ({
-  full_name: p.full_name ?? "",
-  phone: p.phone ?? "",
-  whatsapp: p.whatsapp ?? "",
-  country: p.country ?? "",
-  city: p.city ?? "",
-  age_range: p.age_range ?? CHOOSE,
+const fromProfile = (p: Profile, r: RecruiterProfile | null): Values => ({
+  full_name: s(p.full_name),
+  phone: s(p.phone),
+  whatsapp: s(p.whatsapp),
+  country: s(p.country),
+  city: s(p.city),
   language: p.language ?? CHOOSE,
-  current_status: p.current_status ? currentStatusLabel[p.current_status] : CHOOSE,
-  degree: p.degree ?? CHOOSE,
-  university: p.university ?? "",
-  graduation_year: p.graduation_year ? String(p.graduation_year) : "",
-  linkedin_url: p.linkedin_url ?? "",
-  portfolio_url: p.portfolio_url ?? "",
+  date_of_birth: s(p.date_of_birth),
+  current_status: s(p.current_status),
+  degree_field: s(p.degree_field),
+  degree_level: s(p.degree_level),
+  university: s(p.university),
+  graduation_year: s(p.graduation_year),
+  experience_years: s(p.experience_years),
+  revit_level: s(p.revit_level),
+  career_goal: s(p.career_goal),
+  preferred_format: s(p.preferred_format),
+  heard_from: s(p.heard_from),
+  linkedin_url: s(p.linkedin_url),
+  portfolio_url: s(p.portfolio_url),
   marketing_opt_in: p.marketing_opt_in,
+  job_title: s(r?.job_title),
+  company_name: s(r?.company_name),
+  company_website: s(r?.company_website),
+  company_type: s(r?.company_type),
+  company_size: s(r?.company_size),
+  company_linkedin: s(r?.linkedin_url),
+  hiring_roles: r?.hiring_roles ?? [],
+  expected_hires: s(r?.expected_hires),
 });
 
-const opt = (v: string) => (v === CHOOSE || v === "" ? null : v);
+const opt = (v: string) => (v === CHOOSE || v.trim() === "" ? null : v.trim());
+
+// Optional fields kept from v7: a link is empty or a full https link; a WhatsApp number, when given, has the code.
+const url = z.string().trim().refine((v) => v === "" || /^https?:\/\/.+\..+/.test(v), c.errors.url);
+const extras = z.object({ linkedin_url: url, portfolio_url: url });
+const teamExtras = extras.extend({ whatsapp: z.string().trim().refine((v) => v === "" || phoneRule.safeParse(v).success, c.errors.phone) });
+
+type Issues = { success: boolean; error?: { issues: { path: PropertyKey[]; message: string }[] } };
+function collect(results: Issues[], rename: Record<string, string> = {}) {
+  const out: Record<string, string> = {};
+  for (const r of results) {
+    if (r.success || !r.error) continue;
+    for (const i of r.error.issues) {
+      const k = String(i.path[0] ?? "form");
+      out[rename[k] ?? k] ??= i.message;
+    }
+  }
+  return out;
+}
+
+function validate(variant: Variant, v: Values) {
+  if (variant === "student") return collect([studentSchema.safeParse({ ...v, whatsapp_same: false }), extras.safeParse(v)]);
+  if (variant === "recruiter") return collect([recruiterSchema.safeParse({ ...v, linkedin_url: v.company_linkedin })], { linkedin_url: "company_linkedin" });
+  return collect([ownerSchema.safeParse(v), teamExtras.safeParse(v)]);
+}
+
+function profilePatch(variant: Variant, v: Values) {
+  const t = (x: string) => x.trim();
+  const base = { full_name: t(v.full_name), phone: t(v.phone), country: opt(v.country), city: opt(v.city), marketing_opt_in: v.marketing_opt_in };
+  if (variant === "recruiter") return { ...base, heard_from: v.heard_from };
+  const links = { language: opt(v.language), linkedin_url: opt(v.linkedin_url), portfolio_url: opt(v.portfolio_url), whatsapp: opt(v.whatsapp) };
+  if (variant === "team") return { ...base, ...links };
+  return {
+    ...base,
+    ...links,
+    date_of_birth: v.date_of_birth,
+    current_status: v.current_status,
+    degree_field: v.degree_field,
+    degree_level: v.degree_level,
+    university: t(v.university),
+    graduation_year: Number(v.graduation_year),
+    experience_years: v.experience_years,
+    revit_level: v.revit_level,
+    career_goal: v.career_goal,
+    preferred_format: v.preferred_format,
+    heard_from: v.heard_from,
+  };
+}
+
+// Only the company fields: the verification columns are the team's and never leave the browser.
+const companyPatch = (v: Values) => ({
+  job_title: v.job_title.trim(),
+  company_name: v.company_name.trim(),
+  company_website: v.company_website.trim(),
+  company_type: v.company_type,
+  company_size: v.company_size,
+  linkedin_url: v.company_linkedin.trim(),
+  hiring_roles: v.hiring_roles,
+  expected_hires: v.expected_hires,
+});
+
+const maxDob = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - MIN_AGE);
+  return d.toISOString().slice(0, 10);
+};
 
 export function ProfileScreen() {
+  const { isRecruiter } = useAuth();
   const [deleted, setDeleted] = useState(false);
   if (deleted) return <DeletedScreen />;
   return (
-    <AccountShell sheet={c.sheet} name={c.name} title={c.title} lead={c.lead}>
+    <AccountShell sheet={c.sheet} name={c.name} title={c.title} lead={isRecruiter ? c.leadRecruiter : c.lead}>
       <Body onDeleted={() => setDeleted(true)} />
     </AccountShell>
   );
@@ -107,52 +214,51 @@ function DeletedScreen() {
 }
 
 function Body({ onDeleted }: { onDeleted: () => void }) {
-  const { user, profile, refreshProfile, signOut } = useAuth();
+  const { user, profile, recruiter, role, isAdmin, isRecruiter, refreshProfile, signOut } = useAuth();
+  const variant: Variant = isAdmin ? "team" : isRecruiter ? "recruiter" : "student";
   const [values, setValues] = useState<Values | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Fill the form once from the profile; later profile refreshes do not overwrite what the student is typing.
+  // Fill the form once from the profile; later profile refreshes do not overwrite what the person is typing.
   useEffect(() => {
-    if (profile && !values) setValues(fromProfile(profile));
-  }, [profile, values]);
+    if (profile && !values) setValues(fromProfile(profile, recruiter));
+  }, [profile, recruiter, values]);
 
-  const set = <K extends keyof Values>(k: K, v: Values[K]) => setValues((s) => (s ? { ...s, [k]: v } : s));
+  useHashScroll(values !== null);
+
+  const set = <K extends keyof Values>(k: K, v: Values[K]) => {
+    setValues((x) => (x ? { ...x, [k]: v } : x));
+    if (errors[k]) setErrors((e) => Object.fromEntries(Object.entries(e).filter(([key]) => key !== k)));
+  };
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!values || !user) return;
-    const parsed = schema.safeParse(values);
-    if (!parsed.success) {
-      setErrors(Object.fromEntries(parsed.error.issues.map((i) => [String(i.path[0]), i.message])));
+    const form = e.currentTarget;
+    const errs = validate(variant, values);
+    setErrors(errs);
+    const first = Object.keys(errs)[0];
+    if (first) {
+      form.querySelector<HTMLElement>(`[name="${first}"]`)?.focus();
       return;
     }
-    setErrors({});
     const sb = getSupabase();
     if (!sb) return;
     setSaving(true);
     setMsg(null);
-    const d = parsed.data;
-    const payload = {
-      full_name: d.full_name,
-      phone: d.phone || null,
-      whatsapp: d.whatsapp || null,
-      country: d.country || null,
-      city: d.city || null,
-      age_range: opt(d.age_range),
-      language: opt(d.language),
-      current_status: statusByLabel[d.current_status] ?? null,
-      degree: opt(d.degree),
-      university: d.university || null,
-      graduation_year: d.graduation_year ? Number(d.graduation_year) : null,
-      linkedin_url: d.linkedin_url || null,
-      portfolio_url: d.portfolio_url || null,
-      marketing_opt_in: d.marketing_opt_in,
-    };
-    const { error } = await sb.from("profiles").update(payload).eq("id", user.id);
+    let failed = false;
+    if (variant === "recruiter") {
+      const r = await sb.from("recruiter_profiles").update(companyPatch(values)).eq("id", user.id);
+      failed = Boolean(r.error);
+    }
+    if (!failed) {
+      const p = await sb.from("profiles").update(profilePatch(variant, values)).eq("id", user.id);
+      failed = Boolean(p.error);
+    }
     setSaving(false);
-    if (error) return setMsg({ tone: "error", text: c.failed });
+    if (failed) return setMsg({ tone: "error", text: c.failed });
     await refreshProfile();
     setMsg({ tone: "ok", text: c.saved });
   }
@@ -165,6 +271,13 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
       </div>
     );
 
+  const req = (label: string) => `${label} *`;
+  const text = (k: keyof Values, label: string, extra: Partial<React.ComponentProps<typeof Input>> = {}, required = true) => (
+    <Input label={required ? req(label) : label} name={k} value={String(values[k] ?? "")} onChange={(ev) => set(k, ev.target.value as never)} error={errors[k]} required={required} {...extra} />
+  );
+  const pick = (k: keyof Values, label: string, list: Opt[]) => <OptSelect label={req(label)} name={k} options={list} value={String(values[k] ?? "")} onChange={(x) => set(k, x as never)} error={errors[k]} placeholder={c.choose} />;
+  const typeLabel = labelOf(ACCOUNT_TYPES, profile?.account_type) || roleLabel[role];
+
   return (
     <div className="grid-12 gap-y-12">
       <div className="col-span-12 lg:col-span-8">
@@ -172,40 +285,84 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
 
         <form onSubmit={save} noValidate className="mt-14 grid gap-14">
           <Panel label={c.sections.identity}>
+            <dl className="mb-8 border-b pb-6" style={{ borderColor: "var(--rule)" }} data-testid="account-type">
+              <dt className="mono">{c.accountType}</dt>
+              <dd className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="text-[15px] font-medium text-text">{typeLabel}</span>
+                <span className="t-small text-muted">{c.accountTypeNote}</span>
+              </dd>
+            </dl>
+            <p className="t-small mb-7 text-muted">{c.required}</p>
             <div className="grid gap-7 sm:grid-cols-2">
-              <Input label={c.fields.full_name} name="full_name" autoComplete="name" value={values.full_name} onChange={(e) => set("full_name", e.target.value)} error={errors.full_name} required className="sm:col-span-2" />
-              <Input label={c.fields.phone} name="phone" type="tel" autoComplete="tel" value={values.phone} onChange={(e) => set("phone", e.target.value)} error={errors.phone} />
-              <Input label={c.fields.whatsapp} name="whatsapp" type="tel" value={values.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} error={errors.whatsapp} />
-              <Select label={c.fields.age_range} name="age_range" options={[CHOOSE, ...options.ageRange]} value={values.age_range} onChange={(e) => set("age_range", e.target.value)} />
-              <Select label={c.fields.language} name="language" options={[CHOOSE, ...options.language]} value={values.language} onChange={(e) => set("language", e.target.value)} />
+              {text("full_name", c.fields.full_name, { autoComplete: "name", className: "sm:col-span-2" })}
+              {text("phone", c.fields.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
+              {variant !== "recruiter" && text("whatsapp", c.fields.whatsapp, { type: "tel", inputMode: "tel" }, variant === "student")}
+              {variant === "student" && <DateField label={req(c.fields.date_of_birth)} name="date_of_birth" value={values.date_of_birth} onChange={(x) => set("date_of_birth", x)} error={errors.date_of_birth} max={maxDob()} />}
+              {variant !== "recruiter" && <Select label={c.fields.language} name="language" options={[CHOOSE, ...options.language]} value={values.language} onChange={(e) => set("language", e.target.value)} />}
             </div>
           </Panel>
 
           <Panel label={c.sections.location}>
             <div className="grid gap-7 sm:grid-cols-2">
-              <Input label={c.fields.country} name="country" autoComplete="country-name" value={values.country} onChange={(e) => set("country", e.target.value)} />
-              <Input label={c.fields.city} name="city" autoComplete="address-level2" value={values.city} onChange={(e) => set("city", e.target.value)} />
+              {text("country", c.fields.country, { autoComplete: "country-name" }, variant !== "team")}
+              {text("city", c.fields.city, { autoComplete: "address-level2" }, variant !== "team")}
             </div>
           </Panel>
 
-          <Panel label={c.sections.education}>
-            <div className="grid gap-7 sm:grid-cols-2">
-              <Select label={c.fields.current_status} name="current_status" options={[CHOOSE, ...statusLabels]} value={values.current_status} onChange={(e) => set("current_status", e.target.value)} />
-              <Select label={c.fields.degree} name="degree" options={[CHOOSE, ...options.degree]} value={values.degree} onChange={(e) => set("degree", e.target.value)} />
-              <Input label={c.fields.university} name="university" autoComplete="organization" value={values.university} onChange={(e) => set("university", e.target.value)} />
-              <Input label={c.fields.graduation_year} name="graduation_year" inputMode="numeric" value={values.graduation_year} onChange={(e) => set("graduation_year", e.target.value.replace(/[^\d]/g, "").slice(0, 4))} error={errors.graduation_year} />
-            </div>
-          </Panel>
+          {variant === "student" && (
+            <>
+              <Panel label={c.sections.education}>
+                <div className="grid gap-7 sm:grid-cols-2">
+                  {pick("current_status", c.fields.current_status, STUDENT_STATUS)}
+                  {pick("degree_field", c.fields.degree_field, DEGREE_FIELDS)}
+                  {pick("degree_level", c.fields.degree_level, DEGREE_LEVELS)}
+                  {text("university", c.fields.university, { autoComplete: "organization" })}
+                  {text("graduation_year", c.fields.graduation_year, { inputMode: "numeric", onChange: (ev) => set("graduation_year", ev.target.value.replace(/[^\d]/g, "").slice(0, 4)) })}
+                </div>
+              </Panel>
+              <Panel label={c.sections.goals}>
+                <div className="grid gap-7 sm:grid-cols-2">
+                  {pick("experience_years", c.fields.experience_years, EXPERIENCE)}
+                  {pick("revit_level", c.fields.revit_level, REVIT_LEVELS)}
+                  {pick("career_goal", c.fields.career_goal, CAREER_GOALS)}
+                  {pick("preferred_format", c.fields.preferred_format, FORMATS)}
+                </div>
+              </Panel>
+            </>
+          )}
 
-          <Panel label={c.sections.links}>
-            <div className="grid gap-7 sm:grid-cols-2">
-              <Input label={c.fields.linkedin_url} name="linkedin_url" type="url" inputMode="url" value={values.linkedin_url} onChange={(e) => set("linkedin_url", e.target.value)} error={errors.linkedin_url} />
-              <Input label={c.fields.portfolio_url} name="portfolio_url" type="url" inputMode="url" value={values.portfolio_url} onChange={(e) => set("portfolio_url", e.target.value)} error={errors.portfolio_url} />
-            </div>
-          </Panel>
+          {variant === "recruiter" && (
+            <Panel id="company" label={c.sections.company} className="scroll-mt-24">
+              <p className="t-small mb-7 text-muted">{c.companyLead}</p>
+              <div className="grid gap-7 sm:grid-cols-2">
+                {text("job_title", c.fields.job_title, { autoComplete: "organization-title" })}
+                {text("company_name", c.fields.company_name, { autoComplete: "organization" })}
+                {text("company_website", c.fields.company_website, { type: "url", inputMode: "url" })}
+                {text("company_linkedin", c.fields.company_linkedin, { type: "url", inputMode: "url" })}
+                {pick("company_type", c.fields.company_type, COMPANY_TYPES)}
+                {pick("company_size", c.fields.company_size, COMPANY_SIZES)}
+                <div className="sm:col-span-2">
+                  <CheckGroup legend={c.fields.hiring_roles} name="hiring_roles" options={HIRING_ROLES} value={values.hiring_roles} onChange={(x) => set("hiring_roles", x)} error={errors.hiring_roles} />
+                </div>
+                {pick("expected_hires", c.fields.expected_hires, EXPECTED_HIRES)}
+              </div>
+            </Panel>
+          )}
+
+          {variant !== "recruiter" && (
+            <Panel label={c.sections.links}>
+              <div className="grid gap-7 sm:grid-cols-2">
+                {text("linkedin_url", c.fields.linkedin_url, { type: "url", inputMode: "url" }, false)}
+                {text("portfolio_url", c.fields.portfolio_url, { type: "url", inputMode: "url" }, false)}
+              </div>
+            </Panel>
+          )}
 
           <Panel label={c.sections.prefs}>
-            <Check name="marketing_opt_in" checked={values.marketing_opt_in} onChange={(e) => set("marketing_opt_in", e.target.checked)} label={c.fields.marketing_opt_in} />
+            <div className="grid gap-7">
+              {variant !== "team" && pick("heard_from", c.fields.heard_from, HEARD_FROM)}
+              <Check name="marketing_opt_in" checked={values.marketing_opt_in} onChange={(e) => set("marketing_opt_in", e.target.checked)} label={c.fields.marketing_opt_in} />
+            </div>
           </Panel>
 
           <div className="grid gap-5">
@@ -231,8 +388,25 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
       </div>
 
       <aside className="order-first col-span-12 self-start lg:order-none lg:col-span-4 lg:sticky lg:top-24">
-        <CompletenessMeter profile={profile} className="card p-6" />
+        {variant === "student" && <CompletenessMeter profile={profile} className="card p-6" />}
+        {variant === "recruiter" && <VerificationCard recruiter={recruiter} />}
       </aside>
+    </div>
+  );
+}
+
+// Read-only: only the academy team changes a verification.
+function VerificationCard({ recruiter }: { recruiter: RecruiterProfile | null }) {
+  const status = recruiter?.verification_status ?? "pending";
+  return (
+    <div className="card p-6" data-testid="verification-status" data-status={status}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="mono">{c.verification}</p>
+        <Tag tone={status === "approved" ? "blueprint" : status === "pending" ? "brass" : "default"}>{verificationLabel[status]}</Tag>
+      </div>
+      <p className="t-small mt-4 text-muted">{account.recruiter.banner[status]}</p>
+      {status === "rejected" && recruiter?.rejection_note && <p className="t-small mt-3 border-s-2 ps-4 text-text" style={{ borderColor: "var(--err)" }}>{recruiter.rejection_note}</p>}
+      <p className="mono mt-5 !normal-case">{c.verificationNote}</p>
     </div>
   );
 }
