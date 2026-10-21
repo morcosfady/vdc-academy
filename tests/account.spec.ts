@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
 import { emptyState, loginAs, mockSupabase, seedUser, type MockState } from "./helpers/mockSupabase";
+import { PASSWORD, registerStudent } from "./helpers/register";
 
 // Student accounts against the static export. `?mock=1` points lib/supabase.ts at https://mock.supabase.local,
 // which tests/helpers/mockSupabase.ts answers in memory (auth, rest, storage). RLS is not modelled here.
@@ -72,32 +73,17 @@ function seededStudent() {
 test("sign up shows Check your email, then confirmed login lands on the empty dashboard", async ({ page }) => {
   const state = await mockSupabase(page);
   await open(page, "signup/");
-  await page.locator('input[name="name"]').fill("Test Student");
-  await page.locator('input[name="email"]').fill("new@example.com");
-  await page.locator('input[name="password"]').fill("Str0ng-pass!");
-  await expect(page.getByText("Strong password.")).toBeVisible();
-  await page.getByRole("button", { name: "Show password" }).click();
-  await expect(page.locator('input[name="password"]')).toHaveAttribute("type", "text");
-  await page.locator('select[name="status"]').selectOption("Fresh graduate");
-  await expect(page.getByText("You may qualify for 40% off")).toBeVisible();
-  // consent missing: inline error, nothing sent
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Please agree to continue.")).toBeVisible();
-  expect(state.users).toHaveLength(0);
-  await page.locator('input[name="consent"]').check();
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Check your email." })).toBeVisible();
+  await registerStudent(page, "new@example.com", { full_name: "Test Student" });
+  await expect(page.getByRole("heading", { name: "Check your email to verify your account." })).toBeVisible();
   await expect(page.getByText("new@example.com")).toBeVisible();
   expect(state.users).toHaveLength(1);
-  expect(state.users[0].meta).toMatchObject({ full_name: "Test Student", current_status: "fresh_grad", marketing_opt_in: false });
-  expect(state.tables.profiles[0].current_status).toBe("fresh_grad");
-  await page.getByRole("button", { name: "Resend the email" }).click();
-  await expect(page.getByText("Sent again.")).toBeVisible();
+  expect(state.users[0].meta).toMatchObject({ account_type: "student", full_name: "Test Student", current_status: "fresh_grad" });
+  expect(state.tables.profiles[0]).toMatchObject({ current_status: "fresh_grad", onboarding_complete: true });
 
   // Unconfirmed: the login error says what to do.
   await open(page, "login/");
   await page.locator('input[name="email"]').fill("new@example.com");
-  await page.locator('input[name="password"]').fill("Str0ng-pass!");
+  await page.locator('input[name="password"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page.getByText("Your email is not confirmed yet.")).toBeVisible();
 

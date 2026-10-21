@@ -174,6 +174,8 @@ export function studentMeta(d: StudentDetails, c: Consents): SignupMeta {
   return {
     account_type: "student",
     full_name: d.full_name.trim(),
+    first_name: d.full_name.trim().split(/\s+/)[0], // for the confirmation email greeting
+
     phone: d.phone.trim(),
     whatsapp: d.whatsapp_same ? d.phone.trim() : (d.whatsapp ?? "").trim(),
     country: d.country.trim(),
@@ -198,6 +200,7 @@ export function recruiterMeta(d: RecruiterDetails, c: Consents): SignupMeta {
   return {
     account_type: "recruiter",
     full_name: d.full_name.trim(),
+    first_name: d.full_name.trim().split(/\s+/)[0],
     phone: d.phone.trim(),
     country: d.country.trim(),
     city: d.city.trim(),

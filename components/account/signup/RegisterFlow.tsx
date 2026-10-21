@@ -274,11 +274,12 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
       const meta =
         effectiveKind === "student" ? studentMeta(studentSchema.parse(v), consents)
         : effectiveKind === "recruiter" ? recruiterMeta(recruiterSchema.parse(v), consents)
-        : { full_name: v.full_name.trim(), phone: v.phone.trim(), team: true, consent_terms: v.consent_terms, consent_contact: v.consent_contact };
+        : { full_name: v.full_name.trim(), first_name: v.full_name.trim().split(/\s+/)[0], phone: v.phone.trim(), team: true, consent_terms: v.consent_terms, consent_contact: v.consent_contact };
       const { data, error } = await sb.auth.signUp({
         email: v.email.trim(),
         password: v.password,
-        options: { data: meta, emailRedirectTo: authCallbackUrl(next ?? undefined), ...(token ? { captchaToken: token } : {}) },
+        // a team sign-up comes back to /admin/ (with a grant it is complete; without one the gate sends it to /onboarding/)
+        options: { data: meta, emailRedirectTo: authCallbackUrl(next ?? (effectiveKind === "team" ? "/admin/" : undefined)), ...(token ? { captchaToken: token } : {}) },
       });
       if (error) {
         setPhase("form");

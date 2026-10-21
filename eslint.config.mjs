@@ -19,6 +19,9 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
       "supabase/**",
+      ".claude/**", // agent worktrees and local tooling
+      "test-results/**",
+      "playwright-report/**",
     ],
   },
 ];

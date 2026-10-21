@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { emptyState, loginAs, mockSupabase, seedUser, type MockState } from "./helpers/mockSupabase";
+import { registerStudent } from "./helpers/register";
 
 // The apply flow against the static export, with the in-memory Supabase from tests/helpers/mockSupabase.ts
 // (`?mock=1`). Applications belong to an account: logged out shows the gate, logged in prefills from the profile,
@@ -92,56 +93,46 @@ test("logged out: the gate with Sign up and Log in tabs, no form", async ({ page
   await expect(page.getByRole("tab", { name: "Sign up" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("tab", { name: "Log in" })).toBeVisible();
   await expect(page.getByText("STEP 01 / 05")).toHaveCount(0);
-  await expect(page.getByLabel(/Full name/)).toBeVisible();
-  await expect(page.getByLabel(/^Password/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Create account" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign up" })).toHaveAttribute("href", /signup\/\?next=%2Fapply%2F/);
+  // sign-up is the full registration on /signup (every field required), coming back to /apply/
+  await expect(page.getByTestId("gate-signup")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create account" })).toHaveAttribute("href", /signup\/\?next=%2Fapply%2F/);
+  await expect(page.getByLabel(/Full name/)).toHaveCount(0);
   await expect(page.getByRole("img", { name: /study model/i })).toBeVisible();
 
   await page.getByRole("tab", { name: "Log in" }).click();
   await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Email me a link" })).toBeVisible();
-  await expect(page.getByLabel(/Full name/)).toHaveCount(0);
   await expect(page.getByRole("link", { name: /log in/ })).toHaveAttribute("href", /login\/\?next=%2Fapply%2F/);
   expect(page.url()).toMatch(/apply\/\?mock=1$/); // tabs never leave the page
 });
 
-test("gate validation: empty sign-up and a short password", async ({ page }) => {
+test("the gate's Create account opens the registration with the way back to /apply/", async ({ page }) => {
   await mockSupabase(page);
   await open(page);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Please enter your full name.")).toBeVisible();
-  await expect(page.getByText("Please enter a valid email address.")).toBeVisible();
-  await expect(page.getByText("Please use at least 8 characters.")).toBeVisible();
-  await expect(page.getByText("Please agree to the Privacy Policy and Terms.")).toBeVisible();
-  await page.getByLabel(/^Password/).fill("short");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Please use at least 8 characters.")).toBeVisible();
+  await page.getByRole("link", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/signup\/\?next=%2Fapply%2F/);
+  await expect(page.getByRole("heading", { name: "Are you a student or a recruiter?" })).toBeVisible();
 });
 
 test("sign up from the gate: check-your-email, the guest draft survives and is restored after login", async ({ page }) => {
   const state = await mockSupabase(page);
   await page.addInitScript(() => {
     try {
-      localStorage.setItem("vdc-apply-draft", JSON.stringify({ values: { fullName: "Guest Draft", email: "guest@example.com", phone: "+1 555 999 0000", country: "USA", city: "Austin" }, step: 0 }));
+      if (!localStorage.getItem("vdc-apply-draft")) localStorage.setItem("vdc-apply-draft", JSON.stringify({ values: { fullName: "Guest Draft", email: "guest@example.com", phone: "+1 555 999 0000", country: "USA", city: "Austin" }, step: 0 }));
     } catch {}
   });
-  await open(page);
-  await page.getByLabel(/Full name/).fill("New Student");
-  await page.getByLabel(/^Email/).fill("new@example.com");
-  await page.getByLabel(/^Password/).fill("password123");
-  await page.getByLabel(/Current status/).selectOption("Fresh graduate");
-  await page.locator('input[name="consent"]').check();
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("Check your email, then come back here.")).toBeVisible();
+  await page.goto("signup/?next=%2Fapply%2F&mock=1");
+  await page.waitForLoadState("networkidle");
+  await registerStudent(page, "new@example.com", { full_name: "New Student" });
+  await expect(page.getByRole("heading", { name: "Check your email to verify your account." })).toBeVisible();
   await expect(page.getByText(/confirmation link to new@example.com/)).toBeVisible();
 
   // the sign-up carried the metadata the profile trigger reads, and asked to come back to /apply/
   const signup = state.requests.find((r) => r.path === "/auth/v1/signup");
   expect(signup?.method).toBe("POST");
-  const b = signup!.body as { email: string; data: Record<string, unknown>; code_challenge?: string };
+  const b = signup!.body as { email: string; data: Record<string, unknown> };
   expect(b.email).toBe("new@example.com");
-  expect(b.data).toMatchObject({ full_name: "New Student", current_status: "fresh_grad", marketing_opt_in: false });
+  expect(b.data).toMatchObject({ account_type: "student", full_name: "New Student", current_status: "fresh_grad" });
   const u = state.users.find((x) => x.email === "new@example.com")!;
   expect(u.confirmed).toBe(false);
   expect(state.tables.profiles.some((p) => p.id === u.id && p.full_name === "New Student")).toBe(true);
@@ -530,7 +521,7 @@ test("layout: gate and step 1 at 1440 and 390", async ({ browser }) => {
   await mockSupabase(p2);
   await open(p2);
   await expect(p2.getByRole("tab", { name: "Sign up" })).toBeVisible();
-  expect((await p2.getByLabel(/Full name/).boundingBox())!.width).toBeGreaterThan(300);
+  expect((await p2.getByTestId("gate-signup").boundingBox())!.width).toBeGreaterThan(300);
   expect(await p2.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
   await phone.close();
 });

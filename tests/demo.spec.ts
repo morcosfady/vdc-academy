@@ -20,7 +20,7 @@ test("the tour page turns the demo on, the banner shows everywhere, exit turns i
   const leaks = await noNetworkToSupabase(page);
   await page.goto("demo/");
   await expect(page.getByRole("heading", { name: /full experience/ })).toBeVisible();
-  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(5);
+  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(9);
   await expect(page.getByText("Demo is off")).toBeVisible();
   await page.getByTestId("demo-start").click();
   await page.waitForLoadState("networkidle");
@@ -87,15 +87,37 @@ test("card 02 shows the student dashboard at Under review with a pending discoun
   expect(leaks).toEqual([]);
 });
 
-test("card 01: a new sign-up is confirmed at once and lands in the apply steps", async ({ page }) => {
+test("register cards: Fill sample data creates a student and a recruiter, confirmed at once", async ({ page }) => {
+  const leaks = await noNetworkToSupabase(page);
+  for (const [card, role] of [["Register as a student", "student"], ["Register as a recruiter", "recruiter"]] as const) {
+    await page.goto("demo/");
+    await page.getByRole("button", { name: card }).click();
+    await page.waitForURL(/\/signup\/\?as=/);
+    await expect(page.locator(`input[name="account_type"][value="${role}"]`)).toBeChecked();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByTestId("fill-sample").click();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByTestId("review")).toContainText(role === "student" ? "Sample Student" : "Sample Company C");
+    await page.getByRole("button", { name: "Create account" }).click();
+    await page.waitForURL(/\/account\/$/);
+    const created = await page.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem("vdc-demo-state") ?? "{}");
+      const u = st.users[st.users.length - 1];
+      return st.tables.profiles.find((p: { id: string }) => p.id === u.id);
+    });
+    expect(created).toMatchObject({ account_type: role, role, onboarding_complete: true });
+    expect(created.email).toMatch(/@example\.com$/);
+  }
+  expect(leaks).toEqual([]);
+});
+
+test("the demo super admin has the badge and the same admin screens", async ({ page }) => {
   await page.goto("demo/");
-  await page.getByRole("button", { name: "Open the apply gate" }).click();
-  await page.waitForURL(/\/apply\/$/);
-  await page.locator('input[name="name"]').fill("Sample Applicant");
-  await page.locator('input[name="email"]').fill("applicant99@example.com");
-  await page.locator('input[name="password"]').fill("demo-password-9");
-  await page.locator('select[name="status"]').selectOption({ index: 1 });
-  await page.locator('input[name="consent"]').check();
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByText("STEP 01 / 05")).toBeVisible();
+  await page.getByRole("button", { name: "Open as super admin" }).click();
+  await page.waitForURL(/\/admin\/recruiters\//);
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await expect(page.getByTestId("super-admin-badge")).toBeVisible();
+  const email = await page.evaluate(() => JSON.parse(localStorage.getItem("vdc-demo-state") ?? "{}").roleGrants?.[0]?.email);
+  expect(email).toBe("owner@example.com");
 });
