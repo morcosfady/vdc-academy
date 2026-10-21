@@ -1,6 +1,7 @@
 // Types and labels for the account tables (supabase/migrations/0003_accounts.sql). Keep in step with the SQL.
 
-export type Role = "student" | "admin";
+import type { AccountType, Role } from "./roles";
+export type { AccountType, Role };
 export type CurrentStatus = "fresh_grad" | "student" | "professional" | "career_changer" | "other";
 export type ApplicationStatus = "draft" | "submitted" | "under_review" | "interview" | "accepted" | "enrolled" | "waitlist" | "rejected";
 export type DiscountStatus = "none" | "pending" | "verified" | "rejected";
@@ -26,7 +27,63 @@ export type Profile = {
   marketing_opt_in: boolean;
   created_at: string;
   updated_at: string;
+  // v9 registration (supabase/migrations/0005_roles_registration.sql)
+  account_type: AccountType | null;
+  onboarding_complete: boolean;
+  date_of_birth: string | null;
+  degree_field: string | null;
+  degree_level: string | null;
+  experience_years: string | null;
+  revit_level: string | null;
+  career_goal: string | null;
+  preferred_format: string | null;
+  heard_from: string | null;
+  consent_terms_at: string | null;
+  consent_contact_at: string | null;
 };
+
+export type VerificationStatus = "pending" | "approved" | "rejected";
+
+// One row per recruiter (1:1 with profiles). The verification columns are written by admins only.
+export type RecruiterProfile = {
+  id: string;
+  job_title: string | null;
+  company_name: string | null;
+  company_website: string | null;
+  company_type: string | null;
+  company_size: string | null;
+  linkedin_url: string | null;
+  hiring_roles: string[];
+  expected_hires: string | null;
+  authorised_confirmed: boolean;
+  verification_status: VerificationStatus;
+  verified_by: string | null;
+  verified_at: string | null;
+  rejection_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HiringStatus = "new" | "in_review" | "matched" | "closed";
+export type WorkMode = "on_site" | "hybrid" | "remote";
+
+export type HiringRequest = {
+  id: string;
+  recruiter_id: string;
+  role: string;
+  hires: number;
+  location: string;
+  work_mode: WorkMode;
+  start_date: string;
+  notes: string | null;
+  status: HiringStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export const verificationLabel: Record<VerificationStatus, string> = { pending: "Pending review", approved: "Approved", rejected: "Not approved" };
+export const hiringStatusLabel: Record<HiringStatus, string> = { new: "New", in_review: "In review", matched: "Matched", closed: "Closed" };
+export const workModeLabel: Record<WorkMode, string> = { on_site: "On site", hybrid: "Hybrid", remote: "Remote" };
 
 export type Application = {
   id: string;
