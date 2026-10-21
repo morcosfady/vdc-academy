@@ -4,7 +4,64 @@ Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, re
 Repo (public): https://github.com/morcosfady/vdc-academy
 Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
-## v8: launch ready (2026-10-20), continue here
+## v9: registration with roles (2026-10-21), continue here
+
+Everything below is on `main` and deployed. The design did not change. Supabase is still not connected, so the new flows run on the in-browser mock (tests) and the demo (presenting). The database side is no longer untested: `.github/workflows/db-tests.yml` starts a local Supabase stack on every push that touches `supabase/**`, applies every migration twice and runs `supabase/tests/rls_accounts.sql`: **33 of 33 checks PASS**.
+
+### Roles
+- `lib/roles.ts` is the one place for role checks: `isStudent`, `isRecruiter`, `isAdmin` (admin and super admin), `isSuperAdmin`, `roleOf`, `can(profile, permission)` over one permissions map.
+- **Super admin differences (placeholder):** today the super admin has every admin permission and nothing more. When the owner lists the differences, move those permissions into `SUPER_ONLY` in `lib/roles.ts` (slots already named: `manage_admins`, `site_settings`) and gate the screen with `can()`; `components/admin/AdminShell.tsx` has the marked TODO for nav entries. The first planned one is a promote/demote screen (today colleagues are promoted with the SQL fallback in `docs/GO-LIVE.md`).
+- The owner's email is granted in `supabase/migrations/0005_roles_registration.sql` (`role_grants`) and nowhere in the frontend. A trigger on `auth.users` applies the grant only when `email_confirmed_at` is set. The demo uses a fictional `owner@example.com` through the mock's grant list.
+
+### Registration (`/signup`) and onboarding (`/onboarding/`)
+- `components/account/signup/RegisterFlow.tsx` (both pages), `fields.tsx` (key/label select, date field, checkbox group, role cards), schemas in `lib/signupSchema.ts` (one per step and role, every field required, option lists with stable keys, `profileComplete()`).
+- Steps: 1 Student or Recruiter (or the "Academy team account" link: name and phone), 2 account, 3 details, 4 review with Edit and consents (recruiters confirm authorisation), Turnstile, honeypot. The error summary takes focus, focus moves to the top of each new step, changes are announced, autosave never stores the password, `?as=student|recruiter` preselects the role, "Fill sample data" in the demo.
+- Answers travel in the sign-up metadata (the user has no session until they confirm); `handle_new_user` copies the whitelisted fields (never a role) and sets `onboarding_complete` only when `profile_complete()` passes. The database refuses `onboarding_complete = true` with any required field missing (including under 16).
+- **Deviation from the brief, on purpose:** the site cannot detect the owner's email at sign-up without telling anonymous visitors which emails are privileged. The owner uses the team link (or any path, even Google): after confirming, the grant makes them super admin, `profile_complete` accepts name and phone, and a team sign-up returns to `/admin/`.
+- Onboarding gate: `RequireAuth` and `/apply` send a signed-in user with a loaded, incomplete profile to `/onboarding/?next=...` (Google, magic link, interrupted sign-ups, v7/v8 accounts). The account type is locked once set.
+- `/apply`: the gate's Sign up tab hands over to `/signup/?next=/apply/`; recruiters see "Applications are for students" with a hiring request link.
+
+### Database (migrations 0005 and 0006)
+- 0005: `account_type`, `onboarding_complete`, the student fields and server-stamped consents on `profiles`; `recruiter_profiles` (verification columns admin-only, decisions signed by `verified_by` and `verified_at`); `hiring_requests` (recruiters insert their own, the team moves the status); `role_grants`; guards against self-promotion, account-type switches and admin roles granted by anyone but a super admin; only students create applications; recruiters see no applications or student profiles.
+- 0006 (emails): `welcome_sent_at`, `recruiter_alert_sent_at`, guarded from the browser.
+- **Bug found by the database CI and fixed:** 0003 dropped the wrong trigger name, so 0001's insert trigger stayed on `applications` and forced `status = 'new'`, which the v7 status check refuses: every application save would have failed on the live database. 0001 and 0003 also were not re-runnable (policies without drops). All fixed.
+- `lib/demo/engine.ts` mirrors 0005 (metadata to profile, grants on confirmed emails only, per-role visibility, the guards), so tests and the demo behave like the database.
+
+### Screens
+- Recruiter dashboard (`components/account/RecruiterDashboard.tsx`, `R-100 · RECRUITER`): verification banner (pending, approved, rejected with the note), company card, hiring request form and list, talent pool teaser marked Coming soon (no student browsing).
+- Profile: the v9 student fields, the recruiter company section, read-only account type and verification.
+- Header menus by role; recruiters get "Hire talent" instead of Apply; the super admin badge in the menu.
+- Admin: Users (students, recruiters, team, filters, search, CSV), Recruiters (approve, reject with a required note, calls `on-recruiter-verified`), Hiring (status changes), four new overview cards.
+
+### Emails (Edge Functions; `docs/GO-LIVE.md` has the full table)
+- `on-account-verified`: welcome per role after the confirmation link (called from `components/account/AuthCallback.tsx`, never blocking more than 3 s) and the "new recruiter to review" alert to `ADMIN_NOTIFY_EMAIL`.
+- `on-recruiter-verified`: approved or rejected (with the note). The confirmation email greets with the first name.
+
+### Demo (`/demo/`)
+Nine cards: register as a student, register as a recruiter, apply, student dashboard, profile, recruiter dashboard, admin overview, admin detail, super admin on users and recruiters. Sample Recruiter 01 to 04 (Sample Company A to D) in every state, three hiring requests, `owner@example.com` as the demo super admin.
+
+### Tests
+- Chromium full suite: 203 passed, 6 skipped (screenshot captures), 1 perf timing blip under load that passes 28 of 28 when repeated.
+- CI: Firefox 186 passed. WebKit 184 passed with one gate login test failing; its cause (a brief onboarding redirect) is fixed and the test passes locally on WebKit and Chromium. Database: 33 of 33.
+- New: `tests/signup.spec.ts` (13), `tests/recruiter.spec.ts` (10), `tests/admin-v9.spec.ts`, `tests/v9-shots.spec.ts` (`SHOTS=1`, writes `docs/audit/v9/`), helpers in `tests/helpers/register.ts`.
+- Screenshots: `docs/audit/v9/` (role choice, student details, recruiter details and errors, review, verify email, recruiter dashboard pending, admin users, recruiter approval, super admin badge; 1440 and 390).
+
+### Live vs not tested
+- Live: the deploy, the demo flows, the mock-based tests on three engines, the SQL on a real Postgres in CI.
+- Not tested: a real Supabase project (Auth emails, the five Edge Functions, Resend, Turnstile), real phones.
+
+### Owner steps
+1. Free a Supabase slot (pause or delete `pharaohs-bites` or `kanisa-checkin`), then Claude runs `docs/GO-LIVE.md`: migrations 0001 to 0006, the RLS proof, five functions, secrets.
+2. Sign up on the live site with the granted owner email (the team link), confirm the email: you are super admin and land on `/admin/`.
+3. Resend domain, Turnstile keys, optional Google OAuth, as in v8.
+
+### Open items
+- Super admin differences (see Roles above).
+- A promote/demote screen for admins (planned super-admin-only).
+- Student opt-in to share a profile, then recruiter browsing (deliberately not built).
+- `brand-palette` is a local, unpushed preview branch from the client colour review (2026-10-21); keep or delete.
+
+## v8: launch ready (2026-10-20), see v9 above
 
 Everything below is on `main` and deployed. The design did not change. Supabase is still not connected (step 1 of `docs/GO-LIVE.md` is blocked), so accounts, apply and admin run on the in-memory mock in tests and on the client demo for presenting.
 
