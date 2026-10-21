@@ -1,4 +1,4 @@
--- VDC Academy: Row Level Security checks for the account tables (migrations 0003 and 0004).
+-- VDC Academy: Row Level Security checks for the account tables (migrations 0003, 0004 and 0005).
 --
 -- Run the whole file in the SQL editor (it runs as `postgres`). It creates three throwaway users (student A,
 -- student B, one admin), then runs each check as that user by setting the JWT claims and switching to the
@@ -6,7 +6,8 @@
 -- results table that is returned at the end. Safe to run more than once: the throwaway rows are removed at the
 -- end, and at the start in case an earlier run stopped half way.
 --
--- Requires 0004 (its profiles_guard fix lets the dashboard promote the admin user).
+-- Requires 0004 and 0005. Checks 16 to 30 cover v9: recruiters, hiring requests, role grants (super admin only after
+-- the email is confirmed) and the rule that onboarding_complete needs every required field.
 --
 -- If the `insert into auth.users` below fails on your project, create the three users by hand instead:
 -- Dashboard > Authentication > Users > Add user > Create new user, "Auto confirm user" on, with the emails
@@ -27,15 +28,17 @@ end $$;
 
 do $$
 declare
-  a uuid; b uuid; adm uuid;
-  claims_a text; claims_b text; claims_adm text;
+  a uuid; b uuid; adm uuid; r uuid; ow uuid; sup uuid;
+  claims_a text; claims_b text; claims_adm text; claims_r text; claims_sup text;
+  hr_id uuid; ok boolean; n2txt text;
   app_a_draft uuid; app_a_sub uuid; app_b_draft uuid;
   owner uuid; lead_id uuid;
   n int; n2 int; txt text;
 begin
   -- 0. Clean up an earlier run (cascades: profiles, applications, events, deletion requests).
-  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid');
+  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid', 'rls-test-recruiter@example.invalid', 'rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
   delete from public.leads where email = 'rls-test-lead@example.invalid';
+  delete from public.role_grants where email in ('rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
 
   -- 1. Three users. The handle_new_user trigger creates their profiles.
   insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
@@ -51,8 +54,9 @@ begin
   insert into public.profiles (id, email, full_name) values (b, 'rls-test-b@example.invalid', 'Test Student B') on conflict (id) do nothing;
   insert into public.profiles (id, email, full_name) values (adm, 'rls-test-admin@example.invalid', 'Test Admin') on conflict (id) do nothing;
 
-  -- No JWT here, so the 0004 guard lets the dashboard set the role.
+  -- No JWT here, so the guard lets the dashboard set the role. A and B are students (v7 accounts were).
   update public.profiles set role = 'admin' where id = adm;
+  update public.profiles set account_type = 'student' where id in (a, b);
 
   claims_a := json_build_object('sub', a, 'role', 'authenticated', 'email', 'rls-test-a@example.invalid')::text;
   claims_b := json_build_object('sub', b, 'role', 'authenticated', 'email', 'rls-test-b@example.invalid')::text;
@@ -311,11 +315,285 @@ begin
     perform pg_temp.rls_check('leads are admin only', false, sqlerrm);
   end;
 
+  -- v9 ------------------------------------------------------------------------------------------------------------
+  -- A recruiter signs up with the full metadata the form sends (plus a forged "role": it must be ignored), and a
+  -- super admin exists for the admin-role checks.
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+  values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-recruiter@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+    '{"account_type":"recruiter","full_name":"Test Recruiter","phone":"+1 555 010 0000","country":"USA","city":"Dallas","heard_from":"linkedin","job_title":"BIM Lead","company_name":"Test Company","company_website":"https://example.com","company_type":"general_contractor","company_size":"51-200","linkedin_url":"https://www.linkedin.com/in/test-recruiter","hiring_roles":["bim_coordinator","vdc_engineer","not-a-role"],"expected_hires":"2-5","consent_terms":true,"consent_contact":true,"authorised_confirmed":true,"role":"admin"}',
+    now(), now(), '', '', '', '');
+  select id into r from auth.users where email = 'rls-test-recruiter@example.invalid';
+  claims_r := json_build_object('sub', r, 'role', 'authenticated', 'email', 'rls-test-recruiter@example.invalid')::text;
+
+  insert into public.role_grants (email, role) values ('rls-test-super@example.invalid', 'super_admin');
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+  values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-super@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Test Super","phone":"+1 555 010 0001"}', now(), now(), '', '', '', '');
+  select id into sup from auth.users where email = 'rls-test-super@example.invalid';
+  claims_sup := json_build_object('sub', sup, 'role', 'authenticated', 'email', 'rls-test-super@example.invalid')::text;
+
+  -- T16. Sign-up metadata becomes a complete recruiter profile: role from account_type (never from metadata),
+  --      pending verification, unknown hiring roles dropped.
+  begin
+    select role || '/' || account_type || '/' || onboarding_complete::text into txt from public.profiles where id = r;
+    select verification_status = 'pending' and hiring_roles = array['bim_coordinator','vdc_engineer'] into ok from public.recruiter_profiles where id = r;
+    perform pg_temp.rls_check('recruiter sign-up creates a complete, pending company profile', txt = 'recruiter/recruiter/true' and coalesce(ok, false), coalesce(txt, 'no profile') || ' pending+roles=' || coalesce(ok::text, 'no row'));
+  exception when others then
+    perform pg_temp.rls_check('recruiter sign-up creates a complete, pending company profile', false, sqlerrm);
+  end;
+
+  -- T17. A student cannot see recruiter rows (profile or company).
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    select count(*) into n from public.recruiter_profiles;
+    select count(*) into n2 from public.profiles where id = r;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student cannot read recruiter profiles', n = 0 and n2 = 0, format('company rows=%s, profile rows=%s', n, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student cannot read recruiter profiles', false, sqlerrm);
+  end;
+
+  -- T18. A recruiter reads no applications and no student profiles.
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    select count(*) into n from public.applications;
+    select count(*) into n2 from public.profiles where id in (a, b);
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('recruiter cannot read applications or student profiles', n = 0 and n2 = 0, format('applications=%s, student profiles=%s', n, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('recruiter cannot read applications or student profiles', false, sqlerrm);
+  end;
+
+  -- T19. A recruiter cannot create an application.
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    insert into public.applications (status, full_name, email, programs) values ('draft', 'Test Recruiter', 'rls-test-recruiter@example.invalid', array['revit-mep']);
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('recruiter cannot create an application', false, 'insert succeeded');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('recruiter cannot create an application', sqlerrm ilike '%row-level security%', sqlerrm);
+  end;
+
+  -- T20. A recruiter cannot approve their own company (the guard keeps the verification columns).
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    update public.recruiter_profiles set verification_status = 'approved', verified_at = now(), job_title = 'Head of BIM' where id = r;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select verification_status || '/' || job_title into txt from public.recruiter_profiles where id = r;
+    perform pg_temp.rls_check('recruiter cannot verify their own company', txt = 'pending/Head of BIM', coalesce(txt, 'null'));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('recruiter cannot verify their own company', false, sqlerrm);
+  end;
+
+  -- T21. The account type is set once: a recruiter cannot become a student (or the reverse).
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    update public.profiles set account_type = 'student' where id = r;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select account_type into txt from public.profiles where id = r;
+    perform pg_temp.rls_check('account type cannot be switched by the user', txt = 'recruiter', 'no exception; account_type=' || coalesce(txt, 'null'));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('account type cannot be switched by the user', sqlerrm like '%chosen once%', sqlerrm);
+  end;
+
+  -- T22. Nobody self-promotes: a recruiter to admin, a student to super admin.
+  begin
+    ok := true;
+    begin
+      perform set_config('request.jwt.claims', claims_r, true);
+      set local role authenticated;
+      update public.profiles set role = 'admin' where id = r;
+      reset role;
+      ok := false;
+    exception when others then reset role; ok := ok and sqlerrm like '%only an admin%';
+    end;
+    begin
+      perform set_config('request.jwt.claims', claims_a, true);
+      set local role authenticated;
+      update public.profiles set role = 'super_admin' where id = a;
+      reset role;
+      ok := false;
+    exception when others then reset role; ok := ok and sqlerrm like '%only an admin%';
+    end;
+    perform set_config('request.jwt.claims', '', true);
+    select ok and (select role from public.profiles where id = r) = 'recruiter' and (select role from public.profiles where id = a) = 'student' into ok;
+    perform pg_temp.rls_check('nobody can promote themselves', ok, '');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('nobody can promote themselves', false, sqlerrm);
+  end;
+
+  -- T23. A plain admin cannot hand out admin roles; a super admin can.
+  begin
+    ok := false;
+    begin
+      perform set_config('request.jwt.claims', claims_adm, true);
+      set local role authenticated;
+      update public.profiles set role = 'admin' where id = b;
+      reset role;
+    exception when others then reset role; ok := sqlerrm like '%only a super admin%';
+    end;
+    perform set_config('request.jwt.claims', claims_sup, true);
+    set local role authenticated;
+    update public.profiles set role = 'admin' where id = b;
+    update public.profiles set role = 'student' where id = b;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select role into txt from public.profiles where id = sup;
+    perform pg_temp.rls_check('only a super admin grants admin roles', ok and txt = 'super_admin' and (select role from public.profiles where id = b) = 'student', 'plain admin refused=' || ok::text || ', super=' || coalesce(txt, 'null'));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('only a super admin grants admin roles', false, sqlerrm);
+  end;
+
+  -- T24. A granted email gets super_admin only after it is confirmed (and the match ignores letter case).
+  begin
+    insert into public.role_grants (email, role) values ('rls-test-owner@example.invalid', 'super_admin');
+    insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+    values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-owner@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), null, '{"provider":"email","providers":["email"]}', '{"full_name":"Test Owner","phone":"+1 555 010 0002"}', now(), now(), '', '', '', '');
+    select id into ow from auth.users where email = 'rls-test-owner@example.invalid';
+    select role into txt from public.profiles where id = ow;
+    update auth.users set email_confirmed_at = now() where id = ow;
+    select role || '/' || onboarding_complete::text into n2txt from public.profiles where id = ow;
+    perform pg_temp.rls_check('super admin grant waits for email confirmation', txt = 'student' and n2txt = 'super_admin/true', format('before confirm=%s, after=%s', txt, n2txt));
+  exception when others then
+    perform pg_temp.rls_check('super admin grant waits for email confirmation', false, sqlerrm);
+  end;
+
+  -- T25. onboarding_complete cannot be set with missing fields (A only has a name).
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    update public.profiles set onboarding_complete = true where id = a;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('incomplete profile cannot finish onboarding', false, 'update succeeded');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('incomplete profile cannot finish onboarding', sqlerrm like '%profile_complete%', sqlerrm);
+  end;
+
+  -- T26. A student under 16 cannot finish onboarding even with every other field.
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    update public.profiles set phone = '+1 555 010 0003', whatsapp = '+1 555 010 0003', country = 'USA', city = 'Dallas', date_of_birth = current_date - interval '15 years',
+      current_status = 'fresh_grad', degree_field = 'architecture', degree_level = 'bachelor', university = 'Test University', graduation_year = 2026,
+      experience_years = '0', revit_level = 'beginner', career_goal = 'bim_modeler', preferred_format = 'online', heard_from = 'google',
+      consent_terms_at = now(), consent_contact_at = now(), onboarding_complete = true where id = a;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('under-16 student cannot finish onboarding', false, 'update succeeded');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('under-16 student cannot finish onboarding', sqlerrm like '%profile_complete%', sqlerrm);
+  end;
+
+  -- T27. Hiring requests: a student cannot send one; a recruiter can (owner and status forced) but cannot move it.
+  begin
+    ok := false;
+    begin
+      perform set_config('request.jwt.claims', claims_a, true);
+      set local role authenticated;
+      insert into public.hiring_requests (recruiter_id, role, hires, location, work_mode, start_date) values (a, 'bim_modeler', 1, 'Dallas', 'on_site', current_date + 30);
+      reset role;
+    exception when others then reset role; ok := sqlerrm ilike '%row-level security%';
+    end;
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    insert into public.hiring_requests (recruiter_id, role, hires, location, work_mode, start_date, status) values (r, 'vdc_engineer', 2, 'Fort Worth', 'hybrid', current_date + 30, 'matched') returning id into hr_id;
+    update public.hiring_requests set status = 'closed' where id = hr_id;
+    get diagnostics n = row_count;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select status || '/' || (recruiter_id = r)::text into txt from public.hiring_requests where id = hr_id;
+    perform pg_temp.rls_check('hiring requests: recruiters only, status set by the team', ok and n = 0 and txt = 'new/true', format('student refused=%s, recruiter updates=%s, row=%s', ok, n, coalesce(txt, 'null')));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('hiring requests: recruiters only, status set by the team', sqlerrm like '%only the academy team%' and ok, sqlerrm);
+  end;
+
+  -- T28. A student cannot see a recruiter's hiring requests; the admin can.
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    select count(*) into n from public.hiring_requests where id = hr_id;
+    reset role;
+    perform set_config('request.jwt.claims', claims_adm, true);
+    set local role authenticated;
+    select count(*) into n2 from public.hiring_requests where id = hr_id;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('hiring requests visible to their recruiter and admins only', n = 0 and n2 = 1, format('student=%s, admin=%s', n, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('hiring requests visible to their recruiter and admins only', false, sqlerrm);
+  end;
+
+  -- T29. An admin approves the recruiter; the database signs and dates the decision.
+  begin
+    perform set_config('request.jwt.claims', claims_adm, true);
+    set local role authenticated;
+    update public.recruiter_profiles set verification_status = 'approved' where id = r;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select verification_status = 'approved' and verified_by = adm and verified_at is not null into ok from public.recruiter_profiles where id = r;
+    perform pg_temp.rls_check('admin approves a recruiter (verified_by and verified_at set)', coalesce(ok, false), '');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('admin approves a recruiter (verified_by and verified_at set)', false, sqlerrm);
+  end;
+
+  -- T30. Role grants are invisible to students and recruiters.
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    select count(*) into n from public.role_grants;
+    reset role;
+    perform set_config('request.jwt.claims', claims_sup, true);
+    set local role authenticated;
+    select count(*) into n2 from public.role_grants;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('role grants readable by super admins only', n = 0 and n2 >= 1, format('recruiter=%s, super admin=%s', n, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('role grants readable by super admins only', false, sqlerrm);
+  end;
+
   -- 2. Clean up. Deleting the users cascades to profiles, applications, events and deletion requests.
   reset role;
   perform set_config('request.jwt.claims', '', true);
-  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid');
+  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid', 'rls-test-recruiter@example.invalid', 'rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
   delete from public.leads where id = lead_id;
+  delete from public.role_grants where email in ('rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
 
   select count(*) into n from pg_temp.rls_results where not pass;
   if n = 0 then
