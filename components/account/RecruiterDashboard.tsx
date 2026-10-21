@@ -273,7 +273,7 @@ function HiringForm({ userId, approved, onSent }: { userId: string; approved: bo
         <Input label={`${h.fields.hires} *`} name="hires" inputMode="numeric" autoComplete="off" value={v.hires} onChange={(e) => set("hires", e.target.value.replace(/[^\d]/g, "").slice(0, 3))} error={errors.hires} required />
         <Input label={`${h.fields.location} *`} name="location" autoComplete="off" maxLength={160} value={v.location} onChange={(e) => set("location", e.target.value)} error={errors.location} required />
         <OptSelect label={`${h.fields.work_mode} *`} name="work_mode" options={WORK_MODES} value={v.work_mode} onChange={(x) => set("work_mode", x)} error={errors.work_mode} placeholder={h.choose} />
-        <DateField label={`${h.fields.start_date} *`} name="start_date" value={v.start_date} onChange={(x) => set("start_date", x)} error={errors.start_date} max={`${Number(todayIso().slice(0, 4)) + 5}-12-31`} />
+        <DateField label={`${h.fields.start_date} *`} name="start_date" value={v.start_date} onChange={(x) => set("start_date", x)} error={errors.start_date} min={todayIso()} max={`${Number(todayIso().slice(0, 4)) + 5}-12-31`} />
       </div>
       <div>
         <TextareaField label={h.fields.notes} name="notes" rows={4} maxLength={NOTES_MAX} value={v.notes} onChange={(e) => set("notes", e.target.value)} error={errors.notes} />

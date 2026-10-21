@@ -29,11 +29,11 @@ export function OptSelect({ label, name, options, value, onChange, onBlur, error
         {label}
       </label>
       <select id={id} name={name} required value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-e` : undefined} className={cn(box, "appearance-none pe-10")}>
-        <option value="" className="bg-white text-[#18282b]">
+        <option value="" className="bg-white text-[#0a1d23]">
           {placeholder}
         </option>
         {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-white text-[#18282b]">
+          <option key={o.value} value={o.value} className="bg-white text-[#0a1d23]">
             {o.label}
           </option>
         ))}
@@ -47,14 +47,14 @@ export function OptSelect({ label, name, options, value, onChange, onBlur, error
 }
 
 // Date input with the same static label as the select (a floating label would sit on top of the native mm/dd/yyyy).
-export function DateField({ label, name, value, onChange, onBlur, error, max }: { label: string; name: string; value: string; onChange: (v: string) => void; onBlur?: () => void; error?: string; max?: string }) {
+export function DateField({ label, name, value, onChange, onBlur, error, max, min = "1920-01-01" }: { label: string; name: string; value: string; onChange: (v: string) => void; onBlur?: () => void; error?: string; max?: string; min?: string }) {
   const id = useId();
   return (
     <div className="relative">
       <label htmlFor={id} className="pointer-events-none absolute start-4 top-2 text-xs text-dim">
         {label}
       </label>
-      <input id={id} name={name} type="date" required value={value} max={max} min="1920-01-01" onChange={(e) => onChange(e.target.value)} onBlur={onBlur} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-e` : undefined} className={box} />
+      <input id={id} name={name} type="date" required value={value} max={max} min={min} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-e` : undefined} className={box} />
       <ErrorLine id={`${id}-e`} error={error} />
     </div>
   );

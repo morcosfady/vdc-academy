@@ -1,6 +1,7 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { emptyState, loginAs, mockSupabase, seedUser } from "./helpers/mockSupabase";
+import { fillStudent } from "./helpers/register";
 
 // v8 cross-browser QA (runs in every project of playwright.config.ts: Chromium, Firefox, WebKit).
 // Layout at four widths, the modal dialog, file and select inputs, reduced motion, Comfort mode, keyboard-only use
@@ -141,18 +142,30 @@ test("keyboard: log in reaches email, password and the button, focus is visible,
   await expect(page.getByRole("alert").or(page.getByText(/not right|invalid|incorrect|check/i)).first()).toBeVisible();
 });
 
-test("keyboard: sign up reaches every field and the consent checkbox toggles with Space", async ({ page }) => {
+test("keyboard: sign up picks a role, fills the account and checks a consent with the keyboard only", async ({ page }) => {
   await mockSupabase(page);
   await page.goto("signup/?mock=1");
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(600);
-  await tabTo(page, (e) => e.name === "name");
-  await tabTo(page, (e) => e.name === "email", 6);
-  await tabTo(page, (e) => e.name === "password", 6);
-  await tabTo(page, (e) => e.name === "status", 8);
-  await tabTo(page, (e) => e.name === "consent", 8);
+  await tabTo(page, (e) => e.name === "account_type");
   await page.keyboard.press("Space");
-  await expect(page.locator('input[name="consent"]')).toBeChecked();
+  await expect(page.locator('input[name="account_type"][value="student"]')).toBeChecked();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText(/STEP 02 \/ 04/)).toBeVisible();
+  await tabTo(page, (e) => e.name === "email");
+  expect(await focusVisible(page)).toBe(true);
+  await page.keyboard.type("student90@example.com");
+  await tabTo(page, (e) => e.name === "password", 6);
+  await page.keyboard.type("Str0ng-pass1");
+  await tabTo(page, (e) => e.name === "confirm", 6);
+  await page.keyboard.type("Str0ng-pass1");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText(/· Details/)).toBeVisible();
+  await fillStudent(page);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await tabTo(page, (e) => e.name === "consent_terms", 40);
+  await page.keyboard.press("Space");
+  await expect(page.locator('input[name="consent_terms"]')).toBeChecked();
   expect(await focusVisible(page)).toBe(true);
 });
 

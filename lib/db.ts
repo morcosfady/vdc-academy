@@ -176,7 +176,7 @@ export const currentStatusLabel: Record<CurrentStatus, string> = {
 };
 
 // Profile completeness: the fields the apply form prefills from, equally weighted.
-const COMPLETENESS_FIELDS: (keyof Profile)[] = ["full_name", "phone", "country", "city", "current_status", "degree", "university", "graduation_year", "linkedin_url", "avatar_path"];
+const COMPLETENESS_FIELDS: (keyof Profile)[] = ["full_name", "phone", "country", "city", "current_status", "degree_field", "university", "graduation_year", "linkedin_url", "avatar_path"];
 export function profileCompleteness(p: Profile | null): { percent: number; missing: (keyof Profile)[] } {
   if (!p) return { percent: 0, missing: COMPLETENESS_FIELDS };
   const missing = COMPLETENESS_FIELDS.filter((k) => p[k] === null || p[k] === "" || p[k] === undefined);
