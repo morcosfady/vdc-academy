@@ -360,6 +360,9 @@ update public.profiles p set role = g.role
 from public.role_grants g, auth.users u
 where u.id = p.id and u.email::citext = g.email and u.email_confirmed_at is not null and p.role is distinct from g.role;
 
+-- Safety net for databases that ran 0003 before its fix: the 0001 insert trigger must not touch applications.
+drop trigger if exists trg_applications_before on public.applications;
+
 -- 7. Row Level Security -----------------------------------------------------------------------------------------
 alter table public.recruiter_profiles enable row level security;
 alter table public.hiring_requests enable row level security;

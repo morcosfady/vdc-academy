@@ -106,18 +106,28 @@ alter table public.admin_emails enable row level security;
 alter table public.activity_log enable row level security;
 
 -- Public: insert only.
+drop policy if exists "anon insert applications" on public.applications;
 create policy "anon insert applications" on public.applications for insert to anon, authenticated
   with check (consent_privacy is true and consent_contact is true and char_length(full_name) between 2 and 200);
+drop policy if exists "anon insert leads" on public.leads;
 create policy "anon insert leads" on public.leads for insert to anon, authenticated with check (char_length(email) between 5 and 200);
+drop policy if exists "anon insert contact" on public.contact_messages;
 create policy "anon insert contact" on public.contact_messages for insert to anon, authenticated with check (char_length(message) between 10 and 5000);
+drop policy if exists "anon insert newsletter" on public.newsletter_subscribers;
 create policy "anon insert newsletter" on public.newsletter_subscribers for insert to anon, authenticated with check (char_length(email) between 5 and 200);
 
 -- Admins: read and update.
+drop policy if exists "admin read applications" on public.applications;
 create policy "admin read applications" on public.applications for select to authenticated using (public.is_admin());
+drop policy if exists "admin update applications" on public.applications;
 create policy "admin update applications" on public.applications for update to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "admin read leads" on public.leads;
 create policy "admin read leads" on public.leads for select to authenticated using (public.is_admin());
+drop policy if exists "admin read contact" on public.contact_messages;
 create policy "admin read contact" on public.contact_messages for select to authenticated using (public.is_admin());
+drop policy if exists "admin read newsletter" on public.newsletter_subscribers;
 create policy "admin read newsletter" on public.newsletter_subscribers for select to authenticated using (public.is_admin());
+drop policy if exists "admin log" on public.activity_log;
 create policy "admin log" on public.activity_log for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- Private bucket for CVs and proof documents: 5 MB, limited types, insert only for the public.
@@ -126,7 +136,9 @@ values ('applications', 'applications', false, 5242880,
   array['application/pdf','image/jpeg','image/png','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
 on conflict (id) do update set file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types, public = false;
 
+drop policy if exists "public upload applications" on storage.objects;
 create policy "public upload applications" on storage.objects for insert to anon, authenticated with check (bucket_id = 'applications');
+drop policy if exists "admin read uploads" on storage.objects;
 create policy "admin read uploads" on storage.objects for select to authenticated using (bucket_id = 'applications' and public.is_admin());
 
 -- After running this file add yourself as an admin:

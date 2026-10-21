@@ -160,6 +160,9 @@ begin
   return new;
 end $$;
 drop trigger if exists before_public_insert on public.applications;
+-- 0001 named it trg_applications_before (one per public table). Left in place it forced status = 'new', which the
+-- status check above refuses, so every application insert failed. Found by the v9 database CI.
+drop trigger if exists trg_applications_before on public.applications;
 drop trigger if exists applications_before_insert on public.applications;
 create trigger applications_before_insert before insert on public.applications for each row execute function public.applications_before_insert();
 
@@ -247,11 +250,15 @@ create policy "profiles self insert" on public.profiles for insert to authentica
 drop policy if exists "profiles self update" on public.profiles;
 create policy "profiles self update" on public.profiles for update to authenticated using (id = auth.uid() or public.is_admin()) with check (id = auth.uid() or public.is_admin());
 
+drop policy if exists "applications own insert" on public.applications;
 create policy "applications own insert" on public.applications for insert to authenticated with check (user_id = auth.uid() or public.is_admin());
+drop policy if exists "applications own select" on public.applications;
 create policy "applications own select" on public.applications for select to authenticated using (user_id = auth.uid() or public.is_admin());
+drop policy if exists "applications own draft update" on public.applications;
 create policy "applications own draft update" on public.applications for update to authenticated
   using ((user_id = auth.uid() and status = 'draft') or public.is_admin())
   with check (user_id = auth.uid() or public.is_admin());
+drop policy if exists "applications own draft delete" on public.applications;
 create policy "applications own draft delete" on public.applications for delete to authenticated using (user_id = auth.uid() and status = 'draft');
 
 drop policy if exists "events student select" on public.application_events;
