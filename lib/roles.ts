@@ -22,9 +22,11 @@ export type Permission =
   // students
   | "apply"
   | "view_own_applications"
+  | "view_own_evaluations"
   // recruiters
   | "send_hiring_request"
   | "view_own_hiring_requests"
+  | "evaluate_students" // verified recruiters only, enforced in the database
   // academy team
   | "view_admin"
   | "review_applications"
@@ -34,20 +36,23 @@ export type Permission =
   | "manage_hiring_requests"
   | "read_inbox"
   | "export_csv"
-  // super admin only (none yet: the owner will describe them)
+  | "moderate_evaluations"
+  // super admin only (the owner named the first one: the calendar)
+  | "manage_calendar"
   | "manage_admins"
   | "site_settings";
 
-const ADMIN: Permission[] = ["view_admin", "review_applications", "verify_discounts", "manage_users", "verify_recruiters", "manage_hiring_requests", "read_inbox", "export_csv"];
+const ADMIN: Permission[] = ["view_admin", "review_applications", "verify_discounts", "manage_users", "verify_recruiters", "manage_hiring_requests", "read_inbox", "export_csv", "moderate_evaluations"];
 
 // TODO(super admin): the owner will list what only the super admin may do. Move those permissions out of ADMIN
 // and into SUPER_ONLY (for example manage_admins, site_settings), then gate the screens with can(). Until then
 // the super admin has every admin permission and nothing else.
-const SUPER_ONLY: Permission[] = [];
+// First super-admin-only power: adding events to the public calendar (built later in the internal dashboard).
+const SUPER_ONLY: Permission[] = ["manage_calendar"];
 
 export const PERMISSIONS: Record<Role, readonly Permission[]> = {
-  student: ["apply", "view_own_applications"],
-  recruiter: ["send_hiring_request", "view_own_hiring_requests"],
+  student: ["apply", "view_own_applications", "view_own_evaluations"],
+  recruiter: ["send_hiring_request", "view_own_hiring_requests", "evaluate_students"],
   admin: ADMIN,
   super_admin: [...ADMIN, ...SUPER_ONLY],
 };
