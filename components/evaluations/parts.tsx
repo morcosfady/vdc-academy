@@ -6,12 +6,20 @@ import { programs } from "@/content/programs";
 import { evaluations } from "@/content/copy-evaluations";
 import type { EvaluationView } from "@/lib/db";
 import { CRITERIA, SCORE_WORDS, contextLabel, recommendationLabel } from "@/lib/evaluationSchema";
+import { instructorContextLabel, readinessLabel } from "@/lib/instructorEvaluationSchema";
 import { cn } from "@/lib/utils";
 import { fmtDate } from "@/components/account/format";
 
 const rule = { borderColor: "var(--rule)" } as const;
 
 export const programTitle = (slug: string) => programs.find((p) => p.slug === slug)?.title ?? slug;
+
+// "Sam Dawson" becomes "Sam D." (what a student sees of an instructor).
+export function shortName(full: string | null | undefined) {
+  const parts = (full ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  return parts.length === 1 ? parts[0] : `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
 
 // One to five, as a segmented radio group. Real radios, so Tab reaches the group and the arrow keys change the score.
 export function ScoreInput({ name, label, hint, value, onChange, error }: { name: string; label: string; hint?: string; value: number; onChange: (n: number) => void; error?: string }) {
@@ -76,20 +84,31 @@ export const criteriaItems = (scores: Record<string, number>) => CRITERIA.map((c
 // The private note has no place in this component: it is not even part of EvaluationView.
 export function StudentEvaluationCard({ ev, className, preview = false }: { ev: EvaluationView; className?: string; preview?: boolean }) {
   const c = evaluations.student.card;
+  const ic = evaluations.instructorEvals.studentCard;
+  const byInstructor = ev.source === "instructor";
+  const from = byInstructor ? ic.from : c.from;
+  const who = byInstructor ? ev.author_name || ic.anInstructor : (ev.company_name ?? c.aVerifiedRecruiter);
+  const basis = byInstructor ? instructorContextLabel(ev.context) : contextLabel(ev.context);
+  const meta = [byInstructor && ev.program ? programTitle(ev.program) : "", basis, ev.published_at ? fmtDate(ev.published_at) : ""].filter(Boolean).join(" · ");
   return (
-    <article className={cn("card min-w-0 max-w-full p-6 md:p-7", className)} data-testid={preview ? "evaluation-preview" : "evaluation-card"} aria-label={`${c.from} ${ev.company_name ?? c.aVerifiedRecruiter}`}>
+    <article
+      className={cn("card min-w-0 max-w-full p-6 md:p-7", className)}
+      data-testid={preview ? "evaluation-preview" : "evaluation-card"}
+      data-source={byInstructor ? "instructor" : "recruiter"}
+      aria-label={`${from} ${who}`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <p className="mono">{c.from}</p>
+          <p className="mono">{from}</p>
           <h3 className="mt-1 break-words !text-[1.25rem]" data-testid="evaluation-from">
-            {ev.company_name ?? c.aVerifiedRecruiter}
+            {who}
           </h3>
         </div>
-        <Tag tone="brass">{recommendationLabel(ev.recommendation)}</Tag>
+        <Tag tone="brass">
+          <span data-testid="evaluation-verdict">{byInstructor ? readinessLabel(ev.readiness) : recommendationLabel(ev.recommendation)}</span>
+        </Tag>
       </div>
-      <p className="mono mt-3 !normal-case !tracking-normal">
-        {[contextLabel(ev.context), ev.published_at ? fmtDate(ev.published_at) : ""].filter(Boolean).join(" · ")}
-      </p>
+      <p className="mono mt-3 !normal-case !tracking-normal">{meta}</p>
       <div className="mt-5 flex items-baseline gap-3 border-t pt-5" style={rule}>
         <p className="mono">{c.overall}</p>
         <p className="text-[1.5rem] font-semibold leading-none tabular-nums text-text">

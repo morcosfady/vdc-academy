@@ -20,7 +20,7 @@ test("the tour page turns the demo on, the banner shows everywhere, exit turns i
   const leaks = await noNetworkToSupabase(page);
   await page.goto("demo/");
   await expect(page.getByRole("heading", { name: /full experience/ })).toBeVisible();
-  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(13);
+  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(15);
   await expect(page.getByText("Demo is off")).toBeVisible();
   await page.getByTestId("demo-start").click();
   await page.waitForLoadState("networkidle");
@@ -104,12 +104,37 @@ test("card 06 shows the instructor dashboard pending, and the approved view", as
   await expect(page.getByText("I-100", { exact: true })).toBeVisible();
   await expect(page.getByTestId("verification-banner")).toHaveAttribute("data-status", "pending");
   await expect(page.getByTestId("teaching-card")).toContainText("Sample Instructor 01");
-  await expect(page.getByTestId("cohorts")).toContainText("Coming soon");
+  await expect(page.getByTestId("students-locked")).toContainText("Students appear here after the academy team approves your profile.");
   await page.goto("demo/");
   await page.getByRole("button", { name: "Approved view" }).click();
   await page.waitForURL(/\/account\/$/);
   await expect(page.getByTestId("verification-banner")).toHaveAttribute("data-status", "approved");
   await expect(page.getByTestId("teaching-card")).toContainText("Sample Instructor 02");
+  expect(leaks).toEqual([]);
+});
+
+test("card 14 opens the approved instructor's students; card 15 shows the instructor feedback to the demo student", async ({ page }) => {
+  const leaks = await noNetworkToSupabase(page);
+  await page.goto("demo/");
+  await page.getByRole("button", { name: "Open the student list" }).click();
+  await page.waitForURL(/\/account\/#students$/);
+  await expect(page.getByTestId("verification-banner")).toHaveAttribute("data-status", "approved");
+  await expect(page.getByTestId("student-card")).toHaveCount(3);
+  await expect(page.getByTestId("student-card").filter({ hasText: "Sample Student 01" })).toContainText("BIM Fundamentals");
+  await page.getByTestId("student-card").filter({ hasText: "Sample Student B" }).getByRole("link", { name: /Edit evaluation/ }).click();
+  await page.waitForURL(/account\/evaluate-student\/\?student=.*&context=mid_course/);
+  await expect(page.getByTestId("evaluate-student")).toContainText("Sample Student B");
+  await expect(page.getByTestId("editing-note")).toBeVisible();
+
+  await page.goto("demo/");
+  await page.getByRole("button", { name: "Open the evaluations card" }).last().click();
+  await page.waitForURL(/\/account\/#evaluations$/);
+  const card = page.locator('[data-testid="evaluation-card"][data-source="instructor"]');
+  await expect(card).toHaveCount(1);
+  await expect(card).toContainText("From your instructor");
+  await expect(card.getByTestId("evaluation-from")).toHaveText("Sample 0.");
+  await expect(card.getByTestId("evaluation-verdict")).toHaveText("Almost there");
+  await expect(page.locator("body")).not.toContainText("Strong candidate");
   expect(leaks).toEqual([]);
 });
 

@@ -97,6 +97,9 @@ function Empty({ visible }: { visible: boolean }) {
     <div className="card flex flex-col items-start gap-5 p-7 md:p-9" data-testid="evaluations-empty" data-visible={visible ? "on" : "off"}>
       <h3 className="t-h3">{e.title}</h3>
       <p className="t-small max-w-[60ch] text-muted">{e.text}</p>
+      <p className="t-small max-w-[60ch] text-muted" data-testid="evaluations-empty-instructors">
+        {evaluations.instructorEvals.studentEmpty}
+      </p>
       <Link prefetch={false} href="/account/profile/#visibility" className="ul-draw inline-flex items-center gap-2 pb-1 text-[15px] font-medium text-text hover:text-accent-text">
         {e.action}
         <svg aria-hidden width="16" height="12" viewBox="0 0 16 12">

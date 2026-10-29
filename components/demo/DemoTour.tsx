@@ -55,7 +55,7 @@ const cards = [
   {
     n: "06",
     title: "Instructor dashboard",
-    text: "Sample Instructor 01 is waiting for review: the banner, the teaching profile and a cohorts panel marked Coming soon. The second link shows Sample Instructor 02, who is approved.",
+    text: "Sample Instructor 01 is waiting for review: the banner, the teaching profile and a note that students appear after approval. The second link shows Sample Instructor 02, who is approved.",
     hint: `Logged in as ${DEMO_INSTRUCTOR_EMAIL}.`,
     action: "Open the instructor dashboard",
     go: () => demo.asInstructor("/account/"),
@@ -122,6 +122,22 @@ const cards = [
     go: () => demo.asAdmin("/admin/evaluations/?status=submitted"),
     second: { label: "All evaluations", go: () => demo.asAdmin("/admin/evaluations/") },
   },
+  {
+    n: "14",
+    title: "Evaluate a student as an instructor",
+    text: "Sample Instructor 02 is approved and sees only the students the team assigned. Open one, score six criteria, choose how ready they are and send it for review. The team reads it before the student does.",
+    hint: "Logged in as instructor02@example.com.",
+    action: "Open the student list",
+    go: () => demo.asApprovedInstructor("/account/#students"),
+  },
+  {
+    n: "15",
+    title: "See the instructor feedback as a student",
+    text: "Sample Student 01 has one published evaluation from Sample Instructor 02: the program, the readiness, scores as thin lines, strengths and what to work on. The private note never appears.",
+    hint: `Logged in as ${DEMO_STUDENT_EMAIL}.`,
+    action: "Open the evaluations card",
+    go: () => demo.asStudent("/account/#evaluations"),
+  },
 ];
 
 export function DemoTour() {
@@ -136,7 +152,7 @@ export function DemoTour() {
             <SheetTag sheet="D-000" name="Client demo" />
             <h1 className="t-h1 mt-8 max-w-[16ch]">The full experience, before the backend is live.</h1>
             <p className="t-lead mt-6 max-w-[52ch]">
-              Thirteen short scenes: a student and an instructor register, a student applies and follows their status, verified recruiters evaluate students who chose to be seen, and the public calendar shows what is on, and the academy team reviews it all. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
+              Fifteen short scenes: a student and an instructor register, a student applies and follows their status, instructors and verified recruiters evaluate students, and the public calendar shows what is on, and the academy team reviews it all. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
             </p>
           </div>
           <div className="lg:col-span-4 lg:col-start-9">
@@ -148,7 +164,7 @@ export function DemoTour() {
                 ["Admin", DEMO_ADMIN_EMAIL],
                 ["Super admin", DEMO_SUPER_EMAIL],
                 ["Password", DEMO_PASSWORD],
-                ["Data", "24 applications, 4 instructors, 6 recruiters, 3 hiring requests, 8 students (5 visible), 9 evaluations"],
+                ["Data", "24 applications, 4 instructors, 6 recruiters, 3 hiring requests, 8 students (5 visible), 9 recruiter evaluations, 5 assigned students, 5 instructor evaluations"],
               ].map(([k, v]) => (
                 <div key={k} className="grid grid-cols-[88px_1fr] gap-4 border-b py-3" style={rule}>
                   <dt className="mono pt-1">{k}</dt>

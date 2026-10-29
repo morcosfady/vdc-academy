@@ -8,6 +8,7 @@ import { Tag } from "@/components/ds/Chips";
 import { Button } from "@/components/ui/Button";
 import { account } from "@/content/copy-account";
 import { AccountShell, Panel } from "./AccountShell";
+import { InstructorStudents } from "@/components/evaluations/InstructorStudents";
 import { Notice } from "./Notice";
 import { shortId } from "./format";
 
@@ -19,9 +20,9 @@ const Arrow = () => (
   </svg>
 );
 
-// /account/ for instructors: the review status, the teaching profile and an honest "coming soon" cohorts panel.
-// It reads nothing from the database itself (the session already loaded the teaching profile). Instructors have no
-// access to applications or to other people's profiles, and this screen never asks for them.
+// /account/ for instructors: the review status, the teaching profile and the students the team assigned to them.
+// Instructors have no access to applications or to other people's profiles, and this screen never asks for them: the
+// students come from the view my_students (see InstructorStudents).
 export function InstructorDashboard() {
   const { user, profile } = useAuth();
   const name = firstName(profile?.full_name ?? (user?.user_metadata?.full_name as string | undefined));
@@ -30,7 +31,7 @@ export function InstructorDashboard() {
       sheet={i.sheet}
       name={i.name}
       title={i.welcome(name)}
-      lead={i.lead}
+      lead={i.leadStudents}
       actions={
         <Button href="/account/profile/#teaching" variant="link">
           {i.teaching.edit}
@@ -51,10 +52,8 @@ function Body() {
         <Panel id="teaching" label={i.teaching.label} className="col-span-12 scroll-mt-24 lg:col-span-8">
           <TeachingCard instructor={instructor} fullName={profile?.full_name ?? null} />
         </Panel>
-        <aside className="col-span-12 self-start lg:col-span-4">
-          <CohortsCard />
-        </aside>
       </div>
+      <InstructorStudents className="mt-20" />
     </>
   );
 }
@@ -157,22 +156,5 @@ function TeachingCard({ instructor, fullName }: { instructor: InstructorProfile 
       </dl>
       {editLink}
     </article>
-  );
-}
-
-// Honest placeholder: nothing is assigned to anyone yet, so it says so and shows no data.
-function CohortsCard() {
-  const c = i.cohorts;
-  return (
-    <section className="card p-6" aria-labelledby="cohorts-h" data-testid="cohorts">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="mono">{c.label}</p>
-        <Tag tone="brass">{c.tag}</Tag>
-      </div>
-      <h3 id="cohorts-h" className="mt-3 !text-[1.375rem]">
-        {c.title}
-      </h3>
-      <p className="t-small mt-2 text-muted">{c.text}</p>
-    </section>
   );
 }
