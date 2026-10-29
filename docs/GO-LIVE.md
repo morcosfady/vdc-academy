@@ -79,7 +79,7 @@ gh secret set NEXT_PUBLIC_SITE_URL -R morcosfady/vdc-academy            # https:
 
 ## 8. The owner becomes super admin (Owner)
 
-1. Owner: on the live site, **Sign up** with `thefadys99@gmail.com`, the email granted in `role_grants` (migration 0005; the site code never contains it), using the "Academy team account" path (name and phone only).
+1. Owner: on the live site, **Sign up** with `thefadys99@gmail.com`, the email granted in `role_grants` (migration 0005; the site code never contains it), using the "Academy team account" path (name and phone only). The owner is **Eddie Eshak**: type that name in the Full name field. The account cannot be created ahead of time: it needs a Supabase project, and the password is chosen by Eddie, never by Claude.
 2. Owner: open the confirmation email and click the link. The `apply_role_grant` trigger makes the account `super_admin` the moment the email is confirmed; no SQL needed. The welcome email that follows is the "team access is active" one.
 3. Owner: the account menu shows **Admin**. Claude can confirm with `select id, onboarding_complete from public.profiles where role = 'super_admin';` (one row).
 
@@ -141,7 +141,7 @@ Every email the site sends. The Auth emails come from Supabase (built-in mailer,
 
 ## Owner-only items
 
-- [ ] **Free a Supabase slot**: pause or delete one of `pharaohs-bites` / `kanisa-checkin`, or upgrade an organization to Pro. This is the only blocker for steps 1 to 9.
+- [ ] **Free a Supabase slot**: pause or delete one of the two active projects (on 2026-10-29: `pharaohs-bites` and `pickleball-matchmaker`), or upgrade an organization to Pro. This is the only blocker for steps 1 to 9.
 - [ ] **Resend**: create an account and verify a sending domain the academy controls, ideally the client's (`academy.baybimdesigns.com` or `baybimdesigns.com`). That needs DNS access from the client (three records: SPF/MX on a `send.` subdomain and a DKIM TXT). Until then the temporary option is `onboarding@resend.dev`, which only delivers to the Resend account owner's own inbox: fine for the smoke test, not for students.
 - [ ] **Cloudflare Turnstile**: a widget for `morcosfady.github.io` (plus the custom domain later, and `localhost`), mode Managed. Site key goes to GitHub (step 7), secret key to Supabase (step 6).
 - [ ] Optional: **Google OAuth** client ID and secret for "Continue with Google" (Google Cloud console, authorized redirect `https://<ref>.supabase.co/auth/v1/callback`), then `NEXT_PUBLIC_AUTH_GOOGLE=1` in GitHub.
