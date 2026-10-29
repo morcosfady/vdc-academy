@@ -64,6 +64,12 @@ export function validateRecruiterVerifiedBody(b: Record<string, unknown>): Valid
   return { ok: true, value: { recruiter_id: b.recruiter_id, status: b.status } };
 }
 
+export function validateInstructorVerifiedBody(b: Record<string, unknown>): Validation<{ instructor_id: string; status: VerifyDecision }> {
+  if (!isUuid(b.instructor_id)) return { ok: false, error: "instructor_id must be a uuid" };
+  if (!isVerifyDecision(b.status)) return { ok: false, error: "status must be approved or rejected" };
+  return { ok: true, value: { instructor_id: b.instructor_id, status: b.status } };
+}
+
 export function validateEvaluationBody(b: Record<string, unknown>): Validation<{ evaluation_id: string }> {
   if (!isUuid(b.evaluation_id)) return { ok: false, error: "evaluation_id must be a uuid" };
   return { ok: true, value: { evaluation_id: b.evaluation_id } };

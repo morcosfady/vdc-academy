@@ -238,6 +238,24 @@ export const HIRING_ROLE_LABEL: Record<string, string> = {
   other: "Other",
 };
 export const EXPECTED_HIRES_LABEL: Record<string, string> = { "1": "1", "2-5": "2 to 5", "6-10": "6 to 10", "10+": "10+" };
+// Instructor labels (the same as INSTRUCTOR_SUBJECTS and friends in lib/signupSchema.ts).
+export const INSTRUCTOR_SUBJECT_LABEL: Record<string, string> = {
+  "vdc-professional-bootcamp": "VDC Professional Bootcamp",
+  "bim-fundamentals-revit": "BIM Fundamentals with Revit",
+  "revit-architecture": "Revit Architecture",
+  "revit-structure": "Revit Structure",
+  "revit-mep": "Revit MEP",
+  "low-voltage-bim": "Low Voltage & Technology Systems BIM",
+  "revit-family-creation": "Revit Family Creation",
+  "navisworks-clash-detection": "Navisworks: Coordination & Clash Detection",
+  "4d-5d-simulation": "4D/5D Construction Simulation",
+  "dynamo-for-revit": "Dynamo for Revit (BIM Automation)",
+  "bim-management-iso-19650": "BIM Management & ISO 19650 basics",
+};
+export const INDUSTRY_YEARS_LABEL: Record<string, string> = { "3-5": "3 to 5 years", "5-10": "5 to 10 years", "10-15": "10 to 15 years", "15+": "15+ years" };
+export const TEACHING_YEARS_LABEL: Record<string, string> = { none: "New to teaching", lt2: "Under 2 years", "2-5": "2 to 5 years", "5+": "5+ years" };
+export const AVAILABILITY_LABEL: Record<string, string> = { evenings: "Weekday evenings", weekends: "Weekends", daytime: "Weekday daytime", flexible: "Flexible" };
+export const TEACHING_FORMAT_LABEL: Record<string, string> = { online: "Online live", in_person: "In person (Fort Worth)", either: "Either" };
 export const labelOf = (map: Record<string, string>, v: unknown) => {
   const k = v === null || v === undefined ? "" : String(v);
   return map[k] ?? k;
@@ -332,6 +350,62 @@ export function recruiterRejected(a: { firstName: string; note: string; contactU
     outro: ["If something is missing or has changed, contact us or reply to this email and we look again."],
   };
   return { subject: "About your VDC Academy company account", ...render(sheet) };
+}
+
+// 11a. Instructor: welcome after the email is confirmed, the profile is under review.
+export function welcomeInstructor(a: { firstName: string; accountUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-025 · INSTRUCTOR ACCOUNT",
+    title: `Welcome, ${a.firstName}. Your instructor account is created.`,
+    intro: ["Your email is confirmed and your instructor account is created. The academy team will review your profile before you are listed."],
+    steps: [
+      "We read your teaching profile, usually within one or two working days.",
+      "You get an email as soon as we have decided.",
+      "Your dashboard shows the review status and your profile in the meantime.",
+    ],
+    button: { label: "Open your dashboard", href: a.accountUrl },
+    outro: ["If we need anything else, we email you. You can also reply to this email."],
+  };
+  return { subject: "Your VDC Academy instructor account is created", ...render(sheet) };
+}
+
+// 11b. Admin: an instructor confirmed their email and waits for review.
+export function adminNewInstructor(a: { name: string; rows: Row[]; adminUrl: string }): Email {
+  const who = a.name || "an instructor";
+  const sheet: Sheet = {
+    tag: "S-125 · NEW INSTRUCTOR",
+    title: `New instructor to review: ${who}`,
+    intro: [`${a.name || "An instructor"} confirmed their email. Read the teaching profile before you approve or reject it.`],
+    rows: a.rows,
+    button: { label: "Review instructors", href: a.adminUrl },
+    outro: ["Reply to this email to write to the instructor directly."],
+  };
+  return { subject: `New instructor to review: ${who}`, ...render(sheet) };
+}
+
+// 11c. Instructor: the profile is approved.
+export function instructorApproved(a: { firstName: string; accountUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-135 · APPROVED",
+    title: `${a.firstName}, your instructor profile is approved.`,
+    intro: ["The academy team read your profile and approved it. Your dashboard shows the new status, and we will contact you about the courses you can teach."],
+    button: { label: "Open your dashboard", href: a.accountUrl },
+    outro: ["Reply to this email if you want to change what you teach or when you are available."],
+  };
+  return { subject: "Your instructor profile is approved", ...render(sheet) };
+}
+
+// 11d. Instructor: the profile was not approved. The admin's note is shown when there is one.
+export function instructorRejected(a: { firstName: string; note: string; contactUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-145 · DECISION",
+    title: `${a.firstName}, we could not approve your instructor profile.`,
+    intro: ["The academy team reads every instructor profile by hand, and we could not approve this one."],
+    rows: a.note ? [["Note from the team", a.note]] : undefined,
+    button: { label: "Contact us", href: a.contactUrl },
+    outro: ["If something is missing or has changed, contact us or reply to this email and we look again."],
+  };
+  return { subject: "About your VDC Academy instructor profile", ...render(sheet) };
 }
 
 // 11. Student: a recruiter's evaluation was published. No company, no scores, no private note: the dashboard has them.

@@ -6,23 +6,33 @@
 //    must be confirmed.
 // 2. Load the profile with the service role. If welcome_sent_at is empty, claim it (a conditional update, so two
 //    tabs never send twice) and send the welcome email for the role: student, recruiter (under review) or academy
-//    team (admin, super_admin). If the send fails, the claim is released so a later call can retry.
+//    team (admin, super_admin) or instructor (profile under review). If the send fails, the claim is released so a
+//    later call can retry.
 // 3. A recruiter also triggers one email to ADMIN_NOTIFY_EMAIL ("New recruiter to review"), claimed the same way
-//    with recruiter_alert_sent_at (migration 0006).
+//    with recruiter_alert_sent_at (migration 0006). An instructor does the same ("New instructor to review"), with
+//    the same column: recruiter_alert_sent_at is the shared "team was alerted about a new account" stamp (it keeps
+//    its name so no migration is needed).
 //
 // Secrets: RESEND_API_KEY, EMAIL_FROM, ADMIN_NOTIFY_EMAIL, SITE_URL.
 // Returns JSON { ok: true, welcome, alert } or { ok: false, error }. Logs never contain names or emails.
 import { fail, ok, preflight } from "../_shared/cors.ts";
 import { adminEmail, getCaller, serviceClient, siteUrl } from "../_shared/clients.ts";
 import {
+  adminNewInstructor,
   adminNewRecruiter,
+  AVAILABILITY_LABEL,
   COMPANY_SIZE_LABEL,
   COMPANY_TYPE_LABEL,
   EXPECTED_HIRES_LABEL,
   HIRING_ROLE_LABEL,
+  INDUSTRY_YEARS_LABEL,
+  INSTRUCTOR_SUBJECT_LABEL,
   labelOf,
+  TEACHING_FORMAT_LABEL,
+  TEACHING_YEARS_LABEL,
   type Email,
   type Row,
+  welcomeInstructor,
   welcomeRecruiter,
   welcomeStudent,
   welcomeTeam,
@@ -30,12 +40,13 @@ import {
 import { sendEmail } from "../_shared/resend.ts";
 import { firstName, str } from "../_shared/validate.ts";
 
-type Kind = "student" | "recruiter" | "team";
+type Kind = "student" | "instructor" | "recruiter" | "team";
 type Outcome = "sent" | "failed" | "already" | "skipped";
 
-// The same order as lib/roles.ts: team first, then recruiter, everyone else is a student.
+// The same order as lib/roles.ts: team first, then instructor, then recruiter, everyone else is a student.
 function kindOf(p: { role: unknown; account_type: unknown }): Kind {
   if (p.role === "admin" || p.role === "super_admin") return "team";
+  if (p.role === "instructor" || p.account_type === "instructor") return "instructor";
   if (p.role === "recruiter" || p.account_type === "recruiter") return "recruiter";
   return "student";
 }
@@ -84,6 +95,17 @@ Deno.serve(async (req) => {
   }
   const companyName = str(company?.company_name);
 
+  let teaching: Record<string, unknown> | null = null;
+  if (kind === "instructor") {
+    const { data: i, error: iError } = await db
+      .from("instructor_profiles")
+      .select("job_title, employer, industry_years, teaching_years, subjects, teaching_format, availability, linkedin_url, bio")
+      .eq("id", id)
+      .maybeSingle();
+    if (iError) console.error("load instructor profile failed", iError.code ?? "", { id });
+    teaching = i ?? null;
+  }
+
   // Claim a stamp column (only while it is empty), send, and release the claim if the send failed.
   async function once(column: "welcome_sent_at" | "recruiter_alert_sent_at", mail: Email, recipient: string, replyTo?: string): Promise<Outcome> {
     const { data: claimed, error: claimError } = await db
@@ -112,7 +134,9 @@ Deno.serve(async (req) => {
     const mail =
       kind === "team"
         ? welcomeTeam({ firstName: first, adminUrl: siteUrl("/admin/") })
-        : kind === "recruiter"
+        : kind === "instructor"
+          ? welcomeInstructor({ firstName: first, accountUrl: siteUrl("/account/") })
+          : kind === "recruiter"
           ? welcomeRecruiter({ firstName: first, company: companyName, accountUrl: siteUrl("/account/") })
           : welcomeStudent({ firstName: first, programsUrl: siteUrl("/programs/"), applyUrl: siteUrl("/apply/"), accountUrl: siteUrl("/account/") });
     welcome = await once("welcome_sent_at", mail, to, adminEmail() || undefined);
@@ -141,6 +165,31 @@ Deno.serve(async (req) => {
         ["Account", id],
       ];
       const mail = adminNewRecruiter({ company: companyName, name: str(profile.full_name), rows, adminUrl: siteUrl("/admin/recruiters/") });
+      alert = await once("recruiter_alert_sent_at", mail, admin, to);
+    }
+  }
+
+  // 3. The team alert for a new instructor. Same stamp column as the recruiter alert (see the header).
+  if (kind === "instructor") {
+    const admin = adminEmail();
+    if (profile.recruiter_alert_sent_at) alert = "already";
+    else if (!admin) console.warn("instructor alert skipped: ADMIN_NOTIFY_EMAIL is missing", { id });
+    else {
+      const subjects = Array.isArray(teaching?.subjects) ? (teaching?.subjects as unknown[]).map((s) => labelOf(INSTRUCTOR_SUBJECT_LABEL, s)).join(", ") : "";
+      const rows: Row[] = [
+        ["Name", str(profile.full_name)],
+        ["Email", to],
+        ["Current role", [str(teaching?.job_title), str(teaching?.employer)].filter(Boolean).join(" at ")],
+        ["Years in the industry", labelOf(INDUSTRY_YEARS_LABEL, teaching?.industry_years)],
+        ["Teaching experience", labelOf(TEACHING_YEARS_LABEL, teaching?.teaching_years)],
+        ["Can teach", subjects],
+        ["Format", labelOf(TEACHING_FORMAT_LABEL, teaching?.teaching_format)],
+        ["Availability", labelOf(AVAILABILITY_LABEL, teaching?.availability)],
+        ["LinkedIn", str(teaching?.linkedin_url)],
+        ["Profile", profile.onboarding_complete ? "complete" : "incomplete (finishing onboarding)"],
+        ["Account", id],
+      ];
+      const mail = adminNewInstructor({ name: str(profile.full_name), rows, adminUrl: siteUrl("/admin/instructors/") });
       alert = await once("recruiter_alert_sent_at", mail, admin, to);
     }
   }

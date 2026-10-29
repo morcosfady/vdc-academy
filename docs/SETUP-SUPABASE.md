@@ -6,7 +6,7 @@ Have these open in tabs: the Supabase dashboard, the Resend dashboard, the Cloud
 
 What runs where:
 
-- **Supabase**: the database (Postgres with Row Level Security), authentication, two private file buckets and five Edge Functions (`supabase/functions/`).
+- **Supabase**: the database (Postgres with Row Level Security), authentication, two private file buckets and seven Edge Functions (`supabase/functions/`).
 - **Resend**: sends the application and status emails on your behalf.
 - **Cloudflare Turnstile**: the bot check on the forms.
 - **GitHub Pages**: hosts the static site. The build bakes in the public keys only.
@@ -33,10 +33,12 @@ The free plan allows **2 active projects per account**, and the `morcosfady` acc
 4. `supabase/migrations/0004_notifications.sql` (email bookkeeping for the functions, admin bootstrap fix)
 5. `supabase/migrations/0005_roles_registration.sql` (roles student, recruiter, admin, super admin; recruiter company profiles and hiring requests; the owner's super admin grant in `role_grants`)
 6. `supabase/migrations/0006_emails.sql` (when the welcome email and the new recruiter alert went out; the browser can never write these)
+7. `supabase/migrations/0007_evaluations.sql` (student opt-in, the talent list for verified recruiters, evaluations and the student-safe view)
+8. `supabase/migrations/0008_instructors.sql` (the instructor role and `instructor_profiles` with the verification columns; the sign-up offers Student or Instructor)
 
-All six are safe to run twice. CLI alternative, if you install it in step 6 first: `supabase db push`.
+All eight are safe to run twice. CLI alternative, if you install it in step 6 first: `supabase db push`.
 
-What you have now: `profiles` (one row per user, with `account_type` student or recruiter and `role` student, recruiter, admin or super_admin), `recruiter_profiles` (company details and the verification status), `hiring_requests`, `applications` (owned by a user, `draft` to `enrolled`), `application_events` (the student's timeline), `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`. Students only ever see their own rows; admins see everything. The old `admin_emails` table still works as a fallback.
+What you have now: `profiles` (one row per user, with `account_type` student, instructor or recruiter and `role` student, instructor, recruiter, admin or super_admin), `recruiter_profiles` (company details and the verification status), `instructor_profiles` (the teaching profile and the verification status), `hiring_requests`, `applications` (owned by a user, `draft` to `enrolled`), `application_events` (the student's timeline), `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`. Students only ever see their own rows; admins see everything. The old `admin_emails` table still works as a fallback.
 
 ## 3. Authentication (4 min)
 
@@ -94,15 +96,17 @@ Files land in `<user id>/<random uuid>.<ext>`. A student can read only their own
 
 ## 6. Edge Functions (4 min)
 
-Five functions run inside Supabase. The browser calls them with the signed-in user's token (or the anon key for public forms):
+Seven functions run inside Supabase. The browser calls them with the signed-in user's token (or the anon key for public forms):
 
 | Function | Called when | Does |
 | --- | --- | --- |
 | `on-application-submitted` | a student submits | checks the application belongs to the caller, verifies the Turnstile token, emails the student a confirmation and you a summary with an admin link, once per application |
 | `on-status-changed` | you change a status in `/admin` | admin only; emails the student a short message for the new status with a dashboard link |
 | `notify-lead` | a visitor sends a lead or a contact message | rate limited; verifies Turnstile; emails you a summary, once per row |
-| `on-account-verified` | the confirmation link lands on `/auth/callback/` | email must be confirmed; sends the welcome email for the role (student, recruiter under review, or team access) once per account; for a recruiter also emails you "New recruiter to review" once |
+| `on-account-verified` | the confirmation link lands on `/auth/callback/` | email must be confirmed; sends the welcome email for the role (student, instructor or recruiter under review, or team access) once per account; for a recruiter or an instructor also emails you "New recruiter to review" or "New instructor to review" once |
 | `on-recruiter-verified` | you approve or reject a recruiter in `/admin/recruiters/` | admin only; emails the recruiter "verified" or the rejection with your note and a contact link, once per decision |
+| `on-evaluation-published` | you publish a student evaluation in `/admin/evaluations/` | admin only; emails the student that an evaluation was published (no company, no scores), once per evaluation |
+| `on-instructor-verified` | you approve or reject an instructor in `/admin/instructors/` | admin only; emails the instructor "approved" or the rejection with your note and a contact link, once per decision |
 
 The email templates are plain TypeScript functions (`supabase/functions/_shared/email.ts`), not React Email: the static repo has no build step for the functions, and plain functions deploy as they are.
 
@@ -112,7 +116,7 @@ Install the CLI once and deploy:
 npm i -g supabase            # or: brew install supabase/tap/supabase, or scoop install supabase
 supabase login               # opens the browser
 supabase link --project-ref <your-project-ref>
-supabase functions deploy on-application-submitted on-status-changed notify-lead on-account-verified on-recruiter-verified
+supabase functions deploy on-application-submitted on-status-changed notify-lead on-account-verified on-recruiter-verified on-evaluation-published on-instructor-verified
 ```
 
 Set the secrets (one command, or **Edge Functions > Secrets** in the dashboard):
@@ -167,7 +171,7 @@ update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'colleague@example.com');
 ```
 
-They sign out and in again to see **Admin**. To remove an admin, set the role back to `'student'` (or `'recruiter'` for a recruiter account).
+They sign out and in again to see **Admin**. To remove an admin, set the role back to `'student'` (or `'recruiter'` or `'instructor'` for those accounts).
 
 ## 10. Test the whole flow (3 min)
 
@@ -177,9 +181,18 @@ They sign out and in again to see **Admin**. To remove an admin, set the role ba
 4. Supabase > **Table Editor > applications**: one row, `status = submitted`, `notified_at` set, `turnstile_ok` true (or empty without a Turnstile secret), `turnstile_token` empty. **Storage > documents > <user id>/**: your PDF.
 5. As admin: `/admin`, open the application, change the status to **Under review**. The student inbox gets "We are reviewing your application"; the row's `status_notified_at` is set; the student dashboard shows the step.
 6. Send one contact message from `/contact`: a "Contact message from ..." email arrives; the row has `notified_at`.
-7. Delete the test rows afterwards (Table Editor) or delete the test user in **Authentication > Users** (the rows and files cascade).
+7. Instructor: sign up a third address and choose **Instructor**. After the confirmation email, "Your VDC Academy instructor account is created" arrives, and you get "New instructor to review". Approve it as described in "Approve instructors" below; the instructor gets "Your instructor profile is approved".
+8. Delete the test rows afterwards (Table Editor) or delete the test user in **Authentication > Users** (the rows and files cascade).
 
 If no email arrives: **Edge Functions > (function) > Logs** shows the call and any Resend status. `401` means the user session was missing; `403` means the caller is not the owner or not an admin; `409` means the application is not `submitted`.
+
+## Approve instructors (what the team does)
+
+1. When an instructor confirms the email, "New instructor to review: name" arrives at your notify address. The admin Overview also shows "Instructors to review".
+2. Open **Admin > Instructors**. Waiting profiles come first; filter by status or search by name or email.
+3. Read the card (role, years, subjects, format, availability, bio) and open the LinkedIn page.
+4. **Approve**, or **Reject** with a short note (required, up to 1000 characters). The instructor sees the note and gets it by email.
+5. The decision is saved with your name and the time. The email is best effort: if it fails, the decision still stands and the function logs say why.
 
 ## Local testing without keys
 
@@ -192,11 +205,11 @@ If no email arrives: **Edge Functions > (function) > Logs** shows the call and a
 | Step | Done when |
 | --- | --- |
 | 1 Project | `vdc-academy` exists in `us-east-1`; Project URL and anon key copied |
-| 2 Migrations | 0001 to 0006 ran without errors |
+| 2 Migrations | 0001 to 0008 ran without errors |
 | 3 Auth | Site URL and five redirect URLs saved; Email provider with confirmation on; three email templates pasted; optional Google |
 | 4 Storage | `documents` and `avatars` exist and are Private |
 | 5 Resend | domain verified, API key created, from address chosen |
-| 6 Functions | five functions deployed; five secrets set |
+| 6 Functions | seven functions deployed; five secrets set |
 | 7 Turnstile | site key and secret key copied |
 | 8 GitHub | four secrets set (five with Google); one push with a green check |
 | 9 Super admin | signed up with the owner email and confirmed; your profile has `role = 'super_admin'`; the account menu shows Admin |
@@ -204,7 +217,7 @@ If no email arrives: **Edge Functions > (function) > Logs** shows the call and a
 
 ## What is not tested yet
 
-- Nothing in this document has run against a live project yet: migrations, the five functions, Resend, Turnstile and Google sign-in are written and reviewed, not executed. Expect to fix small things on the first pass; the function logs say what.
+- Nothing in this document has run against a live project yet: migrations, the seven functions, Resend, Turnstile and Google sign-in are written and reviewed, not executed. Expect to fix small things on the first pass; the function logs say what.
 - `supabase/tests/rls_accounts.sql` runs in CI on a fresh local stack, not yet on the live project. If the `auth.users` insert fails on your Postgres version, create the three users in the dashboard instead (the file explains how).
 - Supabase's built-in mailer rate limit (about 3 per hour) will block sign-ups under any real load until custom SMTP is set (step 3, last paragraph).
 - Turnstile tokens expire after five minutes. A student who takes longer than that on the apply form may be recorded as "failed" on the bot check. The account is email-confirmed, so this is a signal in your admin email, not a block.
