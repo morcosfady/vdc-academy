@@ -17,14 +17,16 @@ import { EmptyModel } from "./EmptyModel";
 import { Notice } from "./Notice";
 import { Block } from "./Skeleton";
 import { RecruiterDashboard } from "./RecruiterDashboard";
+import { InstructorDashboard } from "./InstructorDashboard";
 import { UpcomingCard } from "@/components/calendar/UpcomingCard";
 import { StudentEvaluations } from "@/components/evaluations/StudentEvaluations";
 
 const c = account.dashboard;
 
-// /account/ by role: recruiters get their own sheet (R-100); students (and the team) keep the student dashboard.
+// /account/ by role: instructors get I-100, recruiters R-100; students (and the team) keep the student dashboard.
 export function Dashboard() {
-  const { isRecruiter } = useAuth();
+  const { isRecruiter, isInstructor } = useAuth();
+  if (isInstructor) return <InstructorDashboard />;
   return isRecruiter ? <RecruiterDashboard /> : <StudentDashboard />;
 }
 

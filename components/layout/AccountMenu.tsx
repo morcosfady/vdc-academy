@@ -12,12 +12,17 @@ import { cn } from "@/lib/utils";
 const m = account.menu;
 
 // The signed-in links, by role. Shared with the full-screen menu (MenuOverlay) so both always agree.
-export function accountLinks({ isAdmin, isRecruiter }: { isAdmin: boolean; isRecruiter: boolean }) {
+export function accountLinks({ isAdmin, isRecruiter, isInstructor = false }: { isAdmin: boolean; isRecruiter: boolean; isInstructor?: boolean }) {
   if (isAdmin)
     return [
       { href: "/admin/", label: m.admin },
       { href: "/account/", label: m.dashboard },
       { href: "/account/profile/", label: m.profile },
+    ];
+  if (isInstructor)
+    return [
+      { href: "/account/", label: m.dashboard },
+      { href: "/account/profile/#teaching", label: m.teaching },
     ];
   if (isRecruiter)
     return [
@@ -41,10 +46,10 @@ export function SuperAdminBadge({ className }: { className?: string }) {
 }
 
 // Header account state. Logged out: "Log in" + Apply. Logged in: an initials button with a small index-sheet menu
-// (recruiters also get "Hire talent" in place of Apply). Renders the logged-out chrome until the session is known so
+// (recruiters also get "Hire talent" in place of Apply, instructors get "Dashboard"). Renders the logged-out chrome until the session is known so
 // server and client HTML match.
 export function AccountMenu({ compact = false }: { compact?: boolean }) {
-  const { enabled, ready, user, profile, isAdmin, isSuperAdmin, isRecruiter, signOut } = useAuth();
+  const { enabled, ready, user, profile, isAdmin, isSuperAdmin, isRecruiter, isInstructor, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
@@ -76,10 +81,15 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
     );
   }
 
-  const items = accountLinks({ isAdmin, isRecruiter });
+  const items = accountLinks({ isAdmin, isRecruiter, isInstructor });
 
   return (
     <>
+      {isInstructor && (
+        <Button href="/account/" className={cn("hidden whitespace-nowrap !h-10 !px-4 sm:inline-flex sm:!h-11 sm:!px-5", compact && "!h-10")}>
+          {m.dashboard}
+        </Button>
+      )}
       {isRecruiter && (
         <Button href="/account/#hiring" className={cn("hidden whitespace-nowrap !h-10 !px-4 sm:inline-flex sm:!h-11 sm:!px-5", compact && "!h-10")}>
           {m.hire}

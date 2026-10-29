@@ -19,6 +19,7 @@ import { programs } from "@/content/programs";
 import { content, shown } from "@/content/site";
 import { pages } from "@/content/copy-pages";
 import { applyCopy } from "@/content/copy-apply";
+import { account as accountCopy } from "@/content/copy-account";
 import { discounts } from "@/config/discounts";
 import { calcPrice, money } from "@/lib/pricing";
 import { newState } from "@/lib/modelState";
@@ -71,7 +72,7 @@ type Dupe = { id: string; titles: string };
 export function ApplyFlow() {
   const router = useRouter();
   const sp = useSearchParams();
-  const { enabled, ready, user, profile, refreshProfile, needsOnboarding, isRecruiter } = useAuth();
+  const { enabled, ready, user, profile, refreshProfile, needsOnboarding, isRecruiter, isInstructor } = useAuth();
   const preview = sp.get("preview") === "1";
 
   const [step, setStep] = useState(0);
@@ -405,6 +406,7 @@ export function ApplyFlow() {
   if (enabled && !userId && (!preview || needLogin)) return <ApplyGate note={needLogin ? applyCopy.gate.submitFirst : undefined} />;
   if (enabled && userId && needsOnboarding) return <section className="theme-light min-h-[60vh] pt-[72px]" aria-busy="true" />;
   if (enabled && userId && isRecruiter) return <RecruiterNotice />;
+  if (enabled && userId && isInstructor) return <InstructorNotice />;
   const showFallback = fallback || (!enabled && !preview);
 
   return (
@@ -748,6 +750,30 @@ export function ApplyFlow() {
               <DimensionString label={c.floors(step + 1)} className="mt-4" />
             </div>
           </aside>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Instructors on /apply: applications are for students; their dashboard is the place to go.
+function InstructorNotice() {
+  const n = accountCopy.instructor.apply;
+  return (
+    <section className="theme-light pt-[72px]" data-testid="instructor-apply">
+      <div className="wrap">
+        <div className="grid-12 pb-24 pt-14 lg:pb-32 lg:pt-20">
+          <div className="col-span-12 lg:col-span-7">
+            <SheetTag sheet={c.sheet} name={c.name} />
+            <h1 className="t-h1 mt-8 max-w-[18ch]">{n.title}</h1>
+            <p className="t-lead mt-6 max-w-[48ch]">{n.lead}</p>
+            <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+              <Button href="/account/">{n.cta}</Button>
+              <Button href="/account/profile/#teaching" variant="link">
+                {n.secondary}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

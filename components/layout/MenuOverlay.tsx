@@ -14,15 +14,16 @@ import { accountLinks, SuperAdminBadge } from "./AccountMenu";
 // Full-screen paper menu, like an index sheet: mono numbers, big titles, hairlines. Focus is trapped, Escape closes.
 export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null);
-  const { enabled, ready, user, isAdmin, isSuperAdmin, isRecruiter, signOut } = useAuth();
+  const { enabled, ready, user, isAdmin, isSuperAdmin, isRecruiter, isInstructor, signOut } = useAuth();
   const signedIn = ready && enabled && Boolean(user);
   const account = signedIn
-    ? accountLinks({ isAdmin, isRecruiter })
+    ? accountLinks({ isAdmin, isRecruiter, isInstructor })
     : [
         { href: "/login/", label: copy.menu.login },
         { href: "/signup/", label: copy.menu.signup },
       ];
   const hire = signedIn && isRecruiter;
+  const dash = signedIn && isInstructor;
   const email = shown(content.contact.email);
   const rule = { borderColor: "var(--rule)" };
 
@@ -112,8 +113,8 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
                     {copy.menu.signOut}
                   </button>
                 )}
-                <Button href={hire ? "/account/#hiring" : "/apply"} onClick={onClose}>
-                  {hire ? copy.menu.hire : copy.menu.applyNow}
+                <Button href={hire ? "/account/#hiring" : dash ? "/account/" : "/apply"} onClick={onClose}>
+                  {hire ? copy.menu.hire : dash ? copy.menu.dashboard : copy.menu.applyNow}
                 </Button>
               </span>
             </div>

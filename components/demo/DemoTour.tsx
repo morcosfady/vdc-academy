@@ -5,7 +5,7 @@ import { SheetTag } from "@/components/ds/Devices";
 import { Tag } from "@/components/ds/Chips";
 import { Button } from "@/components/ui/Button";
 import { demo, demoOn } from "@/lib/demo/browser";
-import { DEMO_ADMIN_EMAIL, DEMO_APP_ID, DEMO_PASSWORD, DEMO_RECRUITER_EMAIL, DEMO_STUDENT_EMAIL, DEMO_SUPER_EMAIL } from "@/lib/demo/seed";
+import { DEMO_ADMIN_EMAIL, DEMO_APP_ID, DEMO_INSTRUCTOR_EMAIL, DEMO_PASSWORD, DEMO_RECRUITER_EMAIL, DEMO_STUDENT_EMAIL, DEMO_SUPER_EMAIL } from "@/lib/demo/seed";
 
 const rule = { borderColor: "var(--rule)" } as const;
 
@@ -22,11 +22,11 @@ const cards = [
   },
   {
     n: "02",
-    title: "Register as a recruiter",
-    text: "Work email, company details, roles they hire for and the authorisation checkbox. The account starts pending verification.",
-    hint: "Fill sample data fills a fictional company.",
-    action: "Register as a recruiter",
-    go: () => demo.asGuest("/signup/?as=recruiter"),
+    title: "Register as an instructor",
+    text: "The person who teaches the courses: job title, employer, programs they can teach, how and when, and a short bio. The account starts pending review.",
+    hint: "Fill sample data fills a fictional instructor.",
+    action: "Register as an instructor",
+    go: () => demo.asGuest("/signup/?as=instructor"),
   },
   {
     n: "03",
@@ -54,11 +54,12 @@ const cards = [
   },
   {
     n: "06",
-    title: "Recruiter dashboard",
-    text: "Sample Company A is pending verification: the banner, the company card, a hiring request form and the talent section, which opens after verification.",
-    hint: `Logged in as ${DEMO_RECRUITER_EMAIL}.`,
-    action: "Open the recruiter dashboard",
-    go: () => demo.asRecruiter("/account/"),
+    title: "Instructor dashboard",
+    text: "Sample Instructor 01 is waiting for review: the banner, the teaching profile and a cohorts panel marked Coming soon. The second link shows Sample Instructor 02, who is approved.",
+    hint: `Logged in as ${DEMO_INSTRUCTOR_EMAIL}.`,
+    action: "Open the instructor dashboard",
+    go: () => demo.asInstructor("/account/"),
+    second: { label: "Approved view", go: () => demo.asApprovedInstructor("/account/") },
   },
   {
     n: "07",
@@ -80,7 +81,7 @@ const cards = [
   {
     n: "09",
     title: "Super admin: users and recruiters",
-    text: "The owner's view with the Super admin badge. Approve Sample Company A, then open card 06: the banner says Approved.",
+    text: "The owner's view with the Super admin badge. Approve Sample Company A, then open Unverified view on card 11: the banner says Approved.",
     hint: `Logged in as ${DEMO_SUPER_EMAIL}. Same screens as an admin for now.`,
     action: "Open as super admin",
     go: () => demo.asSuperAdmin("/admin/recruiters/"),
@@ -135,18 +136,19 @@ export function DemoTour() {
             <SheetTag sheet="D-000" name="Client demo" />
             <h1 className="t-h1 mt-8 max-w-[16ch]">The full experience, before the backend is live.</h1>
             <p className="t-lead mt-6 max-w-[52ch]">
-              Thirteen short scenes: a student and a recruiter register, a student applies and follows their status, verified recruiters evaluate students who chose to be seen, and the public calendar shows what is on, and the academy team reviews it all. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
+              Thirteen short scenes: a student and an instructor register, a student applies and follows their status, verified recruiters evaluate students who chose to be seen, and the public calendar shows what is on, and the academy team reviews it all. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
             </p>
           </div>
           <div className="lg:col-span-4 lg:col-start-9">
             <dl className="border-t text-[15px]" style={rule}>
               {[
                 ["Student", DEMO_STUDENT_EMAIL],
+                ["Instructor", DEMO_INSTRUCTOR_EMAIL],
                 ["Recruiter", DEMO_RECRUITER_EMAIL],
                 ["Admin", DEMO_ADMIN_EMAIL],
                 ["Super admin", DEMO_SUPER_EMAIL],
                 ["Password", DEMO_PASSWORD],
-                ["Data", "24 applications, 6 recruiters, 3 hiring requests, 8 students (5 visible), 9 evaluations"],
+                ["Data", "24 applications, 4 instructors, 6 recruiters, 3 hiring requests, 8 students (5 visible), 9 evaluations"],
               ].map(([k, v]) => (
                 <div key={k} className="grid grid-cols-[88px_1fr] gap-4 border-b py-3" style={rule}>
                   <dt className="mono pt-1">{k}</dt>
@@ -216,10 +218,10 @@ export function DemoTour() {
             <ol className="mt-5 grid gap-3 text-[15px] text-muted">
               {[
                 "Start on the home page with the demo off: the drawing-set design, the model, the programs.",
-                "Cards 01 and 02: register a student and a recruiter. Fill sample data, show the review and the consents.",
+                "Cards 01 and 02: register a student and an instructor. Fill sample data, show the review and the consents.",
                 "Card 04: the student dashboard. Point at the timeline, the pending discount, the documents panel.",
-                "Card 06: the recruiter dashboard, pending verification, then send a hiring request.",
-                "Card 09: approve the company as super admin, then card 06 again: Approved. Finish with Reset demo data, then Exit demo.",
+                "Card 06: the instructor dashboard, pending review, then the approved view.",
+                "Card 09: approve the company as super admin, then Unverified view on card 11: Approved. Finish with Reset demo data, then Exit demo.",
               ].map((s, i) => (
                 <li key={s} className="grid grid-cols-[2.5rem_1fr] gap-x-2 border-t py-3" style={rule}>
                   <span className="mono pt-0.5 !text-accent-text">{String(i + 1).padStart(2, "0")}</span>
