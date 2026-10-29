@@ -15,12 +15,12 @@ export const site = {
   // Header links: four or five only.
   nav: [
     { href: "/programs", label: "Programs" },
+    { href: "/calendar", label: "Calendar" },
     { href: "/fresh-graduates", label: "Fresh Grads" },
     { href: "/pricing", label: "Pricing" },
     { href: "/about", label: "About" },
-    { href: "/faq", label: "FAQ" },
   ],
-  // Full menu adds the rest.
+  // Full menu (FAQ lives here and in the footer) adds the rest.
   menu: [
     { href: "/programs", label: "Programs" },
     { href: "/calendar", label: "Calendar" },
