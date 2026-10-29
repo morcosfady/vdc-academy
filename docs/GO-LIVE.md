@@ -55,10 +55,11 @@ Update this table every time the runbook runs.
 ```bash
 supabase link --project-ref <ref>
 supabase functions deploy on-application-submitted on-status-changed notify-lead on-account-verified on-recruiter-verified on-evaluation-published
-supabase secrets set RESEND_API_KEY=... EMAIL_FROM="VDC Academy <...>" ADMIN_NOTIFY_EMAIL=... TURNSTILE_SECRET_KEY=... SITE_URL=https://morcosfady.github.io/vdc-academy
+supabase secrets set RESEND_API_KEY=... EMAIL_FROM="VDC Academy <...>" ADMIN_NOTIFY_EMAIL=thefadys99@gmail.com TURNSTILE_SECRET_KEY=... SITE_URL=https://morcosfady.github.io/vdc-academy
 ```
 
-- `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_NOTIFY_EMAIL` come from the owner (Resend, below). Until a domain is verified, use `EMAIL_FROM="VDC Academy <onboarding@resend.dev>"`: Resend's test sender delivers **only to the Resend account owner's own address**, so `ADMIN_NOTIFY_EMAIL` and the step 9 test email must be that address.
+- **Client email: `thefadys99@gmail.com`** (confirmed by the owner 2026-10-29). It is both the super admin (granted in migration 0005) and `ADMIN_NOTIFY_EMAIL`, so every "new application / lead / recruiter" email goes there. Create the Resend account with this address too, so the test sender can reach it before a domain is verified.
+- `RESEND_API_KEY` and `EMAIL_FROM` come from the owner (Resend, below). Until a domain is verified, use `EMAIL_FROM="VDC Academy <onboarding@resend.dev>"`: Resend's test sender delivers **only to the Resend account owner's own address**, so `ADMIN_NOTIFY_EMAIL` and the step 9 test email must be that address.
 - Six functions: the three from v7, `on-account-verified` and `on-recruiter-verified` (v9 account emails) and `on-evaluation-published` (tells a student an evaluation was published, see "Emails" below). All six use the same secrets; `ADMIN_NOTIFY_EMAIL` also receives the "New recruiter to review" email.
 - `TURNSTILE_SECRET_KEY` can wait; without it the functions skip the bot check and record "not configured".
 - Typed into the terminal by the owner or set in **Edge Functions > Secrets**. Never pasted into a file or a commit.
@@ -78,7 +79,7 @@ gh secret set NEXT_PUBLIC_SITE_URL -R morcosfady/vdc-academy            # https:
 
 ## 8. The owner becomes super admin (Owner)
 
-1. Owner: on the live site, **Sign up** with the owner email granted in `role_grants` (migration 0005; it is written there and nowhere else), using the "Academy team account" path (name and phone only).
+1. Owner: on the live site, **Sign up** with `thefadys99@gmail.com`, the email granted in `role_grants` (migration 0005; the site code never contains it), using the "Academy team account" path (name and phone only).
 2. Owner: open the confirmation email and click the link. The `apply_role_grant` trigger makes the account `super_admin` the moment the email is confirmed; no SQL needed. The welcome email that follows is the "team access is active" one.
 3. Owner: the account menu shows **Admin**. Claude can confirm with `select id, onboarding_complete from public.profiles where role = 'super_admin';` (one row).
 
