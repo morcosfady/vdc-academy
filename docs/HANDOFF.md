@@ -23,6 +23,19 @@ Tests: Chromium full suite passes; Firefox and WebKit run in CI; the new SQL che
 
 Open items: what instructors can actually do beyond the profile (cohorts, class lists, materials) is not specified, so nothing was invented; the super admin differences; whether recruiters should return later; owner steps are unchanged (free a Supabase slot, then `docs/GO-LIVE.md`).
 
+### v11.1: instructors evaluate their own students (2026-10-29)
+
+The owner chose option 1: an instructor evaluates only the students the academy team assigned to them. Built, tested and live.
+
+- **Database** (`supabase/migrations/0009_instructor_evaluations.sql`): `instructor_assignments` (team only writes; one row per instructor and student; the guard needs an instructor account and a student account), `instructor_evaluations` (same six criteria 1 to 5, overall, readiness, strengths, improvements, a private note only the team reads; always inserted as submitted; the instructor must be approved and the student assigned to them; 30 a day; the team publishes or hides, hiding needs a note; locked after the team decides), views `my_students` (verified instructors: full name, program, date) and `my_evaluations` (now a union of recruiter and instructor rows with `source`, `author_name` as first name and last initial, `program`, `readiness`; no private note, no ids). Students have no policy on either table. Applied to the live project `vdc-academy`.
+- **Instructor screens**: "Your students" panel on the instructor dashboard (`#students`), the evaluate screen `/account/evaluate-student/?student=<id>` (error summary, live preview, locked once decided), "My students" in the menus. A pending or rejected instructor sees no students and the page sends no query.
+- **Student side**: published instructor evaluations show next to recruiter ones ("From your instructor Ines C.", program, readiness chip). Shown to every student, no opt-in (the opt-in only concerns recruiters).
+- **Admin**: `/admin/assignments/` (assign and remove, only approved instructors, students without an instructor), Evaluations has a Recruiters | Instructors switch with Publish and Hide, and the `on-evaluation-published` function now handles `kind: "instructor"` ("Your instructor shared feedback", no private note, no scores, no instructor contact). Privacy page has one sentence about this (flagged in `content/TODO-content.md` for the lawyer).
+- **Tests**: Chromium 323 passed; the database checks (now 89, in `supabase/tests/rls_accounts.sql`, checks 62 to 67 are new) pass on real Postgres in CI; the CI threshold is 85.
+- **Team accounts** (also today): `/account/` sends admins and the super admin to `/admin/`; the header shows an Admin button; no student application for the team.
+- **Known quirk**: in the demo the sample instructor shows as "Sample 0." because the author label is first name plus the initial of the last word of the name; real names give "Ines C.".
+- **Not deployed yet** (needs the Supabase connector to see the project, i.e. the Admin invite to pharaohsbites.dallas@gmail.com accepted): the seven Edge Functions (including the changed `on-evaluation-published`) and their secrets.
+
 ## v10: calendar + student evaluations (2026-10-28), see v11 above
 
 Two features, both merged on `main`: the public calendar (below) and recruiter evaluations (next section). The design did not change. Chromium suite on the merged build: 250 passed, 12 skipped (screenshot captures). Demo: 13 scenes (card 10 calendar, 11 to 13 evaluations).
