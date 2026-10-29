@@ -28,14 +28,14 @@ Update this table every time the runbook runs.
 
 ## 2. Migrations and the RLS proof (Claude)
 
-1. Apply in order, 0001 to 0006: `supabase/migrations/0001_init.sql`, `0002_hardening.sql`, `0003_accounts.sql`, `0004_notifications.sql`, `0005_roles_registration.sql` (roles, recruiters, hiring requests, the owner's role grant), `0006_emails.sql` (welcome and recruiter alert stamps) (MCP `apply_migration`, or `supabase link --project-ref <ref>` then `supabase db push`). All six are re-runnable.
-2. Run `supabase/tests/rls_accounts.sql` (MCP `execute_sql` or the SQL editor). Paste the PASS/FAIL summary into `docs/HANDOFF.md`. **All 30 checks must PASS**; a FAIL stops the runbook until it is fixed with a new migration. The same proof already runs in CI on every push to `main` that touches `supabase/**` (`.github/workflows/db-tests.yml`: a local Supabase stack, every migration applied twice, fails on any FAIL), so a live FAIL means the live project differs from a fresh stack.
-3. `list_tables` and confirm: `profiles`, `recruiter_profiles`, `hiring_requests`, `role_grants`, `applications`, `application_events`, `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`, `admin_emails`, all with RLS on.
+1. Apply in order, 0001 to 0007: `supabase/migrations/0001_init.sql`, `0002_hardening.sql`, `0003_accounts.sql`, `0004_notifications.sql`, `0005_roles_registration.sql` (roles, recruiters, hiring requests, the owner's role grant), `0006_emails.sql` (welcome and recruiter alert stamps), `0007_evaluations.sql` (student opt-in, talent list, evaluations by verified recruiters, the student-safe view) (MCP `apply_migration`, or `supabase link --project-ref <ref>` then `supabase db push`). All seven are re-runnable.
+2. Run `supabase/tests/rls_accounts.sql` (MCP `execute_sql` or the SQL editor). Paste the PASS/FAIL summary into `docs/HANDOFF.md`. **Every check must PASS (at least 50)**; a FAIL stops the runbook until it is fixed with a new migration. The same proof already runs in CI on every push to `main` that touches `supabase/**` (`.github/workflows/db-tests.yml`: a local Supabase stack, every migration applied twice, fails on any FAIL), so a live FAIL means the live project differs from a fresh stack.
+3. `list_tables` and confirm: `profiles`, `recruiter_profiles`, `hiring_requests`, `student_evaluations`, `role_grants`, `applications`, `application_events`, `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`, `admin_emails`, all with RLS on.
 
 ## 3. Advisors (Claude)
 
 - Run the security and performance advisors (MCP `get_advisors`, types `security` and `performance`).
-- Fix anything critical or high with a new migration `0007_*.sql` (committed), for example a missing `search_path` on a function or an unindexed foreign key. Note warnings that are accepted, with the reason, in the handoff.
+- Fix anything critical or high with a new migration `0008_*.sql` (committed), for example a missing `search_path` on a function or an unindexed foreign key. Note warnings that are accepted, with the reason, in the handoff.
 
 ## 4. Auth settings (Claude where the API allows, else Owner)
 
@@ -54,12 +54,12 @@ Update this table every time the runbook runs.
 
 ```bash
 supabase link --project-ref <ref>
-supabase functions deploy on-application-submitted on-status-changed notify-lead on-account-verified on-recruiter-verified
+supabase functions deploy on-application-submitted on-status-changed notify-lead on-account-verified on-recruiter-verified on-evaluation-published
 supabase secrets set RESEND_API_KEY=... EMAIL_FROM="VDC Academy <...>" ADMIN_NOTIFY_EMAIL=... TURNSTILE_SECRET_KEY=... SITE_URL=https://morcosfady.github.io/vdc-academy
 ```
 
 - `RESEND_API_KEY`, `EMAIL_FROM`, `ADMIN_NOTIFY_EMAIL` come from the owner (Resend, below). Until a domain is verified, use `EMAIL_FROM="VDC Academy <onboarding@resend.dev>"`: Resend's test sender delivers **only to the Resend account owner's own address**, so `ADMIN_NOTIFY_EMAIL` and the step 9 test email must be that address.
-- Five functions: the three from v7 plus `on-account-verified` and `on-recruiter-verified` (v9 account emails, see "Emails" below). All five use the same secrets; `ADMIN_NOTIFY_EMAIL` also receives the "New recruiter to review" email.
+- Six functions: the three from v7, `on-account-verified` and `on-recruiter-verified` (v9 account emails) and `on-evaluation-published` (tells a student an evaluation was published, see "Emails" below). All six use the same secrets; `ADMIN_NOTIFY_EMAIL` also receives the "New recruiter to review" email.
 - `TURNSTILE_SECRET_KEY` can wait; without it the functions skip the bot check and record "not configured".
 - Typed into the terminal by the owner or set in **Edge Functions > Secrets**. Never pasted into a file or a commit.
 
@@ -121,6 +121,7 @@ Every email the site sends. The Auth emails come from Supabase (built-in mailer,
 | We received your VDC Academy application | a student submits | `on-application-submitted` (`notified_at`) | the student |
 | New application: name (program) | the same | `on-application-submitted` (`notified_at`) | `ADMIN_NOTIFY_EMAIL` |
 | Status email (one per status) | an admin changes an application status | `on-status-changed` (`status_notified_at`) | the student |
+| A recruiter evaluated your work | an admin publishes an evaluation (it names no company and shows no scores) | `on-evaluation-published` (`student_evaluations.notified_at`) | the student |
 | New lead / Contact message from name | a lead form or the contact form | `notify-lead` (`notified_at`) | `ADMIN_NOTIFY_EMAIL` |
 
 ## Owner-only items

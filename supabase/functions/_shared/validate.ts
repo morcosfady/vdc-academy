@@ -64,6 +64,11 @@ export function validateRecruiterVerifiedBody(b: Record<string, unknown>): Valid
   return { ok: true, value: { recruiter_id: b.recruiter_id, status: b.status } };
 }
 
+export function validateEvaluationBody(b: Record<string, unknown>): Validation<{ evaluation_id: string }> {
+  if (!isUuid(b.evaluation_id)) return { ok: false, error: "evaluation_id must be a uuid" };
+  return { ok: true, value: { evaluation_id: b.evaluation_id } };
+}
+
 // Text helpers used when building emails from database rows.
 export const str = (v: unknown): string => (Array.isArray(v) ? v.map(String).join(", ") : v === null || v === undefined ? "" : String(v));
 export const firstName = (full: unknown): string => str(full).trim().split(/\s+/)[0] || "there";

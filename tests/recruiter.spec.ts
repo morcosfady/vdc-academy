@@ -51,7 +51,7 @@ const axe = async (page: Page) => {
   expect(res.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
 };
 
-test("pending recruiter: R-100 sheet, pending banner, company card and the coming-soon talent pool", async ({ page }) => {
+test("pending recruiter: R-100 sheet, pending banner, company card and a talent section that stays locked", async ({ page }) => {
   const { state, userId } = recruiterState("pending");
   await mockSupabase(page, state);
   await loginAs(page, state, userId);
@@ -73,8 +73,10 @@ test("pending recruiter: R-100 sheet, pending banner, company card and the comin
   await expect(card.getByRole("link", { name: "lonestar.example.com" })).toHaveAttribute("href", "https://lonestar.example.com");
 
   const teaser = page.getByTestId("talent-pool");
-  await expect(teaser).toContainText("Coming soon");
-  await expect(teaser).toContainText("Approved recruiters will be able to see graduates who choose to share their profile.");
+  await expect(teaser).toContainText("After verification");
+  await expect(teaser).toContainText("Talent opens as soon as the academy team has verified your company.");
+  await expect(page.getByTestId("talent-locked")).toBeVisible();
+  await expect(page.getByTestId("talent-card")).toHaveCount(0);
   await expect(page.getByTestId("review-note")).toHaveText("Requests are reviewed once your company account is verified.");
   await expect(page.getByText("No requests yet.")).toBeVisible();
   // the student dashboard is not rendered for a recruiter

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
-import { firstName, hiringStatusLabel, verificationLabel, workModeLabel, type HiringRequest, type Profile, type RecruiterProfile } from "@/lib/db";
+import { firstName, hiringStatusLabel, verificationLabel, workModeLabel, type HiringRequest, type Profile, type RecruiterProfile, type VerificationStatus } from "@/lib/db";
 import { COMPANY_SIZES, COMPANY_TYPES, EXPECTED_HIRES, HIRING_ROLES, labelOf } from "@/lib/signupSchema";
 import { emptyHiring, hiringRow, hiringSchema, NOTES_MAX, todayIso, WORK_MODES, type HiringValues } from "@/lib/hiringSchema";
 import { Input } from "@/components/ds/Forms";
@@ -13,6 +13,8 @@ import { TextareaField } from "@/components/forms/Field";
 import { Button } from "@/components/ui/Button";
 import { DateField, OptSelect } from "./signup/fields";
 import { account } from "@/content/copy-account";
+import { evaluations } from "@/content/copy-evaluations";
+import { RecruiterTalent } from "@/components/evaluations/RecruiterTalent";
 import { AccountShell, Panel } from "./AccountShell";
 import { LiveStatus, Notice } from "./Notice";
 import { Block } from "./Skeleton";
@@ -35,8 +37,8 @@ const Arrow = () => (
   </svg>
 );
 
-// /account/ for recruiters: verification, the company sheet, hiring requests and the talent pool teaser.
-// It never reads applications (recruiters have no access to them, and the screen has no use for them).
+// /account/ for recruiters: verification, the company sheet, the talent list with evaluations (verified recruiters
+// only) and hiring requests. It never reads applications or student profiles (recruiters have no access to them).
 export function RecruiterDashboard() {
   const { user, profile } = useAuth();
   const name = firstName(profile?.full_name ?? (user?.user_metadata?.full_name as string | undefined));
@@ -89,8 +91,12 @@ function Body() {
           <CompanyCard recruiter={recruiter} profile={profile} />
         </Panel>
         <aside className="col-span-12 self-start lg:col-span-4">
-          <TalentTeaser />
+          <TalentSummary status={status} />
         </aside>
+      </div>
+
+      <div className="mt-20">
+        <RecruiterTalent status={status} />
       </div>
 
       <div className="grid-12 mt-20 gap-y-14">
@@ -207,17 +213,26 @@ function CompanyCard({ recruiter, profile }: { recruiter: RecruiterProfile | nul
   );
 }
 
-function TalentTeaser() {
+// The short card beside the company sheet: where the talent list is and whether it is open yet.
+function TalentSummary({ status }: { status: VerificationStatus }) {
+  const t = evaluations.recruiter;
+  const open = status === "approved";
   return (
-    <section className="card p-6" aria-labelledby="talent-h" data-testid="talent-pool">
+    <section className="card p-6" aria-labelledby="talent-summary-h" data-testid="talent-pool">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="mono">{r.talent.label}</p>
-        <Tag tone="brass">{r.talent.soon}</Tag>
+        <p className="mono">{t.label}</p>
+        <Tag tone={open ? "blueprint" : "brass"}>{open ? t.summary.open : t.summary.closed}</Tag>
       </div>
-      <h3 id="talent-h" className="mt-3 !text-[1.375rem]">
-        {r.talent.title}
+      <h3 id="talent-summary-h" className="mt-3 !text-[1.375rem]">
+        {t.title}
       </h3>
-      <p className="t-small mt-2 text-muted">{r.talent.text}</p>
+      <p className="t-small mt-2 text-muted">{open ? t.summary.text : t.locked[status === "rejected" ? "rejected" : "pending"]}</p>
+      {open && (
+        <Link prefetch={false} href="#talent" className="ul-draw mt-5 inline-flex items-center gap-2 pb-1 text-[15px] font-medium text-text hover:text-accent-text">
+          {t.summary.browse}
+          <Arrow />
+        </Link>
+      )}
     </section>
   );
 }

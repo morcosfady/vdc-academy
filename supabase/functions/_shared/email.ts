@@ -333,3 +333,15 @@ export function recruiterRejected(a: { firstName: string; note: string; contactU
   };
   return { subject: "About your VDC Academy company account", ...render(sheet) };
 }
+
+// 11. Student: a recruiter's evaluation was published. No company, no scores, no private note: the dashboard has them.
+export function evaluationPublished(a: { firstName: string; accountUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-130 · EVALUATION",
+    title: `${a.firstName}, a recruiter evaluated your work.`,
+    intro: ["A verified recruiter wrote an evaluation of your work, and the academy team has published it. It is on your dashboard now."],
+    button: { label: "Read the evaluation", href: a.accountUrl },
+    outro: ["Only verified recruiters can see your profile, and only because you chose to share it. You can turn that off any time on your profile page."],
+  };
+  return { subject: "A recruiter evaluated your work", ...render(sheet) };
+}

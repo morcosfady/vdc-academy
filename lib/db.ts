@@ -40,6 +40,9 @@ export type Profile = {
   heard_from: string | null;
   consent_terms_at: string | null;
   consent_contact_at: string | null;
+  // v10 evaluations (supabase/migrations/0007_evaluations.sql): the student's opt-in to be seen by verified recruiters
+  talent_visible: boolean;
+  talent_consent_at: string | null;
 };
 
 export type VerificationStatus = "pending" | "approved" | "rejected";
@@ -80,6 +83,65 @@ export type HiringRequest = {
   created_at: string;
   updated_at: string;
 };
+
+// Evaluations of students by verified recruiters (supabase/migrations/0007_evaluations.sql).
+export type EvaluationStatus = "submitted" | "published" | "hidden";
+export type Recommendation = "strong_yes" | "yes" | "maybe" | "not_now";
+export type EvaluationContext = "portfolio_review" | "interview" | "project_review" | "worked_together";
+export type CriterionKey = "modeling" | "coordination" | "standards" | "communication" | "professionalism" | "portfolio";
+export type EvaluationScores = Record<CriterionKey, number>;
+
+// public.student_evaluations: readable by the recruiter who wrote it and by admins. Never by the student.
+export type StudentEvaluation = {
+  id: string;
+  student_id: string;
+  recruiter_id: string;
+  application_id: string | null;
+  context: EvaluationContext;
+  scores: EvaluationScores;
+  overall: number;
+  recommendation: Recommendation;
+  strengths: string;
+  improvements: string;
+  private_note: string;
+  show_company_name: boolean;
+  status: EvaluationStatus;
+  moderation_note: string | null;
+  moderated_by: string | null;
+  moderated_at: string | null;
+  published_at: string | null;
+  notified_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// public.talent_cards: what a verified recruiter may see about a student who opted in. Nothing else about the student.
+export type TalentCard = {
+  student_id: string;
+  display_name: string; // first name and the initial of the last name
+  city: string | null;
+  country: string | null;
+  graduation_year: number | null;
+  programs: string[]; // program slugs the student is enrolled in
+  software: string[];
+  linkedin_url: string | null;
+  portfolio_url: string | null;
+};
+
+// public.my_evaluations: what a student sees of a published evaluation. No private note, no recruiter, no status.
+export type EvaluationView = {
+  id: string;
+  published_at: string | null;
+  context: EvaluationContext;
+  scores: EvaluationScores;
+  overall: number;
+  recommendation: Recommendation;
+  strengths: string;
+  improvements: string;
+  company_name: string | null; // null when the recruiter chose not to show it
+};
+
+export const evaluationStatusLabel: Record<EvaluationStatus, string> = { submitted: "Submitted", published: "Published", hidden: "Hidden" };
 
 export const verificationLabel: Record<VerificationStatus, string> = { pending: "Pending review", approved: "Approved", rejected: "Not approved" };
 export const hiringStatusLabel: Record<HiringStatus, string> = { new: "New", in_review: "In review", matched: "Matched", closed: "Closed" };

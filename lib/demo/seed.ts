@@ -9,6 +9,9 @@ export const DEMO_ADMIN_EMAIL = "admin@example.com";
 export const DEMO_PASSWORD = "demo-password-1"; // shown in the demo UI; it unlocks sample data only
 export const DEMO_APP_ID = "aaaaaaaa-0000-4000-8000-000000000001";
 export const DEMO_RECRUITER_EMAIL = "recruiter01@example.com";
+// An approved recruiter (Sample Company B) and a student who opted in and has published evaluations, for the evaluation cards.
+export const DEMO_VERIFIED_RECRUITER_EMAIL = "recruiter02@example.com";
+export const DEMO_TALENT_STUDENT_EMAIL = "studenta@example.com";
 // The demo owner. Fictional on purpose: the real owner's address lives only in the database grant (0005).
 export const DEMO_SUPER_EMAIL = "owner@example.com";
 
@@ -152,13 +155,15 @@ export function seedDemo(): MockState {
     { n: 2, company: "Sample Company B", type: "ae_firm", size: "11-50", roles: ["bim_modeler", "revit_drafter"], hires: "1", status: "approved", daysAgo: 9 },
     { n: 3, company: "Sample Company C", type: "other", size: "1-10", roles: ["other"], hires: "1", status: "rejected", daysAgo: 12, note: "We could not confirm the company website. Reply from a company email address and we will review it again." },
     { n: 4, company: "Sample Company D", type: "subcontractor", size: "201-1000", roles: ["bim_coordinator", "bim_manager"], hires: "6-10", status: "pending", daysAgo: 3 },
+    { n: 5, company: "Sample Company E", type: "general_contractor", size: "201-1000", roles: ["bim_coordinator", "vdc_engineer"], hires: "2-5", status: "approved", daysAgo: 20 },
+    { n: 6, company: "Sample Company F", type: "bim_consultancy", size: "11-50", roles: ["bim_modeler", "bim_manager"], hires: "1", status: "approved", daysAgo: 26 },
   ];
   const recruiterIds: string[] = [];
   for (const r of recruiters) {
     const id = seedUser(state, `recruiter${pad(r.n)}@example.com`, DEMO_PASSWORD, { full_name: `Sample Recruiter ${pad(r.n)}` }, "recruiter", {
-      profile: { phone: `+1 555 020 ${pad(r.n)}${pad(r.n)}`, country: "USA", city: ["Dallas", "Fort Worth", "Austin", "Houston"][r.n - 1], heard_from: "linkedin", created_at: at(r.daysAgo) },
+      profile: { phone: `+1 555 020 ${pad(r.n)}${pad(r.n)}`, country: "USA", city: ["Dallas", "Fort Worth", "Austin", "Houston", "Plano", "Irving"][r.n - 1], heard_from: "linkedin", created_at: at(r.daysAgo) },
       recruiter: {
-        job_title: ["Talent lead", "BIM Manager", "Owner", "HR partner"][r.n - 1], company_name: r.company, company_website: `https://example.com/company-${String.fromCharCode(96 + r.n)}`,
+        job_title: ["Talent lead", "BIM Manager", "Owner", "HR partner", "VDC Director", "Principal"][r.n - 1], company_name: r.company, company_website: `https://example.com/company-${String.fromCharCode(96 + r.n)}`,
         company_type: r.type, company_size: r.size, linkedin_url: `https://www.linkedin.com/in/sample-recruiter-${pad(r.n)}`, hiring_roles: r.roles, expected_hires: r.hires, authorised_confirmed: true,
         verification_status: r.status, verified_by: r.status === "pending" ? null : adminId, verified_at: r.status === "pending" ? null : at(r.daysAgo - 2), rejection_note: r.note ?? null, created_at: at(r.daysAgo),
       },
@@ -175,6 +180,8 @@ export function seedDemo(): MockState {
     state.tables.hiring_requests.push({ id: uuid(state.nextId++), recruiter_id: recruiterIds[ri], role, hires, location, work_mode: mode, start_date: start, notes, status, created_at: at(ri === 1 ? 4 : 1), updated_at: at(1) });
   }
 
+  seedTalent(state, adminId, recruiterIds);
+
   // The demo super admin: granted like the real owner (a role grant on a confirmed email), with the same screens.
   seedUser(state, DEMO_SUPER_EMAIL, DEMO_PASSWORD, { full_name: "Sample Owner" }, "super_admin");
   state.roleGrants = [{ email: DEMO_SUPER_EMAIL, role: "super_admin" }];
@@ -187,3 +194,81 @@ export const demoStudentId = (state: MockState) => state.users.find((u) => u.ema
 export const demoAdminId = (state: MockState) => state.users.find((u) => u.email === DEMO_ADMIN_EMAIL)?.id ?? null;
 export const demoRecruiterId = (state: MockState) => state.users.find((u) => u.email === DEMO_RECRUITER_EMAIL)?.id ?? null;
 export const demoSuperId = (state: MockState) => state.users.find((u) => u.email === DEMO_SUPER_EMAIL)?.id ?? null;
+export const demoVerifiedRecruiterId = (state: MockState) => state.users.find((u) => u.email === DEMO_VERIFIED_RECRUITER_EMAIL)?.id ?? null;
+export const demoTalentStudentId = (state: MockState) => state.users.find((u) => u.email === DEMO_TALENT_STUDENT_EMAIL)?.id ?? null;
+
+// ---- talent profiles and evaluations (migration 0007). Eight fictional students: five opted in, three stay hidden.
+type Talent = { letter: string; city: string; country: string; grad: number; programs: string[]; skills: Record<string, string>; visible: boolean; linkedin?: boolean; portfolio?: boolean };
+const talent: Talent[] = [
+  { letter: "A", city: "Fort Worth", country: "USA", grad: year, programs: ["revit-mep"], skills: { Revit: "Intermediate", Navisworks: "Beginner", AutoCAD: "Intermediate" }, visible: true, linkedin: true },
+  { letter: "B", city: "Dallas", country: "USA", grad: year - 1, programs: ["vdc-professional-bootcamp"], skills: { Revit: "Advanced", Navisworks: "Intermediate", Dynamo: "Beginner" }, visible: true, linkedin: true, portfolio: true },
+  { letter: "C", city: "Arlington", country: "USA", grad: year, programs: ["revit-architecture", "revit-family-creation"], skills: { Revit: "Intermediate", AutoCAD: "Advanced" }, visible: true },
+  { letter: "D", city: "Austin", country: "USA", grad: year - 2, programs: ["navisworks-clash-detection"], skills: { Navisworks: "Advanced", Revit: "Intermediate" }, visible: true, portfolio: true },
+  { letter: "E", city: "Houston", country: "USA", grad: year + 1, programs: ["bim-fundamentals-revit"], skills: { Revit: "Beginner", AutoCAD: "Beginner" }, visible: true },
+  { letter: "F", city: "Plano", country: "USA", grad: year - 1, programs: ["revit-structure"], skills: { Revit: "Intermediate" }, visible: false },
+  { letter: "G", city: "Irving", country: "USA", grad: year, programs: ["low-voltage-bim"], skills: { Revit: "Beginner", Navisworks: "None" }, visible: false },
+  { letter: "H", city: "San Antonio", country: "USA", grad: year - 3, programs: ["dynamo-for-revit"], skills: { Dynamo: "Advanced", Revit: "Advanced" }, visible: false },
+];
+
+// recruiter = index into the recruiter list above (0 is Sample Recruiter 01 ... 5 is Sample Recruiter 06)
+type SeededEvaluation = { student: string; recruiter: number; context: string; status: "submitted" | "published" | "hidden"; scores: number[]; overall: number; rec: string; strengths: string; improvements: string; privateNote: string; showCompany: boolean; daysAgo: number; hideNote?: string };
+const CRITERION_ORDER = ["modeling", "coordination", "standards", "communication", "professionalism", "portfolio"];
+const evaluationSeed: SeededEvaluation[] = [
+  { student: "A", recruiter: 1, context: "portfolio_review", status: "published", scores: [4, 4, 5, 4, 5, 4], overall: 4, rec: "yes", strengths: "Clean, well named families and a tidy sheet set. The MEP model followed the standard we asked for.", improvements: "Show more coordination work across disciplines, not only single-discipline models.", privateNote: "Sample note: would interview for the coordinator role next quarter.", showCompany: true, daysAgo: 6 },
+  { student: "A", recruiter: 4, context: "interview", status: "published", scores: [4, 3, 4, 5, 5, 4], overall: 4, rec: "strong_yes", strengths: "Explained a clash decision clearly and calmly. Asked good questions about our model standards.", improvements: "Practice walking through a full model review in under ten minutes.", privateNote: "Sample note: salary expectation is in range.", showCompany: false, daysAgo: 3 },
+  { student: "A", recruiter: 5, context: "project_review", status: "submitted", scores: [3, 3, 4, 4, 4, 3], overall: 3, rec: "maybe", strengths: "Solid duct routing and a good eye for clearances on the sample project.", improvements: "Documentation was thin. Add notes for every sheet you issue.", privateNote: "Sample note: wait for the next cohort project before deciding.", showCompany: true, daysAgo: 0 },
+  { student: "B", recruiter: 1, context: "project_review", status: "submitted", scores: [5, 4, 4, 4, 5, 5], overall: 5, rec: "strong_yes", strengths: "Strong model accuracy and a real portfolio. The coordination log was easy to follow.", improvements: "Be more confident when presenting trade-offs to a senior reviewer.", privateNote: "Sample note: fast track to a second interview.", showCompany: true, daysAgo: 1 },
+  { student: "B", recruiter: 4, context: "portfolio_review", status: "published", scores: [5, 5, 4, 4, 4, 5], overall: 5, rec: "strong_yes", strengths: "The best clash resolution story in this batch, with before and after views.", improvements: "Tidy the naming of linked files so another team can open them without help.", privateNote: "Sample note: send the offer template.", showCompany: true, daysAgo: 8 },
+  { student: "C", recruiter: 1, context: "portfolio_review", status: "submitted", scores: [4, 3, 3, 4, 4, 4], overall: 4, rec: "yes", strengths: "Careful architectural families and good attention to levels and grids.", improvements: "Learn the naming standard we use for sheets and views.", privateNote: "Sample note: check availability in March.", showCompany: true, daysAgo: 2 },
+  { student: "D", recruiter: 1, context: "interview", status: "hidden", scores: [3, 3, 3, 3, 3, 3], overall: 3, rec: "maybe", strengths: "Fine, a good start overall.", improvements: "More detail please, in every box.", privateNote: "Sample note: too short to publish.", showCompany: true, daysAgo: 5, hideNote: "Please describe the work you reviewed and give one example in each box." },
+  { student: "D", recruiter: 5, context: "worked_together", status: "published", scores: [4, 5, 4, 3, 4, 4], overall: 4, rec: "yes", strengths: "Found and fixed three clashes on a shared model without being asked.", improvements: "Update the team earlier when a deadline is at risk.", privateNote: "Sample note: good fit for a coordination assistant role.", showCompany: true, daysAgo: 10 },
+  { student: "E", recruiter: 4, context: "portfolio_review", status: "submitted", scores: [3, 2, 3, 4, 4, 3], overall: 3, rec: "not_now", strengths: "Friendly and quick to learn. The first models are accurate for a beginner.", improvements: "Needs more practice before a junior role. Finish the bootcamp project first.", privateNote: "Sample note: revisit after the next cohort.", showCompany: true, daysAgo: 1 },
+];
+
+function seedTalent(state: MockState, adminId: string, recruiterIds: string[]) {
+  const ids: Record<string, string> = {};
+  talent.forEach((t, i) => {
+    const name = `Sample Student ${t.letter}`;
+    const email = `student${t.letter.toLowerCase()}@example.com`;
+    const phone = `+1 555 030 0${i}0${i}`;
+    const userId = seedUser(state, email, DEMO_PASSWORD, { full_name: name, current_status: "fresh_grad" }, "student", {
+      profile: {
+        phone,
+        whatsapp: phone,
+        city: t.city,
+        country: t.country,
+        graduation_year: t.grad,
+        linkedin_url: t.linkedin ? `https://www.linkedin.com/in/sample-student-${t.letter.toLowerCase()}` : null,
+        portfolio_url: t.portfolio ? `https://example.com/portfolio-${t.letter.toLowerCase()}` : null,
+        talent_visible: t.visible,
+        talent_consent_at: t.visible ? at(12 - i) : null,
+        created_at: at(40 - i),
+      },
+    });
+    ids[t.letter] = userId;
+    const submitted = at(30 - i);
+    state.tables.applications.push({
+      id: `aaaaaaaa-0000-4000-8000-0000000002${String(i).padStart(2, "0")}`,
+      user_id: userId, status: "enrolled", created_at: submitted, updated_at: submitted, submitted_at: submitted,
+      full_name: name, email, phone, whatsapp: null, country: t.country, city: t.city, dob_or_age: "22 to 25", language: "English", current_status: "Fresh graduate",
+      degree: "Architecture", university: "Sample University", graduation_year: t.grad, gpa: null, experience_years: "None", job_title: null, company: null, software_skills: t.skills, career_goal: "BIM Coordinator",
+      linkedin_url: null, portfolio_url: null, programs: t.programs, format: "Online live", schedule: "Evenings", start_pref: "Next cohort", has_laptop: "Yes", source: "LinkedIn",
+      discount_type: null, discount_percent: 0, discount_status: "none", discount_verified: false, proof_file_path: null, cv_file_path: null, consent_privacy: true, consent_contact: true,
+      newsletter: false, notes: null, utm: null, turnstile_ok: true,
+    });
+  });
+  evaluationSeed.forEach((e, n) => {
+    const sent = at(e.daysAgo);
+    const decided = e.status !== "submitted";
+    const decidedAt = at(Math.max(0, e.daysAgo - 1));
+    state.tables.student_evaluations.push({
+      id: `eeeeeeee-0000-4000-8000-${String(n + 1).padStart(12, "0")}`,
+      student_id: ids[e.student], recruiter_id: recruiterIds[e.recruiter], application_id: null, context: e.context,
+      scores: Object.fromEntries(CRITERION_ORDER.map((k, i) => [k, e.scores[i]])), overall: e.overall, recommendation: e.rec,
+      strengths: e.strengths, improvements: e.improvements, private_note: e.privateNote, show_company_name: e.showCompany,
+      status: e.status, moderation_note: e.hideNote ?? null, moderated_by: decided ? adminId : null, moderated_at: decided ? decidedAt : null,
+      published_at: e.status === "published" ? decidedAt : null, notified_at: e.status === "published" ? decidedAt : null,
+      created_at: sent, updated_at: sent,
+    });
+  });
+}

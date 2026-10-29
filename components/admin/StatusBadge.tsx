@@ -1,4 +1,4 @@
-import { type ApplicationStatus, type DiscountStatus, type HiringStatus, type VerificationStatus, discountStatusLabel, hiringStatusLabel, statusLabel, verificationLabel } from "@/lib/db";
+import { type ApplicationStatus, type DiscountStatus, type EvaluationStatus, type HiringStatus, type VerificationStatus, discountStatusLabel, evaluationStatusLabel, hiringStatusLabel, statusLabel, verificationLabel } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
 // Status and discount badges in the Tag voice: mono, 4px radius. Blueprint for verified or moving forward,
@@ -76,6 +76,17 @@ export function HiringBadge({ status, className }: { status: HiringStatus | stri
   return (
     <Badge tone={hiringTone[s] ?? "outline"} className={className}>
       {hiringStatusLabel[s] ?? status}
+    </Badge>
+  );
+}
+
+const evaluationTone: Record<EvaluationStatus, Tone> = { submitted: "brass", published: "blueprint", hidden: "outline" };
+
+export function EvaluationBadge({ status, className }: { status: EvaluationStatus | string; className?: string }) {
+  const s = status as EvaluationStatus;
+  return (
+    <Badge tone={evaluationTone[s] ?? "outline"} className={className}>
+      {evaluationStatusLabel[s] ?? status}
     </Badge>
   );
 }

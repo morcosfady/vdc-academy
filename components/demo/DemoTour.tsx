@@ -55,7 +55,7 @@ const cards = [
   {
     n: "06",
     title: "Recruiter dashboard",
-    text: "Sample Company A is pending verification: the banner, the company card, a hiring request form and the talent pool teaser.",
+    text: "Sample Company A is pending verification: the banner, the company card, a hiring request form and the talent section, which opens after verification.",
     hint: `Logged in as ${DEMO_RECRUITER_EMAIL}.`,
     action: "Open the recruiter dashboard",
     go: () => demo.asRecruiter("/account/"),
@@ -94,6 +94,33 @@ const cards = [
     action: "Open the calendar",
     go: () => demo.asGuest("/calendar/"),
   },
+  {
+    n: "11",
+    title: "Recruiter evaluates a student",
+    text: "Sample Company B is verified. The talent list shows only students who opted in, with no email or phone. Open one, score six criteria, write strengths and send it for review.",
+    hint: "Logged in as recruiter02@example.com.",
+    action: "Open the talent list",
+    go: () => demo.asVerifiedRecruiter("/account/#talent"),
+    second: { label: "Unverified view", go: () => demo.asRecruiter("/account/#talent") },
+  },
+  {
+    n: "12",
+    title: "Student sees an evaluation",
+    text: "Sample Student A opted in and has three published evaluations: scores as thin lines, strengths, what to work on. The private note never appears. Switch visibility off on the profile and the student leaves the talent list.",
+    hint: "Logged in as studenta@example.com.",
+    action: "Open the evaluations card",
+    go: () => demo.asTalentStudent("/account/#evaluations"),
+    second: { label: "Visibility switch", go: () => demo.asTalentStudent("/account/profile/#visibility") },
+  },
+  {
+    n: "13",
+    title: "Admin moderates evaluations",
+    text: "Four evaluations wait for review. Open one, read it with the private note, then publish it or hide it with a required note. Then open card 12 or 11 to see the result.",
+    hint: `Logged in as ${DEMO_ADMIN_EMAIL}.`,
+    action: "Open the review queue",
+    go: () => demo.asAdmin("/admin/evaluations/?status=submitted"),
+    second: { label: "All evaluations", go: () => demo.asAdmin("/admin/evaluations/") },
+  },
 ];
 
 export function DemoTour() {
@@ -108,7 +135,7 @@ export function DemoTour() {
             <SheetTag sheet="D-000" name="Client demo" />
             <h1 className="t-h1 mt-8 max-w-[16ch]">The full experience, before the backend is live.</h1>
             <p className="t-lead mt-6 max-w-[52ch]">
-              Ten short scenes: a student and a recruiter register, a student applies and follows their status, the academy team reviews it all, and the public calendar shows what is on. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
+              Thirteen short scenes: a student and a recruiter register, a student applies and follows their status, verified recruiters evaluate students who chose to be seen, and the public calendar shows what is on, and the academy team reviews it all. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
             </p>
           </div>
           <div className="lg:col-span-4 lg:col-start-9">
@@ -119,7 +146,7 @@ export function DemoTour() {
                 ["Admin", DEMO_ADMIN_EMAIL],
                 ["Super admin", DEMO_SUPER_EMAIL],
                 ["Password", DEMO_PASSWORD],
-                ["Data", "16 applications, 4 recruiters, 3 hiring requests"],
+                ["Data", "24 applications, 6 recruiters, 3 hiring requests, 8 students (5 visible), 9 evaluations"],
               ].map(([k, v]) => (
                 <div key={k} className="grid grid-cols-[88px_1fr] gap-4 border-b py-3" style={rule}>
                   <dt className="mono pt-1">{k}</dt>
