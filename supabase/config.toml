@@ -1,7 +1,7 @@
 # Supabase CLI config (only what this project needs). `supabase link --project-ref <ref>` fills project_id.
 project_id = "vdc-academy"
 
-# All five functions are called from the browser with `supabase.functions.invoke(name, { body })`, which sends
+# All six functions are called from the browser with `supabase.functions.invoke(name, { body })`, which sends
 # the caller's JWT (a signed-in user's session, or the anon key for public forms). The gateway checks that the
 # token is valid; each function then decides who may do what (see the comment at the top of each index.ts).
 [functions.on-application-submitted]
@@ -18,4 +18,8 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.on-recruiter-verified]
+verify_jwt = true
+
+# v10 evaluations: the admin evaluations page tells the student an evaluation was published (admin only).
+[functions.on-evaluation-published]
 verify_jwt = true

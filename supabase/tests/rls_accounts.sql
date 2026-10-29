@@ -6,8 +6,10 @@
 -- results table that is returned at the end. Safe to run more than once: the throwaway rows are removed at the
 -- end, and at the start in case an earlier run stopped half way.
 --
--- Requires 0004 and 0005. Checks 16 to 30 cover v9: recruiters, hiring requests, role grants (super admin only after
--- the email is confirmed) and the rule that onboarding_complete needs every required field.
+-- Requires 0004 to 0007. Checks 16 to 30 cover v9: recruiters, hiring requests, role grants (super admin only after
+-- the email is confirmed) and the rule that onboarding_complete needs every required field. Checks 31 to 49 cover
+-- 0007: the student opt-in, the talent list, evaluations by verified recruiters, moderation, the student-safe view
+-- (no private note) and the daily cap of 20 evaluations per recruiter.
 --
 -- If the `insert into auth.users` below fails on your project, create the three users by hand instead:
 -- Dashboard > Authentication > Users > Add user > Create new user, "Auto confirm user" on, with the emails
@@ -34,9 +36,13 @@ declare
   app_a_draft uuid; app_a_sub uuid; app_b_draft uuid;
   owner uuid; lead_id uuid;
   n int; n2 int; txt text;
+  r2 uuid; claims_r2 text; ev1 uuid; ev2 uuid; caps uuid[]; i int;
+  sc jsonb := '{"modeling":4,"coordination":4,"standards":4,"communication":4,"professionalism":4,"portfolio":4}';
+  ctxs text[] := array['portfolio_review','interview','project_review','worked_together'];
 begin
-  -- 0. Clean up an earlier run (cascades: profiles, applications, events, deletion requests).
-  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid', 'rls-test-recruiter@example.invalid', 'rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
+  -- 0. Clean up an earlier run (cascades: profiles, applications, events, deletion requests, evaluations).
+  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid', 'rls-test-recruiter@example.invalid', 'rls-test-recruiter2@example.invalid', 'rls-test-owner@example.invalid', 'rls-test-super@example.invalid')
+    or email like 'rls-test-cap-%@example.invalid';
   delete from public.leads where email = 'rls-test-lead@example.invalid';
   delete from public.role_grants where email in ('rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
 
@@ -588,10 +594,428 @@ begin
     perform pg_temp.rls_check('role grants readable by super admins only', false, sqlerrm);
   end;
 
-  -- 2. Clean up. Deleting the users cascades to profiles, applications, events and deletion requests.
+  -- v10: evaluations (migration 0007) ---------------------------------------------------------------------------
+  -- A second recruiter, unverified for now. The verified recruiter from T29 is r; student A is the one evaluated.
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+  values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-recruiter2@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+    '{"account_type":"recruiter","full_name":"Test Recruiter Two","phone":"+1 555 010 0004","country":"USA","city":"Austin","heard_from":"google","job_title":"Talent Partner","company_name":"Test Company Two","company_website":"https://example.com","company_type":"ae_firm","company_size":"11-50","linkedin_url":"https://www.linkedin.com/in/test-recruiter-two","hiring_roles":["bim_modeler"],"expected_hires":"1","consent_terms":true,"consent_contact":true,"authorised_confirmed":true}',
+    now(), now(), '', '', '', '');
+  select id into r2 from auth.users where email = 'rls-test-recruiter2@example.invalid';
+  claims_r2 := json_build_object('sub', r2, 'role', 'authenticated', 'email', 'rls-test-recruiter2@example.invalid')::text;
+
+  -- T31. Student A opts in, student B does not: a verified recruiter lists A only, shown as first name + last initial.
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    update public.profiles set talent_visible = true where id = a;
+    reset role;
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    select count(*) into n from public.talent_cards where student_id = a;
+    select count(*) into n2 from public.talent_cards where student_id = b;
+    select display_name into txt from public.talent_cards where student_id = a;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select talent_consent_at is not null into ok from public.profiles where id = a;
+    perform pg_temp.rls_check('opted-in student is on the talent list, a student who did not opt in is not', n = 1 and n2 = 0 and coalesce(txt, '') = 'Test A.' and coalesce(ok, false), format('opted in=%s, not opted in=%s, shown as %s, consent stamped=%s', n, n2, coalesce(txt, 'null'), coalesce(ok::text, 'null')));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('opted-in student is on the talent list, a student who did not opt in is not', false, sqlerrm);
+  end;
+
+  -- T32. The talent list has no email, phone, full name, birth date, photo or university column.
+  begin
+    select count(*) into n from information_schema.columns where table_schema = 'public' and table_name = 'talent_cards'
+      and column_name in ('email', 'phone', 'whatsapp', 'full_name', 'date_of_birth', 'avatar_path', 'university', 'id', 'role', 'age_range');
+    select count(*) into n2 from information_schema.columns where table_schema = 'public' and table_name = 'talent_cards';
+    perform pg_temp.rls_check('talent list exposes only the safe columns', n = 0 and n2 = 9, format('private columns=%s, total columns=%s', n, n2));
+  exception when others then
+    perform pg_temp.rls_check('talent list exposes only the safe columns', false, sqlerrm);
+  end;
+
+  -- T33. Only a student account can opt in, and nobody can opt a student in or out for them (not even an admin).
+  begin
+    ok := false;
+    begin
+      perform set_config('request.jwt.claims', claims_r, true);
+      set local role authenticated;
+      update public.profiles set talent_visible = true where id = r;
+      reset role;
+    exception when others then reset role; ok := sqlerrm like '%only student accounts%';
+    end;
+    perform set_config('request.jwt.claims', claims_adm, true);
+    set local role authenticated;
+    update public.profiles set talent_visible = true where id = b;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select (select talent_visible from public.profiles where id = b) = false and (select talent_visible from public.profiles where id = r) = false and ok into ok;
+    perform pg_temp.rls_check('only a student can opt in, and only for themselves', coalesce(ok, false), '');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('only a student can opt in, and only for themselves', false, sqlerrm);
+  end;
+
+  -- T34. An unverified recruiter sees no students and cannot write an evaluation.
+  begin
+    ok := false;
+    perform set_config('request.jwt.claims', claims_r2, true);
+    set local role authenticated;
+    select count(*) into n from public.talent_cards;
+    begin
+      insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation, strengths, improvements)
+      values (a, r2, 'interview', sc, 4, 'yes', 'Clear models.', 'More detail on schedules.');
+      reset role;
+    exception when others then reset role; ok := sqlerrm ilike '%row-level security%';
+    end;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('unverified recruiter reads no talent and cannot evaluate', n = 0 and ok, format('talent rows=%s, insert refused=%s', n, ok));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('unverified recruiter reads no talent and cannot evaluate', false, sqlerrm);
+  end;
+
+  -- T35. Students and anonymous visitors cannot read the talent list or the evaluations table.
+  begin
+    perform set_config('request.jwt.claims', claims_b, true);
+    set local role authenticated;
+    select count(*) into n from public.talent_cards;
+    reset role;
+    ok := true;
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    begin
+      set local role anon;
+      perform count(*) from public.talent_cards;
+      reset role;
+      ok := false;
+    exception when others then reset role; ok := ok and sqlerrm ilike '%permission denied%';
+    end;
+    begin
+      set local role anon;
+      perform count(*) from public.student_evaluations;
+      reset role;
+      ok := false;
+    exception when others then reset role; ok := ok and sqlerrm ilike '%permission denied%';
+    end;
+    begin
+      set local role anon;
+      perform count(*) from public.my_evaluations;
+      reset role;
+      ok := false;
+    exception when others then reset role; ok := ok and sqlerrm ilike '%permission denied%';
+    end;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('students and anonymous visitors cannot read the talent list or evaluations', n = 0 and ok, format('student sees %s talent rows, anon refused on all three=%s', n, ok));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('students and anonymous visitors cannot read the talent list or evaluations', false, sqlerrm);
+  end;
+
+  -- T36. A verified recruiter submits an evaluation; a forged status is forced back to submitted.
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation, strengths, improvements, private_note, status)
+    values (a, r, 'portfolio_review', sc, 4, 'yes', 'Clean, well named families.', 'Show more coordination work.', 'Ask about relocation.', 'published')
+    returning id, status into ev1, txt;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('verified recruiter submits an evaluation, status is forced to submitted', ev1 is not null and txt = 'submitted', 'status=' || coalesce(txt, 'null'));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('verified recruiter submits an evaluation, status is forced to submitted', false, sqlerrm);
+  end;
+
+  -- T37. Only an opted-in student can be evaluated (not a student who stayed hidden, not another recruiter).
+  begin
+    ok := false;
+    begin
+      perform set_config('request.jwt.claims', claims_r, true);
+      set local role authenticated;
+      insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation) values (b, r, 'interview', sc, 3, 'maybe');
+      reset role;
+    exception when others then reset role; ok := sqlerrm like '%not available%';
+    end;
+    if ok then
+      begin
+        perform set_config('request.jwt.claims', claims_r, true);
+        set local role authenticated;
+        insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation) values (r2, r, 'interview', sc, 3, 'maybe');
+        reset role;
+        ok := false;
+      exception when others then reset role; ok := sqlerrm like '%not available%';
+      end;
+    end if;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('only a student who opted in can be evaluated', ok, '');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('only a student who opted in can be evaluated', false, sqlerrm);
+  end;
+
+  -- T38. One evaluation per student, recruiter and context.
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation) values (a, r, 'portfolio_review', sc, 3, 'maybe');
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('one evaluation per student, recruiter and context', false, 'duplicate insert succeeded');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('one evaluation per student, recruiter and context', sqlerrm ilike '%duplicate key%', sqlerrm);
+  end;
+
+  -- T39. A second verified recruiter keeps a separate evaluation; neither reads the other's rows or private note.
+  begin
+    perform set_config('request.jwt.claims', claims_adm, true);
+    set local role authenticated;
+    update public.recruiter_profiles set verification_status = 'approved' where id = r2;
+    reset role;
+    perform set_config('request.jwt.claims', claims_r2, true);
+    set local role authenticated;
+    insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation, strengths, improvements, private_note)
+    values (a, r2, 'interview', sc, 3, 'maybe', 'Good communication.', 'Needs more Revit practice.', 'second recruiter private note')
+    returning id into ev2;
+    select count(*) into n from public.student_evaluations where id = ev1;
+    select count(*) into n2 from public.student_evaluations where recruiter_id <> r2;
+    ok := n = 0 and n2 = 0;
+    reset role;
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    select count(*) + (select count(*) from public.student_evaluations where private_note like 'second recruiter%') into n2 from public.student_evaluations where id = ev2 or recruiter_id <> r;
+    select count(*) into n from public.student_evaluations where recruiter_id = r;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a recruiter reads only their own evaluations and private notes', ev2 is not null and ok and n = 1 and n2 = 0, format('own rows=%s, rows of the other recruiter=%s, the other side blind=%s', n, n2, ok));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a recruiter reads only their own evaluations and private notes', false, sqlerrm);
+  end;
+
+  -- T40. The recruiter edits a submitted evaluation but cannot move it to another student, another author or a new status.
+  begin
+    ok := true;
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    update public.student_evaluations set strengths = 'Clean, well named families and sheets.', status = 'published' where id = ev1;
+    get diagnostics n = row_count;
+    begin
+      update public.student_evaluations set student_id = b where id = ev1;
+      reset role;
+      ok := false;
+    exception when others then reset role; ok := ok and sqlerrm like '%never change%';
+    end;
+    begin
+      set local role authenticated;
+      update public.student_evaluations set recruiter_id = r2 where id = ev1;
+      reset role;
+      ok := false;
+    exception when others then reset role; ok := ok and sqlerrm like '%never change%';
+    end;
+    perform set_config('request.jwt.claims', '', true);
+    select status || '/' || strengths into txt from public.student_evaluations where id = ev1;
+    perform pg_temp.rls_check('recruiter edits own submission but cannot change status or ids', n = 1 and ok and txt = 'submitted/Clean, well named families and sheets.', format('edited rows=%s, row=%s', n, coalesce(txt, 'null')));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('recruiter edits own submission but cannot change status or ids', false, sqlerrm);
+  end;
+
+  -- T41. The student sees no submitted evaluation: not in the table, not in the safe view; and cannot write one.
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    select count(*) into n from public.student_evaluations;
+    select count(*) into n2 from public.my_evaluations;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student cannot read a submitted evaluation about themselves', n = 0 and n2 = 0, format('table rows=%s, view rows=%s', n, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student cannot read a submitted evaluation about themselves', false, sqlerrm);
+  end;
+
+  -- T42. A student can neither insert nor edit an evaluation (the insert is aimed at their own opted-in record, so
+  --      the guard lets it through and Row Level Security is what refuses it).
+  begin
+    ok := false;
+    begin
+      perform set_config('request.jwt.claims', claims_a, true);
+      set local role authenticated;
+      insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation) values (a, a, 'interview', sc, 5, 'strong_yes');
+      reset role;
+    exception when others then reset role; ok := sqlerrm ilike '%row-level security%';
+    end;
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    update public.student_evaluations set overall = 5, status = 'published' where id = ev1;
+    get diagnostics n = row_count;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select status into txt from public.student_evaluations where id = ev1;
+    perform pg_temp.rls_check('student cannot insert or edit evaluations', ok and n = 0 and txt = 'submitted', format('insert refused=%s, rows edited=%s, status=%s', ok, n, coalesce(txt, 'null')));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student cannot insert or edit evaluations', false, sqlerrm);
+  end;
+
+  -- T43. An admin publishes one evaluation and hides the other (a note is required); the recruiter's words stay as written.
+  begin
+    ok := false;
+    perform set_config('request.jwt.claims', claims_adm, true);
+    set local role authenticated;
+    update public.student_evaluations set status = 'published', strengths = 'rewritten by an admin' where id = ev1;
+    get diagnostics n = row_count;
+    begin
+      update public.student_evaluations set status = 'hidden' where id = ev2;
+      reset role;
+    exception when others then reset role; ok := sqlerrm like '%note is required%';
+    end;
+    set local role authenticated;
+    update public.student_evaluations set status = 'hidden', moderation_note = 'Please describe the work you reviewed.' where id = ev2;
+    get diagnostics n2 = row_count;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select (status = 'published' and published_at is not null and moderated_by = adm and strengths = 'Clean, well named families and sheets.' and ok and (select status from public.student_evaluations where id = ev2) = 'hidden') into ok from public.student_evaluations where id = ev1;
+    perform pg_temp.rls_check('admin publishes and hides evaluations, hiding needs a note', n = 1 and n2 = 1 and coalesce(ok, false), format('published rows=%s, hidden rows=%s', n, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('admin publishes and hides evaluations, hiding needs a note', false, sqlerrm);
+  end;
+
+  -- T44. The student reads the published evaluation (and not the hidden one) with the company name.
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    select count(*) into n from public.my_evaluations;
+    select company_name into txt from public.my_evaluations where id = ev1;
+    select count(*) into n2 from public.my_evaluations where id = ev2;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student reads only published evaluations, with the company name', n = 1 and n2 = 0 and txt = 'Test Company', format('published rows=%s, hidden rows=%s, company=%s', n, n2, coalesce(txt, 'null')));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student reads only published evaluations, with the company name', false, sqlerrm);
+  end;
+
+  -- T45. The student's queries can never return the private note, the recruiter or the moderation columns.
+  begin
+    ok := false;
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    select count(*) into n from public.student_evaluations where private_note <> '';
+    begin
+      perform private_note from public.my_evaluations;
+      reset role;
+    exception when others then reset role; ok := sqlerrm like '%private_note%';
+    end;
+    perform set_config('request.jwt.claims', '', true);
+    select count(*) into n2 from information_schema.columns where table_schema = 'public' and table_name = 'my_evaluations'
+      and column_name in ('private_note', 'recruiter_id', 'student_id', 'moderation_note', 'moderated_by', 'status', 'notified_at');
+    perform pg_temp.rls_check('the student view never exposes the private note', n = 0 and ok and n2 = 0, format('rows with a private note via the table=%s, view query refused=%s, private columns in the view=%s', n, ok, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('the student view never exposes the private note', false, sqlerrm);
+  end;
+
+  -- T46. A published evaluation is locked for its author.
+  begin
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    update public.student_evaluations set strengths = 'changed after publishing', overall = 1 where id = ev1;
+    get diagnostics n = row_count;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select strengths into txt from public.student_evaluations where id = ev1;
+    perform pg_temp.rls_check('a published evaluation is locked for its author', n = 0 and txt = 'Clean, well named families and sheets.', format('rows edited=%s', n));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a published evaluation is locked for its author', false, sqlerrm);
+  end;
+
+  -- T47. "Show my company name" off: the student sees no company.
+  begin
+    update public.student_evaluations set show_company_name = false where id = ev1;
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    select count(*) into n from public.my_evaluations where id = ev1 and company_name is null;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('company name is hidden when the recruiter chose so', n = 1, format('rows without a company=%s', n));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('company name is hidden when the recruiter chose so', false, sqlerrm);
+  end;
+
+  -- T48. The student turns the opt-in off: gone from the talent list, the published evaluation stays.
+  begin
+    perform set_config('request.jwt.claims', claims_a, true);
+    set local role authenticated;
+    update public.profiles set talent_visible = false where id = a;
+    select count(*) into n2 from public.my_evaluations;
+    reset role;
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    select count(*) into n from public.talent_cards where student_id = a;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    select talent_consent_at is null into ok from public.profiles where id = a;
+    perform pg_temp.rls_check('opting out hides the student but keeps published evaluations', n = 0 and n2 = 1 and coalesce(ok, false), format('talent rows=%s, evaluations kept=%s', n, n2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('opting out hides the student but keeps published evaluations', false, sqlerrm);
+  end;
+
+  -- T49. At most 20 evaluations per recruiter per day: the 21st is refused.
+  begin
+    select count(*) into n from public.student_evaluations where recruiter_id = r;
+    insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+    select '00000000-0000-0000-0000-000000000000'::uuid, gen_random_uuid(), 'authenticated'::text, 'authenticated'::text, ('rls-test-cap-' || g || '@example.invalid')::text, extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}'::jsonb, ('{"full_name":"Test Cap ' || g || '"}')::jsonb, now(), now(), ''::text, ''::text, ''::text, ''::text
+    from generate_series(1, 6) as g;
+    select array_agg(id order by email) into caps from auth.users where email like 'rls-test-cap-%@example.invalid';
+    update public.profiles set account_type = 'student', talent_visible = true where id = any(caps);
+    perform set_config('request.jwt.claims', claims_r, true);
+    set local role authenticated;
+    for i in 1..(20 - n) loop
+      insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation)
+      values (caps[((i - 1) / 4) + 1], r, ctxs[((i - 1) % 4) + 1], sc, 3, 'maybe');
+    end loop;
+    select count(*) into n2 from public.student_evaluations where recruiter_id = r;
+    ok := false;
+    begin
+      insert into public.student_evaluations (student_id, recruiter_id, context, scores, overall, recommendation) values (caps[6], r, 'portfolio_review', sc, 3, 'maybe');
+    exception when others then ok := sqlerrm like '%daily limit%';
+    end;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('the 21st evaluation of a day is refused', n2 = 20 and ok, format('evaluations before the last attempt=%s, refused=%s', n2, ok));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('the 21st evaluation of a day is refused', false, sqlerrm);
+  end;
+
+  -- 2. Clean up. Deleting the users cascades to profiles, applications, events, deletion requests and evaluations.
   reset role;
   perform set_config('request.jwt.claims', '', true);
-  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid', 'rls-test-recruiter@example.invalid', 'rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
+  delete from auth.users where email in ('rls-test-a@example.invalid', 'rls-test-b@example.invalid', 'rls-test-admin@example.invalid', 'rls-test-recruiter@example.invalid', 'rls-test-recruiter2@example.invalid', 'rls-test-owner@example.invalid', 'rls-test-super@example.invalid')
+    or email like 'rls-test-cap-%@example.invalid';
   delete from public.leads where id = lead_id;
   delete from public.role_grants where email in ('rls-test-owner@example.invalid', 'rls-test-super@example.invalid');
 
