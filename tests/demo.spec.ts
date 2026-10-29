@@ -147,3 +147,24 @@ test("the demo super admin has the badge and the same admin screens", async ({ p
   const email = await page.evaluate(() => JSON.parse(localStorage.getItem("vdc-demo-state") ?? "{}").roleGrants?.[0]?.email);
   expect(email).toBe("owner@example.com");
 });
+
+// The instructor sample sign-up in the demo: Fill sample data creates a confirmed instructor and the dashboard opens, with no
+// call to a real Supabase.
+test("demo: Fill sample data signs up an instructor and the pending dashboard opens", async ({ page }) => {
+  const leaks = await noNetworkToSupabase(page);
+  await page.goto("demo/");
+  await page.getByRole("button", { name: "Register as an instructor" }).click();
+  await page.waitForURL(/\/signup\/\?as=instructor/);
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByTestId("fill-sample").click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.locator('input[name="consent_terms"]').check();
+  await page.locator('input[name="consent_contact"]').check();
+  await page.locator('input[name="authorised_confirmed"]').check();
+  await page.getByRole("button", { name: "Create account" }).click();
+  await page.waitForURL(/\/account\/$/, { timeout: 15000 });
+  await expect(page.getByTestId("verification-banner")).toHaveAttribute("data-status", "pending");
+  expect(leaks).toEqual([]);
+});
