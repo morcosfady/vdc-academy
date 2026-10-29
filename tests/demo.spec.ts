@@ -20,7 +20,7 @@ test("the tour page turns the demo on, the banner shows everywhere, exit turns i
   const leaks = await noNetworkToSupabase(page);
   await page.goto("demo/");
   await expect(page.getByRole("heading", { name: /full experience/ })).toBeVisible();
-  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(9);
+  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(10);
   await expect(page.getByText("Demo is off")).toBeVisible();
   await page.getByTestId("demo-start").click();
   await page.waitForLoadState("networkidle");

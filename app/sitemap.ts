@@ -7,7 +7,7 @@ export const dynamic = "force-static";
 
 // Public routes only. Anything in PRIVATE_ROUTES (account, admin, demo, tools) never appears here.
 export default function sitemap(): MetadataRoute.Sitemap {
-  const pages = ["", "programs", "pricing", "fresh-graduates", "learning-path", "for-companies", "about", "contact", "faq", "apply", "privacy", "terms", "accessibility"];
+  const pages = ["", "programs", "calendar", "pricing", "fresh-graduates", "learning-path", "for-companies", "about", "contact", "faq", "apply", "privacy", "terms", "accessibility"];
   if (hasInstructors()) pages.push("instructors");
   if (hasStudentWork()) pages.push("student-work");
   const urls = [...pages.map((p) => `/${p}${p ? "/" : ""}`), ...programs.map((p) => `/programs/${p.slug}/`)].filter((u) => !PRIVATE_ROUTES.some((r) => u.startsWith(r)));

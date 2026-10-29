@@ -23,6 +23,7 @@ export const site = {
   // Full menu adds the rest.
   menu: [
     { href: "/programs", label: "Programs" },
+    { href: "/calendar", label: "Calendar" },
     { href: "/fresh-graduates", label: "Fresh Grads" },
     { href: "/pricing", label: "Pricing" },
     { href: "/learning-path", label: "Learning Path" },

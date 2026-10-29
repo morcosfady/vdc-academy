@@ -86,6 +86,14 @@ const cards = [
     go: () => demo.asSuperAdmin("/admin/recruiters/"),
     second: { label: "Users table", go: () => demo.asSuperAdmin("/admin/users/") },
   },
+  {
+    n: "10",
+    title: "Calendar",
+    text: "What is on, day by day: live sessions, info sessions, workshops, deadlines and cohort starts. Month grid or agenda, filters, Add to calendar.",
+    hint: "Public page, no log-in. The dates are a sample until real ones are confirmed.",
+    action: "Open the calendar",
+    go: () => demo.asGuest("/calendar/"),
+  },
 ];
 
 export function DemoTour() {
@@ -100,7 +108,7 @@ export function DemoTour() {
             <SheetTag sheet="D-000" name="Client demo" />
             <h1 className="t-h1 mt-8 max-w-[16ch]">The full experience, before the backend is live.</h1>
             <p className="t-lead mt-6 max-w-[52ch]">
-              Nine short scenes: a student and a recruiter register, a student applies and follows their status, and the academy team reviews it all. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
+              Ten short scenes: a student and a recruiter register, a student applies and follows their status, the academy team reviews it all, and the public calendar shows what is on. Everything here runs on sample data inside this browser. Nothing is saved, nothing is sent, no real account is touched.
             </p>
           </div>
           <div className="lg:col-span-4 lg:col-start-9">

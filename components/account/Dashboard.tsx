@@ -17,6 +17,7 @@ import { EmptyModel } from "./EmptyModel";
 import { Notice } from "./Notice";
 import { Block } from "./Skeleton";
 import { RecruiterDashboard } from "./RecruiterDashboard";
+import { UpcomingCard } from "@/components/calendar/UpcomingCard";
 
 const c = account.dashboard;
 
@@ -116,6 +117,7 @@ function Body() {
           <aside className="col-span-12 grid gap-6 lg:col-span-4 lg:col-start-9">
             <NextSteps apps={apps} profile={profile} className="card p-6" />
             <CompletenessMeter profile={profile} className="card p-6" />
+            <UpcomingCard className="card p-6" />
           </aside>
         </div>
         <Panel label={c.recommended} className="mt-20">
@@ -139,6 +141,7 @@ function Body() {
         <aside className="col-span-12 grid gap-6 self-start lg:col-span-4">
           <NextSteps apps={apps} profile={profile} className="card p-6" />
           <CompletenessMeter profile={profile} className="card p-6" />
+            <UpcomingCard className="card p-6" />
         </aside>
       </div>
 

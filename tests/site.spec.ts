@@ -5,7 +5,7 @@ const BASE = process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/";
 
 const routes = [
   "", "programs/", "programs/revit-mep/", "programs/vdc-professional-bootcamp/", "pricing/", "fresh-graduates/", "learning-path/",
-  "for-companies/", "about/", "contact/", "faq/", "privacy/", "terms/", "accessibility/", "instructors/", "student-work/", "apply/", "apply/?preview=1", "apply/success/", "nothing-here/", "styleguide/",
+  "for-companies/", "calendar/", "about/", "contact/", "faq/", "privacy/", "terms/", "accessibility/", "instructors/", "student-work/", "apply/", "apply/?preview=1", "apply/success/", "nothing-here/", "styleguide/",
 ];
 
 // Bracket placeholders like [PRICE] or [XX] must never reach a visitor.

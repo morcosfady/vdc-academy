@@ -26,6 +26,7 @@ export function Footer() {
   ];
   const academy = [
     { href: "/about", label: "About" },
+    { href: "/calendar", label: "Calendar" },
     { href: "/for-companies", label: "For companies" },
     ...(hasInstructors() ? [{ href: "/instructors", label: "Instructors" }] : []),
     ...(hasStudentWork() ? [{ href: "/student-work", label: "Student work" }] : []),
