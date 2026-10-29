@@ -35,6 +35,7 @@ import { Tag } from "@/components/ds/Chips";
 import { Check, TextareaField } from "@/components/forms/Field";
 import { Button } from "@/components/ui/Button";
 import { CheckGroup, DateField, OptSelect } from "./signup/fields";
+import { TalentConsent } from "@/components/evaluations/TalentConsent";
 import { account } from "@/content/copy-account";
 import { AccountShell, Panel } from "./AccountShell";
 import { CompletenessMeter } from "./CompletenessMeter";
@@ -381,6 +382,7 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
         </form>
 
         <div className="mt-20 grid gap-14">
+          {variant === "student" && <TalentConsent />}
           <EmailSection email={user.email ?? ""} />
           <PasswordSection />
           <DeleteSection userId={user.id} onDone={onDeleted} signOut={signOut} />

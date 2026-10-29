@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Stat } from "@/components/ds/Sections";
 import { Button } from "@/components/ui/Button";
 import { adminCopy } from "@/content/copy-admin";
+import { evaluations } from "@/content/copy-evaluations";
 import { PIPELINE, type ApplicationStatus, type HiringStatus, type VerificationStatus } from "@/lib/db";
 import { isRecruiter, isStudent, type RoleHolder } from "@/lib/roles";
 import { AdminSection, AdminShell } from "../AdminShell";
@@ -21,7 +22,7 @@ type Lite = { id: string; status: ApplicationStatus; submitted_at: string | null
 
 async function load() {
   const s = sb();
-  const [apps, leads, msgs, dels, people, recruiters, hiring] = await Promise.all([
+  const [apps, leads, msgs, dels, people, recruiters, hiring, awaiting] = await Promise.all([
     s.from("applications").select("id,status,submitted_at,created_at,discount_type,discount_status").neq("status", "draft").then((r) => unwrap<Lite[]>(r)),
     s.from("leads").select("id,handled").eq("handled", false).then((r) => unwrap<{ id: string }[]>(r)),
     s.from("contact_messages").select("id,handled").eq("handled", false).then((r) => unwrap<{ id: string }[]>(r)),
@@ -29,6 +30,7 @@ async function load() {
     s.from("profiles").select("id,role,account_type,created_at").then((r) => unwrap<(RoleHolder & { id: string; created_at: string })[]>(r)),
     s.from("recruiter_profiles").select("id,verification_status").eq("verification_status", "pending").then((r) => unwrap<{ id: string; verification_status: VerificationStatus }[]>(r)),
     s.from("hiring_requests").select("id,status").in("status", OPEN_HIRING).then((r) => unwrap<{ id: string; status: HiringStatus }[]>(r)),
+    s.from("student_evaluations").select("id,status").eq("status", "submitted").then((r) => unwrap<{ id: string }[]>(r)),
   ]);
   const weekAgo = Date.now() - 7 * 86400_000;
   const byStatus = Object.fromEntries(STATUSES.map((st) => [st, 0])) as Record<ApplicationStatus, number>;
@@ -40,7 +42,7 @@ async function load() {
   const newThisWeek = people.filter((p) => new Date(p.created_at).getTime() >= weekAgo);
   const studentsWeek = newThisWeek.filter((p) => isStudent(p)).length;
   const recruitersWeek = newThisWeek.filter((p) => isRecruiter(p)).length;
-  return { studentsWeek, recruitersWeek, recruitersPending: recruiters.length, hiringOpen: hiring.length, total, week, fresh, freshPct: total ? Math.round((fresh / total) * 100) : 0, pending, byStatus, leads: leads.length, messages: msgs.length, deletions: dels.length };
+  return { studentsWeek, recruitersWeek, recruitersPending: recruiters.length, hiringOpen: hiring.length, evaluationsAwaiting: awaiting.length, total, week, fresh, freshPct: total ? Math.round((fresh / total) * 100) : 0, pending, byStatus, leads: leads.length, messages: msgs.length, deletions: dels.length };
 }
 
 export function Overview() {
@@ -87,6 +89,11 @@ export function Overview() {
                 <StatCard testId="stat-hiring-open" value={d.hiringOpen} label={c.peopleStats.hiring} href="/admin/hiring/" />
               </>
             )}
+          </div>
+
+          <p className="mono mt-10">{evaluations.overview.label}</p>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {q.loading || !d ? <StatSkeleton /> : <StatCard testId="stat-evaluations-awaiting" value={d.evaluationsAwaiting} label={evaluations.overview.awaiting} href="/admin/evaluations/?status=submitted" />}
           </div>
 
           <div className="mt-14 grid gap-12 lg:grid-cols-12 lg:gap-8">

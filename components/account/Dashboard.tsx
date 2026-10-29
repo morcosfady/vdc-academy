@@ -17,6 +17,7 @@ import { EmptyModel } from "./EmptyModel";
 import { Notice } from "./Notice";
 import { Block } from "./Skeleton";
 import { RecruiterDashboard } from "./RecruiterDashboard";
+import { StudentEvaluations } from "@/components/evaluations/StudentEvaluations";
 
 const c = account.dashboard;
 
@@ -48,7 +49,7 @@ function StudentDashboard() {
 
 // Rendered only once the session is known (inside RequireAuth), so `user` is set.
 function Body() {
-  const { user, profile } = useAuth();
+  const { user, profile, isStudent } = useAuth();
   const [apps, setApps] = useState<Application[] | null>(null);
   const [events, setEvents] = useState<ApplicationEvent[]>([]);
   const [error, setError] = useState(false);
@@ -118,6 +119,7 @@ function Body() {
             <CompletenessMeter profile={profile} className="card p-6" />
           </aside>
         </div>
+        {isStudent && <StudentEvaluations className="mt-20" />}
         <Panel label={c.recommended} className="mt-20">
           <Recommended status={status} />
         </Panel>
@@ -151,6 +153,8 @@ function Body() {
           <DocumentsPanel app={latest} userId={user!.id} onChange={(a) => setApps((list) => (list ?? []).map((x) => (x.id === a.id ? a : x)))} />
         </Panel>
       </div>
+
+      {isStudent && <StudentEvaluations className="mt-20" />}
 
       <Panel label={c.recommended} className="mt-20">
         <Recommended status={status} />

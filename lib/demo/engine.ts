@@ -10,6 +10,14 @@
 // - guards: no self-promotion, account type set once, admin roles only by a super admin, verification and hiring
 //   status columns written by the team only, onboarding_complete refused while a required field is missing
 // Storage paths and Edge Functions are not policed here (the SQL tests cover them).
+//
+// It also mirrors supabase/migrations/0007_evaluations.sql (student evaluations by recruiters):
+// - profiles.talent_visible is the student's own opt-in (nobody else changes it; only students can turn it on)
+// - the views talent_cards and my_evaluations are computed on read: talent_cards only for a verified recruiter or an
+//   admin and only safe columns; my_evaluations only the signed-in student's published rows, without the private note
+// - student_evaluations: recruiters read their own rows, admins all, students none; inserts are forced to "submitted",
+//   need an opted-in student target and obey the 20 per day cap; a recruiter edits until the team decides; admins
+//   moderate only (hiding needs a note); ids never change
 
 import { profileComplete } from "../signupSchema";
 
@@ -41,7 +49,7 @@ export type MockOptions = {
 
 export const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-const TABLES = ["profiles", "recruiter_profiles", "hiring_requests", "applications", "application_events", "leads", "contact_messages", "newsletter_subscribers", "account_deletion_requests"];
+const TABLES = ["profiles", "recruiter_profiles", "hiring_requests", "applications", "application_events", "leads", "contact_messages", "newsletter_subscribers", "account_deletion_requests", "student_evaluations"];
 
 export function emptyState(): MockState {
   return { users: [], tables: Object.fromEntries(TABLES.map((t) => [t, []])), session: null, files: {}, requests: [], nextId: 1, roleGrants: [] };
@@ -56,6 +64,7 @@ const PROFILE_DEFAULTS: Row = {
   graduation_year: null, linkedin_url: null, portfolio_url: null, avatar_path: null, marketing_opt_in: false,
   account_type: null, onboarding_complete: false, date_of_birth: null, degree_field: null, degree_level: null, experience_years: null, revit_level: null,
   career_goal: null, preferred_format: null, heard_from: null, consent_terms_at: null, consent_contact_at: null,
+  talent_visible: false, talent_consent_at: null,
 };
 const STUDENT_KEYS = ["full_name", "phone", "whatsapp", "country", "city", "date_of_birth", "current_status", "degree_field", "degree_level", "university", "graduation_year", "experience_years", "revit_level", "career_goal", "preferred_format", "heard_from"];
 const RECRUITER_PROFILE_KEYS = ["full_name", "phone", "country", "city", "heard_from"];
@@ -184,6 +193,8 @@ function visible(state: MockState, table: string, r: Row, who: Who): boolean {
     }
     case "account_deletion_requests":
       return r.user_id === who.id;
+    case "student_evaluations": // recruiters read their own rows; students have no policy at all
+      return r.recruiter_id === who.id && who.profile?.account_type === "recruiter" && who.profile?.role === "recruiter";
     case "leads":
     case "contact_messages":
     case "newsletter_subscribers":
@@ -209,7 +220,155 @@ function guardProfile(state: MockState, before: Row | null, next: Row, who: Who)
     if (next.consent_contact_at && next.consent_contact_at !== before?.consent_contact_at) next.consent_contact_at = now();
   }
   if (!isAdminRole(next.role) && (next.account_type === "student" || next.account_type === "recruiter")) next.role = next.account_type;
+  const talentError = talentGuard(before, next, who);
+  if (talentError) return talentError;
   if (next.onboarding_complete === true && !profileComplete(next, state.tables.recruiter_profiles.find((x) => x.id === next.id) ?? null)) return "onboarding_complete needs every required field (profile_complete)";
+  return null;
+}
+
+// profiles_talent_guard: the opt-in belongs to the student; only a student account can have it on; the server stamps the time.
+function talentGuard(before: Row | null, next: Row, who: Who): string | null {
+  if (who.id !== null && who.id !== next.id) {
+    next.talent_visible = before ? before.talent_visible : false;
+    next.talent_consent_at = before ? before.talent_consent_at : null;
+    return null;
+  }
+  next.talent_visible = next.talent_visible === true;
+  if (next.talent_visible && !(next.account_type === "student" && next.role === "student")) return "only student accounts can share a profile with recruiters";
+  next.talent_consent_at = next.talent_visible ? (before?.talent_visible ? before.talent_consent_at : now()) : null;
+  return null;
+}
+
+// ---- student evaluations (0007)
+
+const CRITERIA_KEYS = ["modeling", "coordination", "standards", "communication", "professionalism", "portfolio"];
+const EVALUATION_CONTEXTS = ["portfolio_review", "interview", "project_review", "worked_together"];
+const EVALUATION_RECOMMENDATIONS = ["strong_yes", "yes", "maybe", "not_now"];
+const EVALUATION_STATUSES = ["submitted", "published", "hidden"];
+const EVALUATION_TEXT_MAX = 1000;
+const DAILY_CAP = 20;
+const HTML_TAG = /<\s*\/?\s*[a-zA-Z!]/;
+
+const raise = (message: string, status = 400, code = "P0001"): MockResponse => ({ status, body: { code, message }, contentType: "application/json" });
+const checkFailed = (): MockResponse => raise('new row for relation "student_evaluations" violates check constraint', 400, "23514");
+
+const isVerifiedRecruiter = (state: MockState, id: string | null) => {
+  if (!id) return false;
+  const p = state.tables.profiles.find((x) => x.id === id);
+  const r = state.tables.recruiter_profiles.find((x) => x.id === id);
+  return p?.account_type === "recruiter" && p?.role === "recruiter" && r?.verification_status === "approved";
+};
+
+// first_name_last_initial: "Sample Student A" becomes "Sample A."
+export function firstNameLastInitial(full: unknown): string | null {
+  const t = String(full ?? "").trim();
+  if (!t) return null;
+  const parts = t.split(/\s+/);
+  if (parts.length === 1) return t.slice(0, 40);
+  return `${parts[0].slice(0, 40)} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
+
+// public.talent_cards: only for a verified recruiter or an admin, only students who opted in, only the safe columns.
+function talentCards(state: MockState, who: Who): Row[] {
+  if (!who.admin && !isVerifiedRecruiter(state, who.id)) return [];
+  const url = (v: unknown) => (typeof v === "string" && /^https?:\/\//i.test(v) ? v : null);
+  return state.tables.profiles
+    .filter((p) => p.talent_visible === true && p.account_type === "student" && p.role === "student" && firstNameLastInitial(p.full_name))
+    .map((p) => {
+      const apps = state.tables.applications.filter((a) => a.user_id === p.id);
+      const programs = new Set<string>();
+      for (const a of apps) if (a.status === "enrolled") for (const x of (a.programs as string[]) ?? []) programs.add(String(x).slice(0, 80));
+      const software = new Set<string>();
+      for (const a of apps) {
+        if (a.status === "draft") continue;
+        const s = a.software_skills;
+        if (Array.isArray(s)) for (const x of s) software.add(String(x).slice(0, 40));
+        else if (s && typeof s === "object") for (const [k, lvl] of Object.entries(s as Record<string, unknown>)) if (!["", "none"].includes(String(lvl).trim().toLowerCase())) software.add(k.slice(0, 40));
+      }
+      return {
+        student_id: p.id,
+        display_name: firstNameLastInitial(p.full_name),
+        city: p.city ?? null,
+        country: p.country ?? null,
+        graduation_year: p.graduation_year ?? null,
+        programs: [...programs].sort(),
+        software: [...software].sort(),
+        linkedin_url: url(p.linkedin_url),
+        portfolio_url: url(p.portfolio_url),
+      };
+    });
+}
+
+// public.my_evaluations: the signed-in student's published rows. No private note, no recruiter, no status.
+function myEvaluations(state: MockState, who: Who): Row[] {
+  if (!who.id) return [];
+  return state.tables.student_evaluations
+    .filter((e) => e.student_id === who.id && e.status === "published")
+    .map((e) => {
+      const company = String(state.tables.recruiter_profiles.find((r) => r.id === e.recruiter_id)?.company_name ?? "").trim();
+      return { id: e.id, published_at: e.published_at, context: e.context, scores: e.scores, overall: e.overall, recommendation: e.recommendation, strengths: e.strengths, improvements: e.improvements, company_name: e.show_company_name && company ? company : null };
+    });
+}
+
+// The check constraints on public.student_evaluations.
+function evaluationInvalid(r: Row): boolean {
+  const s = r.scores as Record<string, unknown> | null;
+  const keys = s && typeof s === "object" && !Array.isArray(s) ? Object.keys(s) : [];
+  if (keys.length !== 6 || !CRITERIA_KEYS.every((k) => keys.includes(k))) return true;
+  if (!CRITERIA_KEYS.every((k) => Number.isInteger((s as Record<string, unknown>)[k]) && (s as Record<string, number>)[k] >= 1 && (s as Record<string, number>)[k] <= 5)) return true;
+  if (!Number.isInteger(r.overall) || (r.overall as number) < 1 || (r.overall as number) > 5) return true;
+  if (!EVALUATION_CONTEXTS.includes(String(r.context)) || !EVALUATION_RECOMMENDATIONS.includes(String(r.recommendation)) || !EVALUATION_STATUSES.includes(String(r.status))) return true;
+  for (const k of ["strengths", "improvements", "private_note"]) {
+    if (typeof r[k] !== "string" || (r[k] as string).length > EVALUATION_TEXT_MAX || HTML_TAG.test(r[k] as string)) return true;
+  }
+  const note = r.moderation_note;
+  if (note !== null && note !== undefined && (String(note).length > EVALUATION_TEXT_MAX || HTML_TAG.test(String(note)))) return true;
+  return r.student_id === r.recruiter_id;
+}
+
+// student_evaluations_guard on insert, then the insert policy, then the constraints.
+function insertEvaluation(state: MockState, input: Row, who: Who, trusted: boolean): { row: Row } | { error: MockResponse } {
+  const at = now();
+  const row: Row = { application_id: null, strengths: "", improvements: "", private_note: "", show_company_name: true, status: "submitted", moderation_note: null, moderated_by: null, moderated_at: null, published_at: null, notified_at: null, ...input, id: uuid(state.nextId++), created_at: at, updated_at: at };
+  if (!trusted) {
+    if (!who.id) return { error: deny("permission denied for table student_evaluations", 401) };
+    Object.assign(row, { recruiter_id: who.id, status: "submitted", moderation_note: null, moderated_by: null, moderated_at: null, published_at: null, notified_at: null });
+    const s = state.tables.profiles.find((p) => p.id === row.student_id);
+    if (!s || s.account_type !== "student" || s.role !== "student" || s.talent_visible !== true) return { error: raise("this student is not available for evaluation") };
+    if (row.application_id && !state.tables.applications.some((a) => a.id === row.application_id && a.user_id === row.student_id)) row.application_id = null;
+    const recent = state.tables.student_evaluations.filter((x) => x.recruiter_id === row.recruiter_id && Date.now() - Date.parse(String(x.created_at)) < 86400_000).length;
+    if (recent >= DAILY_CAP) return { error: raise(`daily limit of ${DAILY_CAP} evaluations reached`) };
+    if (!isVerifiedRecruiter(state, who.id)) return { error: deny("new row violates row-level security policy for table \"student_evaluations\"") };
+  }
+  if (evaluationInvalid(row)) return { error: checkFailed() };
+  if (state.tables.student_evaluations.some((x) => x.student_id === row.student_id && x.recruiter_id === row.recruiter_id && x.context === row.context)) {
+    return { error: raise('duplicate key value violates unique constraint "student_evaluations_one_per_context"', 409, "23505") };
+  }
+  return { row };
+}
+
+// student_evaluations_guard on update. `r` is already visible and updatable for this caller (the policy's USING part).
+function patchEvaluation(r: Row, patch: Row, who: Who, trusted: boolean): MockResponse | null {
+  const next: Row = { ...r, ...patch };
+  if (next.student_id !== r.student_id || next.recruiter_id !== r.recruiter_id) return raise("the student and the recruiter of an evaluation never change");
+  if (!trusted) {
+    next.context = r.context;
+    next.application_id = r.application_id;
+    next.notified_at = r.notified_at;
+    if (who.admin) {
+      for (const k of ["scores", "overall", "recommendation", "strengths", "improvements", "private_note", "show_company_name"]) next[k] = r[k];
+      const changed = next.status !== r.status || (next.moderation_note ?? null) !== (r.moderation_note ?? null);
+      next.moderated_by = changed ? who.id : r.moderated_by;
+      next.moderated_at = changed ? now() : r.moderated_at;
+      if (next.status === "hidden" && !String(next.moderation_note ?? "").trim()) return raise("a note is required to hide an evaluation");
+      next.published_at = next.status === "published" ? (r.published_at ?? now()) : r.published_at;
+    } else {
+      next.status = "submitted";
+      for (const k of ["moderation_note", "moderated_by", "moderated_at", "published_at"]) next[k] = r[k];
+    }
+  }
+  if (evaluationInvalid(next)) return checkFailed();
+  Object.assign(r, next, { id: r.id, created_at: r.created_at, updated_at: now() });
   return null;
 }
 
@@ -394,7 +553,13 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
     const trustedWrite = sub === undefined && !me;
 
     if (table === "role_grants") return json(who.superAdmin ? (state.roleGrants ?? []).map((g) => ({ ...g })) : []);
-    const rows = (state.tables[table] ??= []);
+    const isView = table === "talent_cards" || table === "my_evaluations";
+    if (isView) {
+      // views: read only, never for anonymous visitors (the database revokes them from anon)
+      if (!me && !trustedWrite) return deny(`permission denied for view ${table}`, 401);
+      if (method !== "GET") return deny(`cannot change view ${table}`, 405);
+    }
+    const rows = isView ? (table === "talent_cards" ? talentCards(state, who) : myEvaluations(state, who)) : (state.tables[table] ??= []);
     const { f, order, limit } = parseFilters(sp);
     const accept = headers["accept"] ?? "";
     const prefer = headers["prefer"] ?? "";
@@ -419,6 +584,13 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
       const created: Row[] = [];
       const upsert = prefer.includes("resolution=merge-duplicates");
       for (const r of incoming) {
+        if (table === "student_evaluations") {
+          const made = insertEvaluation(state, r, who, trustedWrite);
+          if ("error" in made) return made.error;
+          rows.push(made.row);
+          created.push(made.row);
+          continue;
+        }
         const at = now();
         const existing = upsert && r.id ? rows.find((x) => x.id === r.id) : undefined;
         if (existing) {
@@ -475,6 +647,14 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
       const patch = (body ?? {}) as Row;
       const changed: Row[] = [];
       for (const r of rows.filter(match)) {
+        if (table === "student_evaluations") {
+          // update policy: the author while the row is still submitted (and verified), or the team
+          if (!trustedWrite && !who.admin && !(r.recruiter_id === who.id && r.status === "submitted" && isVerifiedRecruiter(state, who.id))) continue;
+          const err = patchEvaluation(r, patch, who, trustedWrite);
+          if (err) return err;
+          changed.push(r);
+          continue;
+        }
         if (!trustedWrite) {
           if (table === "applications" && !who.admin && r.status !== "draft") return deny("a submitted application can no longer be edited");
           if (table === "hiring_requests" && !who.admin) continue; // update policy: the team only
@@ -485,7 +665,11 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
         if (!trustedWrite) {
           const err = table === "profiles" ? guardProfile(state, before, next, who) : table === "recruiter_profiles" ? guardRecruiter(state, before, next, who) : null;
           if (err) return deny(err, 400);
-        } else if (table === "profiles" && !isAdminRole(next.role) && (next.account_type === "student" || next.account_type === "recruiter")) next.role = next.account_type;
+        } else if (table === "profiles") {
+          if (!isAdminRole(next.role) && (next.account_type === "student" || next.account_type === "recruiter")) next.role = next.account_type;
+          const talentError = talentGuard(before, next, who);
+          if (talentError) return deny(talentError, 400);
+        }
         Object.assign(r, next);
         if (table === "applications" && r.status === "submitted" && before.status !== "submitted") {
           r.submitted_at = now();
@@ -501,7 +685,7 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
     }
 
     if (method === "DELETE") {
-      const deletable = (r: Row) => trustedWrite || who.admin || (table === "applications" && r.user_id === who.id && r.status === "draft");
+      const deletable = (r: Row) => trustedWrite || (who.admin && table !== "student_evaluations") || (table === "applications" && r.user_id === who.id && r.status === "draft");
       const gone = rows.filter((r) => match(r) && deletable(r));
       state.tables[table] = rows.filter((r) => !gone.includes(r));
       return prefer.includes("return=minimal") ? { status: 204, text: "" } : json(gone);

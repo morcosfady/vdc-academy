@@ -20,7 +20,7 @@ test("the tour page turns the demo on, the banner shows everywhere, exit turns i
   const leaks = await noNetworkToSupabase(page);
   await page.goto("demo/");
   await expect(page.getByRole("heading", { name: /full experience/ })).toBeVisible();
-  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(9);
+  await expect(page.locator('[data-testid="demo-card"]')).toHaveCount(12);
   await expect(page.getByText("Demo is off")).toBeVisible();
   await page.getByTestId("demo-start").click();
   await page.waitForLoadState("networkidle");
@@ -40,12 +40,12 @@ test("the tour page turns the demo on, the banner shows everywhere, exit turns i
   expect(leaks).toEqual([]);
 });
 
-test("card 04 opens the admin with sixteen sample applications, nothing leaves the browser", async ({ page }) => {
+test("card 04 opens the admin with twenty-four sample applications, nothing leaves the browser", async ({ page }) => {
   const leaks = await noNetworkToSupabase(page);
   await page.goto("demo/");
   await page.getByRole("button", { name: "Open the admin" }).click();
   await page.waitForURL(/\/admin\/$/);
-  await expect(page.getByTestId("stat-total")).toContainText("16");
+  await expect(page.getByTestId("stat-total")).toContainText("24");
   await expect(page.getByTestId("demo-banner")).toBeVisible();
   await page.goto("admin/applications/");
   await expect(page.locator('[data-testid="app-row"]').first()).toBeVisible();

@@ -1,6 +1,6 @@
 // Copy for the admin area (/admin/**). Plain words, short lines, no em dashes. Sheet tags: AD-100 overview,
 // AD-200 applications, AD-210 one application, AD-300 leads and messages, AD-400 users, AD-410 recruiters,
-// AD-420 hiring requests, AD-403 the no-access screen.
+// AD-420 hiring requests, AD-400 evaluations (content/copy-evaluations.ts), AD-403 the no-access screen.
 
 export const adminCopy = {
   navLabel: "Admin sections",
@@ -11,6 +11,7 @@ export const adminCopy = {
     { href: "/admin/users/", label: "Users", match: /^\/admin\/users/ },
     { href: "/admin/recruiters/", label: "Recruiters", match: /^\/admin\/recruiters/ },
     { href: "/admin/hiring/", label: "Hiring", match: /^\/admin\/hiring/ },
+    { href: "/admin/evaluations/", label: "Evaluations", match: /^\/admin\/evaluations/ },
   ],
 
   forbidden: {

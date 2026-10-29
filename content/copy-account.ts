@@ -393,12 +393,6 @@ export const account = {
       edit: "Edit company profile",
       missing: "Your company details are not complete yet.",
     },
-    talent: {
-      label: "Talent pool",
-      soon: "Coming soon",
-      title: "Graduates who share their profile.",
-      text: "Approved recruiters will be able to see graduates who choose to share their profile.",
-    },
   },
 
   // v9 hiring requests (the form and the list on the recruiter dashboard).
