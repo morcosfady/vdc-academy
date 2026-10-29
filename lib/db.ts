@@ -67,6 +67,28 @@ export type RecruiterProfile = {
   updated_at: string;
 };
 
+// One row per instructor (1:1 with profiles), supabase/migrations/0008_instructors.sql. The verification columns are
+// written by admins only. Instructors see no student data.
+export type InstructorProfile = {
+  id: string;
+  job_title: string | null;
+  employer: string | null;
+  industry_years: string | null; // '3-5' | '5-10' | '10-15' | '15+'
+  teaching_years: string | null; // 'none' | 'lt2' | '2-5' | '5+'
+  subjects: string[]; // program slugs, see INSTRUCTOR_SUBJECTS in lib/signupSchema.ts
+  teaching_format: string | null; // 'online' | 'in_person' | 'either'
+  availability: string | null; // 'evenings' | 'weekends' | 'daytime' | 'flexible'
+  linkedin_url: string | null;
+  bio: string | null;
+  info_confirmed: boolean;
+  verification_status: VerificationStatus;
+  verified_by: string | null;
+  verified_at: string | null;
+  rejection_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type HiringStatus = "new" | "in_review" | "matched" | "closed";
 export type WorkMode = "on_site" | "hybrid" | "remote";
 

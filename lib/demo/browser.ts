@@ -1,7 +1,7 @@
 "use client";
 
 import { handle, sessionJson, type MockState } from "./engine";
-import { demoAdminId, demoRecruiterId, demoStudentId, demoSuperId, demoTalentStudentId, demoVerifiedRecruiterId, seedDemo } from "./seed";
+import { demoAdminId, demoApprovedInstructorId, demoInstructorId, demoRecruiterId, demoStudentId, demoSuperId, demoTalentStudentId, demoVerifiedRecruiterId, seedDemo } from "./seed";
 
 // Client demo mode (/demo/): the in-memory Supabase from lib/demo/engine.ts runs inside the page. supabase-js is
 // given `demoFetch` instead of the network, so nothing leaves the browser, even when real keys are baked into the
@@ -170,6 +170,16 @@ export const demo = {
   asAdmin(path: string) {
     demo.enable();
     setSession(demoAdminId(demoState()));
+    go(path);
+  },
+  asInstructor(path: string) {
+    demo.enable();
+    setSession(demoInstructorId(demoState()));
+    go(path);
+  },
+  asApprovedInstructor(path: string) {
+    demo.enable();
+    setSession(demoApprovedInstructorId(demoState()));
     go(path);
   },
   asRecruiter(path: string) {

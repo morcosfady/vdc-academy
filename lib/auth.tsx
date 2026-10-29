@@ -4,8 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { usePathname, useRouter } from "next/navigation";
 import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import { authEnabled, getSupabase, loadSupabase } from "./supabase";
-import type { Profile, RecruiterProfile } from "./db";
-import { isAdmin as adminRole, isRecruiter as recruiterRole, isStudent as studentRole, isSuperAdmin as superRole, roleOf, type Role } from "./roles";
+import type { InstructorProfile, Profile, RecruiterProfile } from "./db";
+import { isAdmin as adminRole, isInstructor as instructorRole, isRecruiter as recruiterRole, isStudent as studentRole, isSuperAdmin as superRole, roleOf, type Role } from "./roles";
 
 // Session + profile for the whole app. `ready` turns true once the client has checked storage (before that,
 // render neutral chrome so server and client HTML match). `enabled` is false without keys and without the mock.
@@ -17,10 +17,12 @@ type Auth = {
   user: User | null;
   profile: Profile | null;
   recruiter: RecruiterProfile | null; // the company row, for recruiters
+  instructor: InstructorProfile | null; // the teaching profile, for instructors
   role: Role;
   isAdmin: boolean; // admin or super admin
   isSuperAdmin: boolean;
   isRecruiter: boolean;
+  isInstructor: boolean;
   isStudent: boolean;
   needsOnboarding: boolean; // signed in, profile not complete: /onboarding/ first
   refreshProfile: () => Promise<void>;
@@ -34,10 +36,12 @@ const Ctx = createContext<Auth>({
   user: null,
   profile: null,
   recruiter: null,
+  instructor: null,
   role: "student",
   isAdmin: false,
   isSuperAdmin: false,
   isRecruiter: false,
+  isInstructor: false,
   isStudent: true,
   needsOnboarding: false,
   refreshProfile: async () => {},
@@ -50,12 +54,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recruiter, setRecruiter] = useState<RecruiterProfile | null>(null);
+  const [instructor, setInstructor] = useState<InstructorProfile | null>(null);
 
   const loadProfile = useCallback(async (userId: string | undefined) => {
     const sb = getSupabase();
     if (!sb || !userId) {
       setProfile(null);
       setRecruiter(null);
+      setInstructor(null);
       return;
     }
     const { data } = await sb.from("profiles").select("*").eq("id", userId).maybeSingle();
@@ -65,8 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await sb.from("recruiter_profiles").select("*").eq("id", userId).maybeSingle();
       r = (res.data as RecruiterProfile | null) ?? null;
     }
+    let i: InstructorProfile | null = null;
+    if (p && (p.account_type === "instructor" || p.role === "instructor")) {
+      const res = await sb.from("instructor_profiles").select("*").eq("id", userId).maybeSingle();
+      i = (res.data as InstructorProfile | null) ?? null;
+    }
     setProfile(p);
     setRecruiter(r);
+    setInstructor(i);
   }, []);
 
   useEffect(() => {
@@ -113,10 +125,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       profile,
       recruiter,
+      instructor,
       role: roleOf(profile),
       isAdmin: adminRole(profile),
       isSuperAdmin: superRole(profile),
       isRecruiter: recruiterRole(profile),
+      isInstructor: instructorRole(profile),
       isStudent: Boolean(profile) && studentRole(profile),
       // only a loaded, incomplete profile: a profile that is briefly missing (a session change, a slow request) must
       // never bounce a signed-in user through /onboarding/
@@ -127,9 +141,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(null);
         setProfile(null);
         setRecruiter(null);
+        setInstructor(null);
       },
     };
-  }, [enabled, ready, session, profile, recruiter, loadProfile]);
+  }, [enabled, ready, session, profile, recruiter, instructor, loadProfile]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

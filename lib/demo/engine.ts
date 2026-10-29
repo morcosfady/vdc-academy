@@ -49,7 +49,7 @@ export type MockOptions = {
 
 export const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-const TABLES = ["profiles", "recruiter_profiles", "hiring_requests", "applications", "application_events", "leads", "contact_messages", "newsletter_subscribers", "account_deletion_requests", "student_evaluations"];
+const TABLES = ["profiles", "recruiter_profiles", "instructor_profiles", "hiring_requests", "applications", "application_events", "leads", "contact_messages", "newsletter_subscribers", "account_deletion_requests", "student_evaluations"];
 
 export function emptyState(): MockState {
   return { users: [], tables: Object.fromEntries(TABLES.map((t) => [t, []])), session: null, files: {}, requests: [], nextId: 1, roleGrants: [] };
@@ -68,6 +68,10 @@ const PROFILE_DEFAULTS: Row = {
 };
 const STUDENT_KEYS = ["full_name", "phone", "whatsapp", "country", "city", "date_of_birth", "current_status", "degree_field", "degree_level", "university", "graduation_year", "experience_years", "revit_level", "career_goal", "preferred_format", "heard_from"];
 const RECRUITER_PROFILE_KEYS = ["full_name", "phone", "country", "city", "heard_from"];
+const INSTRUCTOR_PROFILE_KEYS = RECRUITER_PROFILE_KEYS;
+const INSTRUCTOR_KEYS = ["job_title", "employer", "industry_years", "teaching_years", "subjects", "teaching_format", "availability", "linkedin_url", "bio", "info_confirmed"];
+const INSTRUCTOR_SUBJECT_SLUGS = ["vdc-professional-bootcamp", "bim-fundamentals-revit", "revit-architecture", "revit-structure", "revit-mep", "low-voltage-bim", "revit-family-creation", "navisworks-clash-detection", "4d-5d-simulation", "dynamo-for-revit", "bim-management-iso-19650"];
+const BASE_TYPES = ["student", "instructor", "recruiter"];
 const RECRUITER_KEYS = ["job_title", "company_name", "company_website", "company_type", "company_size", "linkedin_url", "hiring_roles", "expected_hires", "authorised_confirmed"];
 
 export function profileRow(id: string, email: string, meta: Row, role: string = "student"): Row {
@@ -80,27 +84,34 @@ export function recruiterRow(id: string, fields: Row = {}): Row {
   return { id, job_title: null, company_name: null, company_website: null, company_type: null, company_size: null, linkedin_url: null, hiring_roles: [], expected_hires: null, authorised_confirmed: false, verification_status: "pending", verified_by: null, verified_at: null, rejection_note: null, created_at: at, updated_at: at, ...fields };
 }
 
+export function instructorRow(id: string, fields: Row = {}): Row {
+  const at = now();
+  return { id, job_title: null, employer: null, industry_years: null, teaching_years: null, subjects: [], teaching_format: null, availability: null, linkedin_url: null, bio: null, info_confirmed: false, verification_status: "pending", verified_by: null, verified_at: null, rejection_note: null, created_at: at, updated_at: at, ...fields };
+}
+
 // Fictional values that make a seeded profile really complete (only for fields the seed did not set).
 function completeDefaults(role: string): Row {
   const at = now();
   if (role === "admin" || role === "super_admin") return { phone: "+1 555 010 0099" };
   const person = { phone: "+1 555 010 0000", country: "USA", city: "Fort Worth", heard_from: "linkedin", consent_terms_at: at, consent_contact_at: at };
-  if (role === "recruiter") return person;
+  if (role === "recruiter" || role === "instructor") return person;
   return { ...person, whatsapp: "+1 555 010 0000", date_of_birth: "2000-01-01", current_status: "professional", degree_field: "architecture", degree_level: "bachelor", university: "Sample University", graduation_year: 2018, experience_years: "1-3", revit_level: "beginner", career_goal: "bim_coordinator", preferred_format: "online" };
 }
+const INSTRUCTOR_DEFAULTS: Row = { job_title: "BIM manager", employer: "Sample Company", industry_years: "10-15", teaching_years: "2-5", subjects: ["revit-architecture", "bim-fundamentals-revit"], teaching_format: "either", availability: "evenings", linkedin_url: "https://www.linkedin.com/in/sample-instructor", bio: "Sample instructor profile. Ten years of BIM delivery on commercial projects and a few years teaching Revit to new modelers.", info_confirmed: true };
 const RECRUITER_DEFAULTS: Row = { job_title: "Talent lead", company_name: "Sample Company", company_website: "https://example.com", company_type: "general_contractor", company_size: "51-200", linkedin_url: "https://www.linkedin.com/in/sample-recruiter", hiring_roles: ["bim_coordinator"], expected_hires: "2-5", authorised_confirmed: true };
 
 // Trusted seed (like the SQL editor): a confirmed user with a finished profile unless `onboarding: false`.
 // A finished profile gets fictional values for any required field the seed leaves empty.
-export function seedUser(state: MockState, email: string, password: string, meta: Row = {}, role: "student" | "recruiter" | "admin" | "super_admin" = "student", opts: { onboarding?: boolean; profile?: Row; recruiter?: Row } = {}) {
+export function seedUser(state: MockState, email: string, password: string, meta: Row = {}, role: "student" | "instructor" | "recruiter" | "admin" | "super_admin" = "student", opts: { onboarding?: boolean; profile?: Row; recruiter?: Row; instructor?: Row } = {}) {
   const id = uuid(state.nextId++);
   state.users.push({ id, email, password, meta, confirmed: true });
-  const accountType = role === "recruiter" ? "recruiter" : role === "student" ? "student" : (opts.profile?.account_type as string | undefined) ?? null;
+  const accountType = role === "recruiter" || role === "instructor" || role === "student" ? role : (opts.profile?.account_type as string | undefined) ?? null;
   const done = opts.onboarding ?? true;
   const base: Row = { ...profileRow(id, email, meta, role), account_type: accountType };
   const filled = done ? Object.fromEntries(Object.entries(completeDefaults(role)).filter(([k]) => base[k] === null || base[k] === undefined)) : {};
   state.tables.profiles.push({ ...base, ...filled, onboarding_complete: done, ...(opts.profile ?? {}) });
   if (role === "recruiter" || opts.recruiter) state.tables.recruiter_profiles.push(recruiterRow(id, { ...(done ? RECRUITER_DEFAULTS : {}), ...(opts.recruiter ?? {}) }));
+  if (role === "instructor" || opts.instructor) state.tables.instructor_profiles.push(instructorRow(id, { ...(done ? INSTRUCTOR_DEFAULTS : {}), ...(opts.instructor ?? {}) }));
   return id;
 }
 
@@ -138,9 +149,9 @@ const pick = (meta: Row, keys: string[]) => Object.fromEntries(keys.filter((k) =
 // handle_new_user: whitelisted metadata into the profile (and recruiter row); a "role" in the metadata is ignored.
 function createProfileFromMeta(state: MockState, u: MockUser) {
   const meta = u.meta ?? {};
-  const t = meta.account_type === "student" || meta.account_type === "recruiter" ? (meta.account_type as string) : null;
+  const t = typeof meta.account_type === "string" && BASE_TYPES.includes(meta.account_type) ? meta.account_type : null;
   const at = now();
-  const fields = t === "recruiter" ? pick(meta, RECRUITER_PROFILE_KEYS) : t === "student" ? pick(meta, STUDENT_KEYS) : pick(meta, ["full_name", "phone"]);
+  const fields = t === "recruiter" ? pick(meta, RECRUITER_PROFILE_KEYS) : t === "instructor" ? pick(meta, INSTRUCTOR_PROFILE_KEYS) : t === "student" ? pick(meta, STUDENT_KEYS) : pick(meta, ["full_name", "phone"]);
   if (fields.graduation_year !== undefined) fields.graduation_year = Number(fields.graduation_year) || null;
   const profile: Row = {
     ...profileRow(u.id, u.email, meta, t ?? "student"),
@@ -158,7 +169,15 @@ function createProfileFromMeta(state: MockState, u: MockUser) {
     recruiter = recruiterRow(u.id, r);
     state.tables.recruiter_profiles.push(recruiter);
   }
-  profile.onboarding_complete = profileComplete(profile, recruiter);
+  let instructor: Row | null = null;
+  if (t === "instructor") {
+    const i = pick(meta, INSTRUCTOR_KEYS);
+    if (Array.isArray(i.subjects)) i.subjects = (i.subjects as unknown[]).map(String).filter((x) => INSTRUCTOR_SUBJECT_SLUGS.includes(x));
+    i.info_confirmed = meta.info_confirmed === true;
+    instructor = instructorRow(u.id, i);
+    state.tables.instructor_profiles.push(instructor);
+  }
+  profile.onboarding_complete = profileComplete(profile, recruiter, instructor);
 }
 
 // apply_role_grant: confirmed emails only, case-insensitive.
@@ -182,6 +201,7 @@ function visible(state: MockState, table: string, r: Row, who: Who): boolean {
   switch (table) {
     case "profiles":
     case "recruiter_profiles":
+    case "instructor_profiles":
       return r.id === who.id;
     case "hiring_requests":
       return r.recruiter_id === who.id;
@@ -208,7 +228,7 @@ function visible(state: MockState, table: string, r: Row, who: Who): boolean {
 function guardProfile(state: MockState, before: Row | null, next: Row, who: Who): string | null {
   const trusted = who.id === null && !who.profile; // only direct test writes come without a caller
   if (!trusted && !who.admin) {
-    if (!before) next.role = next.account_type === "recruiter" ? "recruiter" : "student";
+    if (!before) next.role = next.account_type === "recruiter" || next.account_type === "instructor" ? next.account_type : "student";
     else {
       if (next.role !== before.role) return "only an admin can change a role";
       if (before.account_type && next.account_type !== before.account_type) return "the account type is chosen once at sign-up";
@@ -219,10 +239,10 @@ function guardProfile(state: MockState, before: Row | null, next: Row, who: Who)
     if (next.consent_terms_at && next.consent_terms_at !== before?.consent_terms_at) next.consent_terms_at = now();
     if (next.consent_contact_at && next.consent_contact_at !== before?.consent_contact_at) next.consent_contact_at = now();
   }
-  if (!isAdminRole(next.role) && (next.account_type === "student" || next.account_type === "recruiter")) next.role = next.account_type;
+  if (!isAdminRole(next.role) && BASE_TYPES.includes(String(next.account_type))) next.role = next.account_type;
   const talentError = talentGuard(before, next, who);
   if (talentError) return talentError;
-  if (next.onboarding_complete === true && !profileComplete(next, state.tables.recruiter_profiles.find((x) => x.id === next.id) ?? null)) return "onboarding_complete needs every required field (profile_complete)";
+  if (next.onboarding_complete === true && !profileComplete(next, state.tables.recruiter_profiles.find((x) => x.id === next.id) ?? null, state.tables.instructor_profiles.find((x) => x.id === next.id) ?? null)) return "onboarding_complete needs every required field (profile_complete)";
   return null;
 }
 
@@ -390,6 +410,29 @@ function guardRecruiter(state: MockState, before: Row | null, next: Row, who: Wh
   }
   return null;
 }
+
+// instructor_profiles_guard: the browser can never set or change the verification columns.
+function guardInstructor(state: MockState, before: Row | null, next: Row, who: Who): string | null {
+  if (who.admin) {
+    if (before && next.verification_status !== before.verification_status) {
+      next.verified_by = who.id;
+      next.verified_at = now();
+      if (next.verification_status === "approved") next.rejection_note = null;
+    }
+    return null;
+  }
+  if (!before) {
+    const p = state.tables.profiles.find((x) => x.id === next.id);
+    if (p?.account_type !== "instructor") return "only instructor accounts have a teaching profile";
+    Object.assign(next, { verification_status: "pending", verified_by: null, verified_at: null, rejection_note: null });
+  } else {
+    for (const k of ["id", "verification_status", "verified_by", "verified_at", "rejection_note"]) next[k] = before[k];
+  }
+  return null;
+}
+
+const guardRow = (state: MockState, table: string, before: Row | null, next: Row, who: Who) =>
+  table === "profiles" ? guardProfile(state, before, next, who) : table === "recruiter_profiles" ? guardRecruiter(state, before, next, who) : table === "instructor_profiles" ? guardInstructor(state, before, next, who) : null;
 
 function parseFilters(sp: URLSearchParams) {
   const f: ((r: Row) => boolean)[] = [];
@@ -596,7 +639,7 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
         if (existing) {
           if (!trustedWrite && !visible(state, table, existing, who)) return deny("new row violates row-level security policy");
           const merged = { ...existing, ...r, updated_at: at };
-          const err = table === "profiles" ? guardProfile(state, existing, merged, who) : table === "recruiter_profiles" ? guardRecruiter(state, existing, merged, who) : null;
+          const err = guardRow(state, table, existing, merged, who);
           if (err) return deny(err, 400);
           Object.assign(existing, merged);
           created.push(existing);
@@ -618,6 +661,12 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
             if (!me || (row.id !== me.id && !who.admin)) return deny("new row violates row-level security policy");
             Object.assign(row, { ...recruiterRow(String(row.id)), ...row });
             const err = guardRecruiter(state, null, row, who);
+            if (err) return deny(err, 400);
+          }
+          if (table === "instructor_profiles") {
+            if (!me || (row.id !== me.id && !who.admin)) return deny("new row violates row-level security policy");
+            Object.assign(row, { ...instructorRow(String(row.id)), ...row });
+            const err = guardInstructor(state, null, row, who);
             if (err) return deny(err, 400);
           }
           if (table === "hiring_requests") {
@@ -663,10 +712,10 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
         const before = { ...r };
         const next: Row = { ...r, ...patch, updated_at: now() };
         if (!trustedWrite) {
-          const err = table === "profiles" ? guardProfile(state, before, next, who) : table === "recruiter_profiles" ? guardRecruiter(state, before, next, who) : null;
+          const err = guardRow(state, table, before, next, who);
           if (err) return deny(err, 400);
         } else if (table === "profiles") {
-          if (!isAdminRole(next.role) && (next.account_type === "student" || next.account_type === "recruiter")) next.role = next.account_type;
+          if (!isAdminRole(next.role) && BASE_TYPES.includes(String(next.account_type))) next.role = next.account_type;
           const talentError = talentGuard(before, next, who);
           if (talentError) return deny(talentError, 400);
         }

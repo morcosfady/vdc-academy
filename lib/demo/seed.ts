@@ -8,6 +8,9 @@ export const DEMO_STUDENT_EMAIL = "student01@example.com";
 export const DEMO_ADMIN_EMAIL = "admin@example.com";
 export const DEMO_PASSWORD = "demo-password-1"; // shown in the demo UI; it unlocks sample data only
 export const DEMO_APP_ID = "aaaaaaaa-0000-4000-8000-000000000001";
+// Sample Instructor 01 is pending, 02 approved (the demo instructor dashboard), 03 rejected, 04 approved.
+export const DEMO_INSTRUCTOR_EMAIL = "instructor01@example.com";
+export const DEMO_APPROVED_INSTRUCTOR_EMAIL = "instructor02@example.com";
 export const DEMO_RECRUITER_EMAIL = "recruiter01@example.com";
 // An approved recruiter (Sample Company B) and a student who opted in and has published evaluations, for the evaluation cards.
 export const DEMO_VERIFIED_RECRUITER_EMAIL = "recruiter02@example.com";
@@ -180,6 +183,25 @@ export function seedDemo(): MockState {
     state.tables.hiring_requests.push({ id: uuid(state.nextId++), recruiter_id: recruiterIds[ri], role, hires, location, work_mode: mode, start_date: start, notes, status, created_at: at(ri === 1 ? 4 : 1), updated_at: at(1) });
   }
 
+  // Instructors (fictional people) in every verification state.
+  const instructors: { n: number; title: string; employer: string; industry: string; teaching: string; subjects: string[]; format: string; availability: string; status: "pending" | "approved" | "rejected"; daysAgo: number; note?: string }[] = [
+    { n: 1, title: "BIM Manager", employer: "Sample Company A", industry: "10-15", teaching: "2-5", subjects: ["revit-architecture", "bim-fundamentals-revit"], format: "either", availability: "evenings", status: "pending", daysAgo: 1 },
+    { n: 2, title: "VDC Director", employer: "Sample Company B", industry: "15+", teaching: "5+", subjects: ["navisworks-clash-detection", "4d-5d-simulation", "vdc-professional-bootcamp"], format: "online", availability: "weekends", status: "approved", daysAgo: 14 },
+    { n: 3, title: "Revit Drafter", employer: "Sample Company C", industry: "3-5", teaching: "none", subjects: ["revit-mep"], format: "in_person", availability: "daytime", status: "rejected", daysAgo: 8, note: "We need a little more teaching experience first. Reply with a recorded sample lesson and we will review it again." },
+    { n: 4, title: "MEP Coordinator", employer: "Sample Company D", industry: "5-10", teaching: "lt2", subjects: ["revit-mep", "low-voltage-bim", "dynamo-for-revit"], format: "either", availability: "flexible", status: "approved", daysAgo: 21 },
+  ];
+  for (const i of instructors) {
+    seedUser(state, `instructor${pad(i.n)}@example.com`, DEMO_PASSWORD, { full_name: `Sample Instructor ${pad(i.n)}` }, "instructor", {
+      profile: { phone: `+1 555 030 ${pad(i.n)}${pad(i.n)}`, country: "USA", city: ["Dallas", "Fort Worth", "Austin", "Houston"][i.n - 1], heard_from: "bay_bim", created_at: at(i.daysAgo) },
+      instructor: {
+        job_title: i.title, employer: i.employer, industry_years: i.industry, teaching_years: i.teaching, subjects: i.subjects, teaching_format: i.format, availability: i.availability,
+        linkedin_url: `https://www.linkedin.com/in/sample-instructor-${pad(i.n)}`,
+        bio: `Sample instructor profile ${pad(i.n)}. Years of BIM delivery on commercial projects, now teaching what works on real jobs.`, info_confirmed: true,
+        verification_status: i.status, verified_by: i.status === "pending" ? null : adminId, verified_at: i.status === "pending" ? null : at(i.daysAgo - 2), rejection_note: i.note ?? null, created_at: at(i.daysAgo),
+      },
+    });
+  }
+
   seedTalent(state, adminId, recruiterIds);
 
   // The demo super admin: granted like the real owner (a role grant on a confirmed email), with the same screens.
@@ -192,6 +214,8 @@ export function seedDemo(): MockState {
 
 export const demoStudentId = (state: MockState) => state.users.find((u) => u.email === DEMO_STUDENT_EMAIL)?.id ?? null;
 export const demoAdminId = (state: MockState) => state.users.find((u) => u.email === DEMO_ADMIN_EMAIL)?.id ?? null;
+export const demoInstructorId = (state: MockState) => state.users.find((u) => u.email === DEMO_INSTRUCTOR_EMAIL)?.id ?? null;
+export const demoApprovedInstructorId = (state: MockState) => state.users.find((u) => u.email === DEMO_APPROVED_INSTRUCTOR_EMAIL)?.id ?? null;
 export const demoRecruiterId = (state: MockState) => state.users.find((u) => u.email === DEMO_RECRUITER_EMAIL)?.id ?? null;
 export const demoSuperId = (state: MockState) => state.users.find((u) => u.email === DEMO_SUPER_EMAIL)?.id ?? null;
 export const demoVerifiedRecruiterId = (state: MockState) => state.users.find((u) => u.email === DEMO_VERIFIED_RECRUITER_EMAIL)?.id ?? null;

@@ -3,26 +3,31 @@
 //
 // Roles (profiles.role, set by the database, never by the browser):
 //   student      picked "Student" at sign-up
-//   recruiter    picked "Recruiter" at sign-up; the company account is verified by an admin
+//   instructor   picked "Instructor" at sign-up (the person who teaches the courses); verified by an admin
+//   recruiter    the hiring side (v9/v10). Not offered at sign-up since v11, the code stays for later
 //   admin        the academy team, promoted by a super admin
 //   super_admin  the owner, granted server side from public.role_grants after the email is confirmed
-// account_type (student | recruiter) is chosen once at sign-up and stays, even if an admin later promotes the user.
+// account_type (student | instructor | recruiter) is chosen once at sign-up and stays, even if an admin later promotes the user.
 
-export type Role = "student" | "recruiter" | "admin" | "super_admin";
-export type AccountType = "student" | "recruiter";
+export type Role = "student" | "instructor" | "recruiter" | "admin" | "super_admin";
+export type AccountType = "student" | "instructor" | "recruiter";
 
 export type RoleHolder = { role?: Role | string | null; account_type?: AccountType | string | null } | null | undefined;
 
 export const isSuperAdmin = (p: RoleHolder) => p?.role === "super_admin";
 export const isAdmin = (p: RoleHolder) => p?.role === "admin" || p?.role === "super_admin";
-export const isRecruiter = (p: RoleHolder) => !isAdmin(p) && (p?.role === "recruiter" || p?.account_type === "recruiter");
-export const isStudent = (p: RoleHolder) => !isAdmin(p) && !isRecruiter(p) && (p?.role === "student" || p?.account_type === "student" || !p?.account_type);
+export const isInstructor = (p: RoleHolder) => !isAdmin(p) && (p?.role === "instructor" || p?.account_type === "instructor");
+export const isRecruiter = (p: RoleHolder) => !isAdmin(p) && !isInstructor(p) && (p?.role === "recruiter" || p?.account_type === "recruiter");
+export const isStudent = (p: RoleHolder) => !isAdmin(p) && !isInstructor(p) && !isRecruiter(p) && (p?.role === "student" || p?.account_type === "student" || !p?.account_type);
 
 export type Permission =
   // students
   | "apply"
   | "view_own_applications"
   | "view_own_evaluations"
+  // instructors
+  | "edit_teaching_profile"
+  | "view_own_teaching"
   // recruiters
   | "send_hiring_request"
   | "view_own_hiring_requests"
@@ -33,6 +38,7 @@ export type Permission =
   | "verify_discounts"
   | "manage_users"
   | "verify_recruiters"
+  | "verify_instructors"
   | "manage_hiring_requests"
   | "read_inbox"
   | "export_csv"
@@ -42,7 +48,7 @@ export type Permission =
   | "manage_admins"
   | "site_settings";
 
-const ADMIN: Permission[] = ["view_admin", "review_applications", "verify_discounts", "manage_users", "verify_recruiters", "manage_hiring_requests", "read_inbox", "export_csv", "moderate_evaluations"];
+const ADMIN: Permission[] = ["view_admin", "review_applications", "verify_discounts", "manage_users", "verify_recruiters", "verify_instructors", "manage_hiring_requests", "read_inbox", "export_csv", "moderate_evaluations"];
 
 // TODO(super admin): the owner will list what only the super admin may do. Move those permissions out of ADMIN
 // and into SUPER_ONLY (for example manage_admins, site_settings), then gate the screens with can(). Until then
@@ -52,6 +58,7 @@ const SUPER_ONLY: Permission[] = ["manage_calendar"];
 
 export const PERMISSIONS: Record<Role, readonly Permission[]> = {
   student: ["apply", "view_own_applications", "view_own_evaluations"],
+  instructor: ["edit_teaching_profile", "view_own_teaching"],
   recruiter: ["send_hiring_request", "view_own_hiring_requests", "evaluate_students"],
   admin: ADMIN,
   super_admin: [...ADMIN, ...SUPER_ONLY],
@@ -60,10 +67,11 @@ export const PERMISSIONS: Record<Role, readonly Permission[]> = {
 export function roleOf(p: RoleHolder): Role {
   if (isSuperAdmin(p)) return "super_admin";
   if (isAdmin(p)) return "admin";
+  if (isInstructor(p)) return "instructor";
   if (isRecruiter(p)) return "recruiter";
   return "student";
 }
 
 export const can = (p: RoleHolder, permission: Permission) => Boolean(p) && PERMISSIONS[roleOf(p)].includes(permission);
 
-export const roleLabel: Record<Role, string> = { student: "Student", recruiter: "Recruiter", admin: "Admin", super_admin: "Super admin" };
+export const roleLabel: Record<Role, string> = { student: "Student", instructor: "Instructor", recruiter: "Recruiter", admin: "Admin", super_admin: "Super admin" };
