@@ -5,8 +5,8 @@ import { Chip } from "@/components/ds/Chips";
 import { Input, Select } from "@/components/ds/Forms";
 import { Button } from "@/components/ui/Button";
 import { adminCopy } from "@/content/copy-admin";
-import { verificationLabel, type Profile, type RecruiterProfile, type VerificationStatus } from "@/lib/db";
-import { isAdmin, isRecruiter, isStudent, roleLabel, roleOf } from "@/lib/roles";
+import { verificationLabel, type InstructorProfile, type Profile, type RecruiterProfile, type VerificationStatus } from "@/lib/db";
+import { isAdmin, isInstructor, isRecruiter, isStudent, roleLabel, roleOf } from "@/lib/roles";
 import { ACCOUNT_TYPES, labelOf } from "@/lib/signupSchema";
 import { AdminShell } from "../AdminShell";
 import { CsvButton } from "../CsvButton";
@@ -22,12 +22,15 @@ const PAGE = 25;
 const rule = { borderColor: "var(--rule)" } as const;
 const VERIFICATIONS: VerificationStatus[] = ["pending", "approved", "rejected"];
 
-type TypeId = "" | "student" | "recruiter" | "team";
+type TypeId = "" | "student" | "instructor" | "recruiter" | "team";
 type Onboarding = "" | "done" | "open";
 type Filters = { q: string; type: TypeId; onboarding: Onboarding; verification: VerificationStatus | ""; country: string; from: string; to: string; sort: string; page: number };
 const DEFAULTS: Filters = { q: "", type: "", onboarding: "", verification: "", country: "", from: "", to: "", sort: "created_at.desc", page: 1 };
 
-export type UserRow = Profile & { recruiter: Pick<RecruiterProfile, "verification_status" | "company_name"> | null };
+export type UserRow = Profile & {
+  recruiter: Pick<RecruiterProfile, "verification_status" | "company_name"> | null;
+  instructor: Pick<InstructorProfile, "verification_status" | "employer"> | null;
+};
 
 // The overview links preselect an account type or a verification state. Search text never goes in the URL.
 function fromUrl(): Filters {
@@ -37,18 +40,22 @@ function fromUrl(): Filters {
   return { ...DEFAULTS, type: c.types.some((t) => t.id === type) ? (type as TypeId) : "", verification: (VERIFICATIONS as string[]).includes(v) ? (v as VerificationStatus) : "" };
 }
 
-// Profiles and recruiter rows are two tables: join them here by id. Admins can read both (0005 policies).
+// Profiles, recruiter rows and instructor rows are three tables: join them here by id. Admins can read all (0005, 0008 policies).
 async function load(): Promise<UserRow[]> {
   const s = sb();
-  const [profiles, recruiters] = await Promise.all([
+  const [profiles, recruiters, instructors] = await Promise.all([
     s.from("profiles").select("*").order("created_at", { ascending: false }).then((r) => unwrap<Profile[]>(r)),
     s.from("recruiter_profiles").select("id,verification_status,company_name").then((r) => unwrap<Pick<RecruiterProfile, "id" | "verification_status" | "company_name">[]>(r)),
+    s.from("instructor_profiles").select("id,verification_status,employer").then((r) => unwrap<Pick<InstructorProfile, "id" | "verification_status" | "employer">[]>(r)),
   ]);
   const by = new Map(recruiters.map((r) => [r.id, r]));
-  return profiles.map((p) => ({ ...p, recruiter: by.get(p.id) ?? null }));
+  const byInstructor = new Map(instructors.map((r) => [r.id, r]));
+  return profiles.map((p) => ({ ...p, recruiter: by.get(p.id) ?? null, instructor: byInstructor.get(p.id) ?? null }));
 }
 
-const typeOf = (u: UserRow): TypeId => (isAdmin(u) ? "team" : isRecruiter(u) ? "recruiter" : isStudent(u) ? "student" : "");
+const typeOf = (u: UserRow): TypeId => (isAdmin(u) ? "team" : isInstructor(u) ? "instructor" : isRecruiter(u) ? "recruiter" : isStudent(u) ? "student" : "");
+// Recruiters and instructors both have a verification state; a person is only ever one of the two.
+const verificationOf = (u: UserRow) => u.recruiter?.verification_status ?? u.instructor?.verification_status ?? null;
 const day = (iso: string | null | undefined) => (iso ?? "").slice(0, 10);
 
 function applyFilters(rows: UserRow[], f: Filters) {
@@ -58,7 +65,7 @@ function applyFilters(rows: UserRow[], f: Filters) {
     if (f.type && typeOf(u) !== f.type) return false;
     if (f.onboarding === "done" && !u.onboarding_complete) return false;
     if (f.onboarding === "open" && u.onboarding_complete) return false;
-    if (f.verification && u.recruiter?.verification_status !== f.verification) return false;
+    if (f.verification && verificationOf(u) !== f.verification) return false;
     if (country && !(u.country ?? "").toLowerCase().includes(country)) return false;
     if (f.from && day(u.created_at) < f.from) return false;
     if (f.to && day(u.created_at) > f.to) return false;
@@ -79,7 +86,9 @@ export const userCsvColumns = [
   { key: "role_label", label: "Role" },
   { key: "onboarding_label", label: "Onboarding complete" },
   { key: "verification_label", label: "Recruiter verification" },
+  { key: "instructor_verification_label", label: "Instructor verification" },
   { key: "company", label: "Company" },
+  { key: "employer", label: "Instructor employer" },
   { key: "phone", label: "Phone" },
   { key: "country", label: "Country" },
   { key: "city", label: "City" },
@@ -94,7 +103,9 @@ export function userCsvRow(u: UserRow): Record<string, unknown> {
     role_label: roleLabel[roleOf(u)],
     onboarding_label: u.onboarding_complete ? common.yes : common.no,
     verification_label: u.recruiter ? verificationLabel[u.recruiter.verification_status] : "",
+    instructor_verification_label: u.instructor ? verificationLabel[u.instructor.verification_status] : "",
     company: u.recruiter?.company_name ?? "",
+    employer: u.instructor?.employer ?? "",
   };
 }
 
@@ -142,7 +153,7 @@ export function Users() {
         ),
       },
       { key: "onboarding", label: c.columns.onboarding, render: (u) => (u.onboarding_complete ? c.complete : <span className="text-dim">{c.incomplete}</span>) },
-      { key: "verification", label: c.columns.verification, render: (u) => (u.recruiter ? <VerificationBadge status={u.recruiter.verification_status} /> : <span className="text-dim">{common.none}</span>) },
+      { key: "verification", label: c.columns.verification, render: (u) => (verificationOf(u) ? <VerificationBadge status={verificationOf(u)!} /> : <span className="text-dim">{common.none}</span>) },
       { key: "country", label: c.columns.country, render: (u) => [u.city, u.country].filter(Boolean).join(", ") },
       { key: "created", label: c.columns.created, sortKey: "created_at", className: "whitespace-nowrap", render: (u) => fmtDate(u.created_at) },
     ],
@@ -183,7 +194,7 @@ export function Users() {
         {more && (
           <div className="grid gap-x-5 gap-y-6 border-t pt-6 sm:grid-cols-2 lg:grid-cols-5" style={rule}>
             <Select label={c.onboarding} options={c.onboardingOptions} value={c.onboardingOptions[onboardingIds.indexOf(f?.onboarding ?? "")]} onChange={(e) => set({ onboarding: onboardingIds[c.onboardingOptions.indexOf(e.target.value as (typeof c.onboardingOptions)[number])] ?? "" })} data-testid="onboarding" />
-            <Select label={c.verification} options={verificationOptions} value={f?.verification ? verificationLabel[f.verification] : c.anyVerification} onChange={(e) => set({ verification: VERIFICATIONS.find((v) => verificationLabel[v] === e.target.value) ?? "" })} data-testid="verification" />
+            <Select label={c.verificationAny} options={verificationOptions} value={f?.verification ? verificationLabel[f.verification] : c.anyVerification} onChange={(e) => set({ verification: VERIFICATIONS.find((v) => verificationLabel[v] === e.target.value) ?? "" })} data-testid="verification" />
             <Input label={c.country} value={f?.country ?? ""} onChange={(e) => set({ country: e.target.value })} autoComplete="off" />
             <Input label={c.from} type="date" value={f?.from ?? ""} onChange={(e) => set({ from: e.target.value })} />
             <Input label={c.to} type="date" value={f?.to ?? ""} onChange={(e) => set({ to: e.target.value })} />

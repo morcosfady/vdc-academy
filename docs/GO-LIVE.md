@@ -28,14 +28,14 @@ Update this table every time the runbook runs.
 
 ## 2. Migrations and the RLS proof (Claude)
 
-1. Apply in order, 0001 to 0007: `supabase/migrations/0001_init.sql`, `0002_hardening.sql`, `0003_accounts.sql`, `0004_notifications.sql`, `0005_roles_registration.sql` (roles, recruiters, hiring requests, the owner's role grant), `0006_emails.sql` (welcome and recruiter alert stamps), `0007_evaluations.sql` (student opt-in, talent list, evaluations by verified recruiters, the student-safe view) (MCP `apply_migration`, or `supabase link --project-ref <ref>` then `supabase db push`). All seven are re-runnable.
+1. Apply in order, 0001 to 0008: `supabase/migrations/0001_init.sql`, `0002_hardening.sql`, `0003_accounts.sql`, `0004_notifications.sql`, `0005_roles_registration.sql` (roles, recruiters, hiring requests, the owner's role grant), `0006_emails.sql` (welcome and recruiter alert stamps), `0007_evaluations.sql` (student opt-in, talent list, evaluations by verified recruiters, the student-safe view), `0008_instructors.sql` (the instructor role and `instructor_profiles` with the verification columns; the sign-up offers Student or Instructor) (MCP `apply_migration`, or `supabase link --project-ref <ref>` then `supabase db push`). All eight are re-runnable.
 2. Run `supabase/tests/rls_accounts.sql` (MCP `execute_sql` or the SQL editor). Paste the PASS/FAIL summary into `docs/HANDOFF.md`. **Every check must PASS (at least 50)**; a FAIL stops the runbook until it is fixed with a new migration. The same proof already runs in CI on every push to `main` that touches `supabase/**` (`.github/workflows/db-tests.yml`: a local Supabase stack, every migration applied twice, fails on any FAIL), so a live FAIL means the live project differs from a fresh stack.
-3. `list_tables` and confirm: `profiles`, `recruiter_profiles`, `hiring_requests`, `student_evaluations`, `role_grants`, `applications`, `application_events`, `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`, `admin_emails`, all with RLS on.
+3. `list_tables` and confirm: `profiles`, `recruiter_profiles`, `instructor_profiles`, `hiring_requests`, `student_evaluations`, `role_grants`, `applications`, `application_events`, `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`, `admin_emails`, all with RLS on.
 
 ## 3. Advisors (Claude)
 
 - Run the security and performance advisors (MCP `get_advisors`, types `security` and `performance`).
-- Fix anything critical or high with a new migration `0008_*.sql` (committed), for example a missing `search_path` on a function or an unindexed foreign key. Note warnings that are accepted, with the reason, in the handoff.
+- Fix anything critical or high with a new migration `0009_*.sql` (committed), for example a missing `search_path` on a function or an unindexed foreign key. Note warnings that are accepted, with the reason, in the handoff.
 
 ## 4. Auth settings (Claude where the API allows, else Owner)
 
@@ -54,13 +54,13 @@ Update this table every time the runbook runs.
 
 ```bash
 supabase link --project-ref <ref>
-supabase functions deploy on-application-submitted on-status-changed notify-lead on-account-verified on-recruiter-verified on-evaluation-published
+supabase functions deploy on-application-submitted on-status-changed notify-lead on-account-verified on-recruiter-verified on-evaluation-published on-instructor-verified
 supabase secrets set RESEND_API_KEY=... EMAIL_FROM="VDC Academy <...>" ADMIN_NOTIFY_EMAIL=thefadys99@gmail.com TURNSTILE_SECRET_KEY=... SITE_URL=https://morcosfady.github.io/vdc-academy
 ```
 
 - **Client email: `thefadys99@gmail.com`** (confirmed by the owner 2026-10-29). It is both the super admin (granted in migration 0005) and `ADMIN_NOTIFY_EMAIL`, so every "new application / lead / recruiter" email goes there. Create the Resend account with this address too, so the test sender can reach it before a domain is verified.
 - `RESEND_API_KEY` and `EMAIL_FROM` come from the owner (Resend, below). Until a domain is verified, use `EMAIL_FROM="VDC Academy <onboarding@resend.dev>"`: Resend's test sender delivers **only to the Resend account owner's own address**, so `ADMIN_NOTIFY_EMAIL` and the step 9 test email must be that address.
-- Six functions: the three from v7, `on-account-verified` and `on-recruiter-verified` (v9 account emails) and `on-evaluation-published` (tells a student an evaluation was published, see "Emails" below). All six use the same secrets; `ADMIN_NOTIFY_EMAIL` also receives the "New recruiter to review" email.
+- Seven functions: the three from v7, `on-account-verified` and `on-recruiter-verified` (v9 account emails), `on-evaluation-published` (tells a student an evaluation was published) and `on-instructor-verified` (tells an instructor the profile was approved or not), see "Emails" below. All seven use the same secrets; `ADMIN_NOTIFY_EMAIL` also receives the "New recruiter to review" and "New instructor to review" emails.
 - `TURNSTILE_SECRET_KEY` can wait; without it the functions skip the bot check and record "not configured".
 - Typed into the terminal by the owner or set in **Edge Functions > Secrets**. Never pasted into a file or a commit.
 
@@ -96,7 +96,8 @@ With a test email the owner provides:
 5. As admin: `/admin/`, open the application, verify the discount, change the status to **Under review**.
 6. Inbox: the status email. Student dashboard: the timeline step.
 7. Recruiter: sign up a second test address as a recruiter and confirm. Its inbox: "Your VDC Academy company account is under review"; admin inbox: "New recruiter to review: ...". As admin, approve it in `/admin/recruiters/`: its inbox gets "Your company account is verified" and `recruiter_profiles.verify_notified_at` is set. With the Resend test sender only the Resend owner's inbox receives mail, so run this sub-step after the domain is verified.
-8. Clean up: delete the test user in **Authentication > Users** (rows and files cascade) or with `delete from auth.users where email = '<test email>';`, then check `storage.objects` has nothing left under that user id.
+8. Instructor: sign up a third test address as an instructor and confirm. Its inbox: "Your VDC Academy instructor account is created"; admin inbox: "New instructor to review: ...". As admin, approve it in `/admin/instructors/`: its inbox gets "Your instructor profile is approved" and `instructor_profiles.verify_notified_at` is set. Same Resend test sender limit as the recruiter sub-step.
+9. Clean up: delete the test user in **Authentication > Users** (rows and files cascade) or with `delete from auth.users where email = '<test email>';`, then check `storage.objects` has nothing left under that user id.
 
 Record each sub-step as done or failed in the status log, with the function log line for any failure (ids and status codes only).
 
@@ -115,8 +116,12 @@ Every email the site sends. The Auth emails come from Supabase (built-in mailer,
 | Reset your VDC Academy password | forgot password | Supabase Auth (`reset-password.html`) | the user |
 | Welcome to VDC Academy | first landing on `/auth/callback/` with a confirmed email, student | `on-account-verified` (`welcome_sent_at`) | the student |
 | Your VDC Academy company account is under review | the same, recruiter | `on-account-verified` (`welcome_sent_at`) | the recruiter |
+| Your VDC Academy instructor account is created | the same, instructor (the academy team will review the profile before the instructor is listed) | `on-account-verified` (`welcome_sent_at`) | the instructor |
 | Your VDC Academy team access is active | the same, admin or super admin | `on-account-verified` (`welcome_sent_at`) | the team member |
 | New recruiter to review: company | the same, recruiter | `on-account-verified` (`recruiter_alert_sent_at`) | `ADMIN_NOTIFY_EMAIL` |
+| New instructor to review: name | the same, instructor (`recruiter_alert_sent_at` is the shared team-alert stamp for recruiters and instructors) | `on-account-verified` (`recruiter_alert_sent_at`) | `ADMIN_NOTIFY_EMAIL` |
+| Your instructor profile is approved | an admin approves an instructor | `on-instructor-verified` (`instructor_profiles.verify_notified_at`) | the instructor |
+| About your VDC Academy instructor profile | an admin rejects an instructor (includes the rejection note) | `on-instructor-verified` (`instructor_profiles.verify_notified_at`) | the instructor |
 | Your company account is verified | an admin approves a recruiter | `on-recruiter-verified` (`verify_notified_at`) | the recruiter |
 | About your VDC Academy company account | an admin rejects a recruiter (includes the rejection note) | `on-recruiter-verified` (`verify_notified_at`) | the recruiter |
 | We received your VDC Academy application | a student submits | `on-application-submitted` (`notified_at`) | the student |
@@ -125,10 +130,19 @@ Every email the site sends. The Auth emails come from Supabase (built-in mailer,
 | A recruiter evaluated your work | an admin publishes an evaluation (it names no company and shows no scores) | `on-evaluation-published` (`student_evaluations.notified_at`) | the student |
 | New lead / Contact message from name | a lead form or the contact form | `notify-lead` (`notified_at`) | `ADMIN_NOTIFY_EMAIL` |
 
+## What the team does when an instructor signs up
+
+1. The instructor confirms the email. An email "New instructor to review: name" arrives at `ADMIN_NOTIFY_EMAIL`. The Overview shows the same number on the card "Instructors to review".
+2. Open **Admin > Instructors** (`/admin/instructors/`). Waiting profiles are listed first. Use the status buttons to see one group, or the search box to find a name or email.
+3. Read the card: current role and employer, years in the industry and teaching, the subjects they can teach, format, availability, LinkedIn and the short bio. Open the LinkedIn page to check the person.
+4. Click **Approve**, or **Reject** and write a short note. The note is required (up to 1000 characters). The instructor sees it on their account and in the email, so write it for them.
+5. The screen saves the decision with your name and the time, then asks `on-instructor-verified` to send the email: "Your instructor profile is approved" or "About your VDC Academy instructor profile". If the email fails, the decision still stands: check **Edge Functions > on-instructor-verified > Logs**.
+6. Changed your mind? Use the other button on the same card. A new decision sends a new email.
+
 ## Owner-only items
 
 - [ ] **Free a Supabase slot**: pause or delete one of `pharaohs-bites` / `kanisa-checkin`, or upgrade an organization to Pro. This is the only blocker for steps 1 to 9.
 - [ ] **Resend**: create an account and verify a sending domain the academy controls, ideally the client's (`academy.baybimdesigns.com` or `baybimdesigns.com`). That needs DNS access from the client (three records: SPF/MX on a `send.` subdomain and a DKIM TXT). Until then the temporary option is `onboarding@resend.dev`, which only delivers to the Resend account owner's own inbox: fine for the smoke test, not for students.
 - [ ] **Cloudflare Turnstile**: a widget for `morcosfady.github.io` (plus the custom domain later, and `localhost`), mode Managed. Site key goes to GitHub (step 7), secret key to Supabase (step 6).
 - [ ] Optional: **Google OAuth** client ID and secret for "Continue with Google" (Google Cloud console, authorized redirect `https://<ref>.supabase.co/auth/v1/callback`), then `NEXT_PUBLIC_AUTH_GOOGLE=1` in GitHub.
-- [ ] Two test email addresses for step 9 (a student and a recruiter), and access to the owner inbox for step 8.
+- [ ] Three test email addresses for step 9 (a student, a recruiter and an instructor), and access to the owner inbox for step 8.
