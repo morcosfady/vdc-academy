@@ -584,7 +584,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
               </div>
               {field("linkedin_url", { type: "url", inputMode: "url" })}
               <div>
-                <TextareaField label={`${c.fields.bio} *`} name="bio" rows={5} maxLength={BIO_MAX} value={v.bio} onChange={(ev) => set("bio", ev.target.value)} onBlur={blur("bio")} error={e("bio")} required />
+                <TextareaField label={c.fields.bio} name="bio" rows={5} maxLength={BIO_MAX} value={v.bio} onChange={(ev) => set("bio", ev.target.value)} onBlur={blur("bio")} error={e("bio")} required />
                 <p className="mono mt-2 text-end !normal-case" aria-live="off">
                   {c.bioCount(v.bio.trim().length, BIO_MIN, BIO_MAX)}
                 </p>
