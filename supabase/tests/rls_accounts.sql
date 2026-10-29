@@ -1033,7 +1033,7 @@ do $$
 declare
   i1 uuid; i2 uuid; st uuid; ad uuid;
   c_i1 text; c_st text; c_ad text;
-  n int; ok boolean; txt text; ver uuid;
+  n int; n2 int; n3 int; ok boolean; ok2 boolean; txt text; ver uuid;
   good text := '"full_name":"Test Instructor","phone":"+1 555 030 0000","country":"USA","city":"Dallas","heard_from":"bay_bim","job_title":"BIM Manager","employer":"Test Company","industry_years":"10-15","teaching_years":"2-5","subjects":["revit-architecture","bim-fundamentals-revit","not-a-subject"],"teaching_format":"either","availability":"evenings","linkedin_url":"https://www.linkedin.com/in/test-instructor","bio":"Ten years of BIM delivery on commercial projects and a few years teaching Revit.","consent_terms":true,"consent_contact":true,"info_confirmed":true';
 begin
   delete from auth.users where email in ('rls-test-instructor@example.invalid', 'rls-test-instructor2@example.invalid', 'rls-test-inst-student@example.invalid', 'rls-test-inst-admin@example.invalid');
@@ -1095,13 +1095,14 @@ begin
     perform set_config('request.jwt.claims', c_i1, true);
     set local role authenticated;
     select count(*) into n from public.profiles where id <> i1;
-    perform pg_temp.rls_check('an instructor reads no other profile', n = 0, format('rows=%s', n));
-    select count(*) into n from public.applications;
-    perform pg_temp.rls_check('an instructor reads no application', n = 0, format('rows=%s', n));
-    select count(*) into n from public.instructor_profiles where id <> i1;
-    perform pg_temp.rls_check('an instructor reads no other teaching profile', n = 0, format('rows=%s', n));
+    select count(*) into n2 from public.applications;
+    select count(*) into n3 from public.instructor_profiles where id <> i1;
     reset role;
     perform set_config('request.jwt.claims', '', true);
+    -- the results table belongs to the test owner, so record the results after leaving the restricted role
+    perform pg_temp.rls_check('an instructor reads no other profile', n = 0, format('rows=%s', n));
+    perform pg_temp.rls_check('an instructor reads no application', n2 = 0, format('rows=%s', n2));
+    perform pg_temp.rls_check('an instructor reads no other teaching profile', n3 = 0, format('rows=%s', n3));
   exception when others then
     reset role;
     perform set_config('request.jwt.claims', '', true);
@@ -1148,12 +1149,12 @@ begin
     set local role authenticated;
     ok := false;
     begin update public.profiles set role = 'admin' where id = i1; exception when others then ok := true; end;
-    perform pg_temp.rls_check('an instructor cannot promote themselves', ok, format('refused=%s', ok));
-    ok := false;
-    begin update public.profiles set account_type = 'student' where id = i1; exception when others then ok := true; end;
-    perform pg_temp.rls_check('an instructor cannot switch the account type', ok, format('refused=%s', ok));
+    ok2 := false;
+    begin update public.profiles set account_type = 'student' where id = i1; exception when others then ok2 := true; end;
     reset role;
     perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an instructor cannot promote themselves', ok, format('refused=%s', ok));
+    perform pg_temp.rls_check('an instructor cannot switch the account type', ok2, format('refused=%s', ok2));
   exception when others then
     reset role;
     perform set_config('request.jwt.claims', '', true);
