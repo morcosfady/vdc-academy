@@ -39,7 +39,7 @@ jobs:
           if grep -qE "^\s*[0-9]+ \|\s*FAIL\s*\|" rls.txt; then echo "Some RLS checks failed"; exit 1; fi
           passed=$(grep -cE "^\s*[0-9]+ \|\s*PASS\s*\|" rls.txt || true)
           echo "RLS checks passed: $passed"
-          test "$passed" -ge 50
+          test "$passed" -ge 67
       - name: Supabase logs on failure
         if: failure()
         run: docker ps -a && docker logs $(docker ps -aqf "name=supabase_db") 2>&1 | tail -80

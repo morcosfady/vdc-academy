@@ -192,7 +192,7 @@ export const account = {
     noAccount: "New here?",
     signup: "Create an account",
     newTitle: "New to VDC Academy?",
-    newLead: "Create an account to apply, follow your application and keep your documents in one place. Recruiters can sign up to hire.",
+    newLead: "Create an account to apply, follow your application and keep your documents in one place. Instructors can sign up to teach.",
     newButton: "Create account",
     errors: {
       email: "Please enter a valid email address.",

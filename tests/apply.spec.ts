@@ -111,7 +111,7 @@ test("the gate's Create account opens the registration with the way back to /app
   await open(page);
   await page.getByRole("link", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/signup\/\?next=%2Fapply%2F/);
-  await expect(page.getByRole("heading", { name: "Are you a student or a recruiter?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Are you a student or an instructor?" })).toBeVisible();
 });
 
 test("sign up from the gate: check-your-email, the guest draft survives and is restored after login", async ({ page }) => {

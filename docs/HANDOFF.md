@@ -4,7 +4,26 @@ Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, re
 Repo (public): https://github.com/morcosfady/vdc-academy
 Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
-## v10: calendar + student evaluations (2026-10-28), read this first
+## v11: instructors replace recruiters at sign-up (2026-10-29), read this first
+
+The owner said sign-up must offer **Student or Instructor** (the person who teaches the courses), not Recruiter. Built and tested; the design did not change. Supabase is still not connected, so everything runs on the in-browser mock and the demo.
+
+- **Sign-up** (`components/account/signup/RegisterFlow.tsx`): step 1 has two cards, Student and Instructor. Instructor details are all required: job title, employer, years in the industry, teaching experience, programs they can teach (the 11 academy programs, by slug), format, availability, LinkedIn, a 40 to 600 character bio, plus a "my details are accurate and I can teach this" confirmation. Onboarding, drafts, error summary and the "Academy team account" link work as before.
+- **Recruiter is dormant, not deleted.** No card, no copy points to it. `/signup/?as=recruiter` still opens the old flow, the recruiter dashboard, hiring requests, evaluations (v10) and the admin screens all still work and their tests pass. Remove or re-offer it when the owner decides. The demo tour no longer shows recruiter sign-up or the recruiter dashboard (the v10 evaluation cards stay).
+- **Roles** (`lib/roles.ts`): role and account type `instructor`, permissions `edit_teaching_profile`, `view_own_teaching`; admins and super admins get `verify_instructors`. `useAuth()` returns `instructor` and `isInstructor`.
+- **Database** (`supabase/migrations/0008_instructors.sql`): role and account type checks, `is_instructor()`, table `instructor_profiles` (verification columns writable by admins only, subjects limited to the program slugs, bio at most 600), `profile_complete`, `profiles_guard` and `handle_new_user` replaced with instructor branches, RLS (own row or admin). Instructors read no application and no other profile. `supabase/tests/rls_accounts.sql` has 15 new rows (checks 50 to 61). The DB workflow threshold in `.github/workflows/db-tests.yml` was raised to match.
+- **Instructor screens**: `components/account/InstructorDashboard.tsx` (I-100: verification banner, teaching profile, "Your cohorts" marked Coming soon, nothing invented), Teaching profile section in the profile screen (`#teaching`), menus (Dashboard, Teaching profile), `/apply` shows "Applications are for students".
+- **Admin**: `/admin/instructors/` (approve, reject with a required note, status chips, search), Users (instructors, CSV columns), Overview card "Instructors to review".
+- **Emails** (Edge Functions): `on-account-verified` sends the instructor welcome and "New instructor to review" (shares the `recruiter_alert_sent_at` stamp), new `on-instructor-verified` (approved or rejected). Seven functions in total; `docs/GO-LIVE.md` and `docs/SETUP-SUPABASE.md` are updated (migrations 0001 to 0008).
+- **Demo**: Sample Instructor 01 pending, 02 approved, 03 rejected, 04 approved. Card 02 registers an instructor (Fill sample data), card 06 opens the instructor dashboard (pending and approved views).
+- **Log in page** (v10.1, same day): the real form is always shown, with a clear Create account block; while accounts are off, submitting says "Accounts open soon" with an email box. No public page mentions the demo.
+- **Client email** `thefadys99@gmail.com` is the super admin grant (migration 0005) and `ADMIN_NOTIFY_EMAIL` (GO-LIVE). It is not shown on the public site.
+
+Tests: Chromium full suite passes; Firefox and WebKit run in CI; the new SQL checks run in the database CI on real Postgres (not runnable on this PC: no Docker or psql).
+
+Open items: what instructors can actually do beyond the profile (cohorts, class lists, materials) is not specified, so nothing was invented; the super admin differences; whether recruiters should return later; owner steps are unchanged (free a Supabase slot, then `docs/GO-LIVE.md`).
+
+## v10: calendar + student evaluations (2026-10-28), see v11 above
 
 Two features, both merged on `main`: the public calendar (below) and recruiter evaluations (next section). The design did not change. Chromium suite on the merged build: 250 passed, 12 skipped (screenshot captures). Demo: 13 scenes (card 10 calendar, 11 to 13 evaluations).
 
@@ -46,7 +65,7 @@ Everything below is on `main` and deployed. The design did not change. Supabase 
 
 ### Registration (`/signup`) and onboarding (`/onboarding/`)
 - `components/account/signup/RegisterFlow.tsx` (both pages), `fields.tsx` (key/label select, date field, checkbox group, role cards), schemas in `lib/signupSchema.ts` (one per step and role, every field required, option lists with stable keys, `profileComplete()`).
-- Steps: 1 Student or Recruiter (or the "Academy team account" link: name and phone), 2 account, 3 details, 4 review with Edit and consents (recruiters confirm authorisation), Turnstile, honeypot. The error summary takes focus, focus moves to the top of each new step, changes are announced, autosave never stores the password, `?as=student|recruiter` preselects the role, "Fill sample data" in the demo.
+- Steps: 1 Student or Instructor since v11 (or the "Academy team account" link: name and phone), 2 account, 3 details, 4 review with Edit and consents (recruiters confirm authorisation), Turnstile, honeypot. The error summary takes focus, focus moves to the top of each new step, changes are announced, autosave never stores the password, `?as=student|recruiter` preselects the role, "Fill sample data" in the demo.
 - Answers travel in the sign-up metadata (the user has no session until they confirm); `handle_new_user` copies the whitelisted fields (never a role) and sets `onboarding_complete` only when `profile_complete()` passes. The database refuses `onboarding_complete = true` with any required field missing (including under 16).
 - **Deviation from the brief, on purpose:** the site cannot detect the owner's email at sign-up without telling anonymous visitors which emails are privileged. The owner uses the team link (or any path, even Google): after confirming, the grant makes them super admin, `profile_complete` accepts name and phone, and a team sign-up returns to `/admin/`.
 - Onboarding gate: `RequireAuth` and `/apply` send a signed-in user with a loaded, incomplete profile to `/onboarding/?next=...` (Google, magic link, interrupted sign-ups, v7/v8 accounts). The account type is locked once set.
