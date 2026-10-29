@@ -6,10 +6,11 @@
 -- results table that is returned at the end. Safe to run more than once: the throwaway rows are removed at the
 -- end, and at the start in case an earlier run stopped half way.
 --
--- Requires 0004 to 0007. Checks 16 to 30 cover v9: recruiters, hiring requests, role grants (super admin only after
+-- Requires 0004 to 0008. Checks 16 to 30 cover v9: recruiters, hiring requests, role grants (super admin only after
 -- the email is confirmed) and the rule that onboarding_complete needs every required field. Checks 31 to 49 cover
 -- 0007: the student opt-in, the talent list, evaluations by verified recruiters, moderation, the student-safe view
--- (no private note) and the daily cap of 20 evaluations per recruiter.
+-- (no private note) and the daily cap of 20 evaluations per recruiter. Checks 50 to 61 cover 0008: instructors
+-- (sign-up metadata, no student data, no self approval, admin approval, program subjects).
 --
 -- If the `insert into auth.users` below fails on your project, create the three users by hand instead:
 -- Dashboard > Authentication > Users > Add user > Create new user, "Auto confirm user" on, with the emails
@@ -1024,6 +1025,220 @@ begin
     raise notice 'ALL PASS (% checks)', (select count(*) from pg_temp.rls_results);
   else
     raise notice '% FAILED of % checks', n, (select count(*) from pg_temp.rls_results);
+  end if;
+end $$;
+
+-- v11 (migration 0008): instructors. Checks 50 to 61. Its own throwaway users, removed at the end.
+do $$
+declare
+  i1 uuid; i2 uuid; st uuid; ad uuid;
+  c_i1 text; c_st text; c_ad text;
+  n int; ok boolean; txt text; ver uuid;
+  good text := '"full_name":"Test Instructor","phone":"+1 555 030 0000","country":"USA","city":"Dallas","heard_from":"bay_bim","job_title":"BIM Manager","employer":"Test Company","industry_years":"10-15","teaching_years":"2-5","subjects":["revit-architecture","bim-fundamentals-revit","not-a-subject"],"teaching_format":"either","availability":"evenings","linkedin_url":"https://www.linkedin.com/in/test-instructor","bio":"Ten years of BIM delivery on commercial projects and a few years teaching Revit.","consent_terms":true,"consent_contact":true,"info_confirmed":true';
+begin
+  delete from auth.users where email in ('rls-test-instructor@example.invalid', 'rls-test-instructor2@example.invalid', 'rls-test-inst-student@example.invalid', 'rls-test-inst-admin@example.invalid');
+
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+  values
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-instructor@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      ('{"account_type":"instructor","role":"admin",' || good || '}')::jsonb, now(), now(), '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-instructor2@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      '{"account_type":"instructor","full_name":"Test Instructor Two","phone":"+1 555 030 0001","country":"USA","city":"Dallas","heard_from":"bay_bim","job_title":"Coordinator","employer":"Test Company","subjects":[],"bio":"Too short.","consent_terms":true,"consent_contact":true,"info_confirmed":true}'::jsonb, now(), now(), '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-inst-student@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      '{"account_type":"student","full_name":"Test Student"}'::jsonb, now(), now(), '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-inst-admin@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      '{"full_name":"Test Admin"}'::jsonb, now(), now(), '', '', '', '');
+  select id into i1 from auth.users where email = 'rls-test-instructor@example.invalid';
+  select id into i2 from auth.users where email = 'rls-test-instructor2@example.invalid';
+  select id into st from auth.users where email = 'rls-test-inst-student@example.invalid';
+  select id into ad from auth.users where email = 'rls-test-inst-admin@example.invalid';
+  update public.profiles set role = 'admin' where id = ad; -- trusted (no JWT), like the SQL editor
+  insert into public.profiles (id, email, full_name) values (st, 'rls-test-inst-student@example.invalid', 'Test Student') on conflict (id) do nothing;
+  c_i1 := json_build_object('sub', i1, 'role', 'authenticated', 'email', 'rls-test-instructor@example.invalid')::text;
+  c_st := json_build_object('sub', st, 'role', 'authenticated', 'email', 'rls-test-inst-student@example.invalid')::text;
+  c_ad := json_build_object('sub', ad, 'role', 'authenticated', 'email', 'rls-test-inst-admin@example.invalid')::text;
+
+  -- T50. Sign-up metadata becomes an instructor profile; a role in the metadata is ignored; unknown subjects are dropped.
+  begin
+    perform pg_temp.rls_check('an instructor sign-up creates role=instructor, a pending teaching profile and a finished onboarding',
+      exists (select 1 from public.profiles p join public.instructor_profiles t on t.id = p.id
+              where p.id = i1 and p.role = 'instructor' and p.account_type = 'instructor' and p.onboarding_complete
+                and t.verification_status = 'pending' and t.subjects = array['revit-architecture','bim-fundamentals-revit'] and t.info_confirmed),
+      (select format('role=%s type=%s onboarding=%s subjects=%s', p.role, p.account_type, p.onboarding_complete, t.subjects) from public.profiles p left join public.instructor_profiles t on t.id = p.id where p.id = i1));
+  exception when others then
+    perform pg_temp.rls_check('an instructor sign-up creates role=instructor, a pending teaching profile and a finished onboarding', false, sqlerrm);
+  end;
+
+  -- T51. Missing subjects and a short bio keep onboarding open.
+  begin
+    perform pg_temp.rls_check('an instructor with no subject and a short bio is not complete',
+      (select not p.onboarding_complete from public.profiles p where p.id = i2) and exists (select 1 from public.instructor_profiles where id = i2),
+      (select format('onboarding=%s', onboarding_complete) from public.profiles where id = i2));
+  exception when others then
+    perform pg_temp.rls_check('an instructor with no subject and a short bio is not complete', false, sqlerrm);
+  end;
+
+  -- T52. onboarding_complete cannot be forced on an incomplete instructor.
+  begin
+    ok := false;
+    begin
+      update public.profiles set onboarding_complete = true where id = i2;
+    exception when others then ok := sqlerrm like '%profile_complete%';
+    end;
+    perform pg_temp.rls_check('onboarding_complete = true is refused for an incomplete instructor', ok, format('refused=%s', ok));
+  exception when others then
+    perform pg_temp.rls_check('onboarding_complete = true is refused for an incomplete instructor', false, sqlerrm);
+  end;
+
+  -- T53. An instructor sees only their own rows: no other profile, no application, no other teaching profile.
+  begin
+    perform set_config('request.jwt.claims', c_i1, true);
+    set local role authenticated;
+    select count(*) into n from public.profiles where id <> i1;
+    perform pg_temp.rls_check('an instructor reads no other profile', n = 0, format('rows=%s', n));
+    select count(*) into n from public.applications;
+    perform pg_temp.rls_check('an instructor reads no application', n = 0, format('rows=%s', n));
+    select count(*) into n from public.instructor_profiles where id <> i1;
+    perform pg_temp.rls_check('an instructor reads no other teaching profile', n = 0, format('rows=%s', n));
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an instructor sees only their own rows', false, sqlerrm);
+  end;
+
+  -- T54. An instructor cannot apply.
+  begin
+    perform set_config('request.jwt.claims', c_i1, true);
+    set local role authenticated;
+    ok := false;
+    begin
+      insert into public.applications (user_id, status, full_name, email, programs) values (i1, 'draft', 'Test Instructor', 'rls-test-instructor@example.invalid', array['revit-mep']);
+    exception when others then ok := true;
+    end;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an instructor cannot create an application', ok, format('refused=%s', ok));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an instructor cannot create an application', false, sqlerrm);
+  end;
+
+  -- T55. An instructor edits the teaching profile but cannot approve themselves.
+  begin
+    perform set_config('request.jwt.claims', c_i1, true);
+    set local role authenticated;
+    update public.instructor_profiles set verification_status = 'approved', verified_by = i1, rejection_note = 'x', job_title = 'Head of BIM' where id = i1;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an instructor edits the profile but stays pending (no self approval)',
+      exists (select 1 from public.instructor_profiles where id = i1 and job_title = 'Head of BIM' and verification_status = 'pending' and verified_by is null and rejection_note is null),
+      (select format('status=%s by=%s', verification_status, verified_by) from public.instructor_profiles where id = i1));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an instructor edits the profile but stays pending (no self approval)', false, sqlerrm);
+  end;
+
+  -- T56. No self promotion, no switching the account type.
+  begin
+    perform set_config('request.jwt.claims', c_i1, true);
+    set local role authenticated;
+    ok := false;
+    begin update public.profiles set role = 'admin' where id = i1; exception when others then ok := true; end;
+    perform pg_temp.rls_check('an instructor cannot promote themselves', ok, format('refused=%s', ok));
+    ok := false;
+    begin update public.profiles set account_type = 'student' where id = i1; exception when others then ok := true; end;
+    perform pg_temp.rls_check('an instructor cannot switch the account type', ok, format('refused=%s', ok));
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('no self promotion and no account type switch for an instructor', false, sqlerrm);
+  end;
+
+  -- T57. A student cannot create a teaching profile.
+  begin
+    perform set_config('request.jwt.claims', c_st, true);
+    set local role authenticated;
+    ok := false;
+    begin insert into public.instructor_profiles (id, job_title) values (st, 'Teacher'); exception when others then ok := true; end;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a student cannot create a teaching profile', ok, format('refused=%s', ok));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a student cannot create a teaching profile', false, sqlerrm);
+  end;
+
+  -- T58. A student cannot read any teaching profile.
+  begin
+    perform set_config('request.jwt.claims', c_st, true);
+    set local role authenticated;
+    select count(*) into n from public.instructor_profiles;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a student reads no teaching profile', n = 0, format('rows=%s', n));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a student reads no teaching profile', false, sqlerrm);
+  end;
+
+  -- T59. An admin approves; the database signs and dates the decision.
+  begin
+    perform set_config('request.jwt.claims', c_ad, true);
+    set local role authenticated;
+    update public.instructor_profiles set verification_status = 'approved' where id = i1;
+    select verified_by into ver from public.instructor_profiles where id = i1;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an admin approves an instructor and the decision is signed',
+      ver = ad and exists (select 1 from public.instructor_profiles where id = i1 and verification_status = 'approved' and verified_at is not null),
+      format('verified_by is the admin=%s', ver = ad));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an admin approves an instructor and the decision is signed', false, sqlerrm);
+  end;
+
+  -- T60. An admin reads every teaching profile.
+  begin
+    perform set_config('request.jwt.claims', c_ad, true);
+    set local role authenticated;
+    select count(*) into n from public.instructor_profiles where id in (i1, i2);
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an admin reads the teaching profiles', n = 2, format('rows=%s', n));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an admin reads the teaching profiles', false, sqlerrm);
+  end;
+
+  -- T61. The table refuses a subject that is not an academy program.
+  begin
+    ok := false;
+    begin update public.instructor_profiles set subjects = array['not-a-program'] where id = i1; exception when others then ok := true; end;
+    perform pg_temp.rls_check('a subject outside the academy programs is refused', ok, format('refused=%s', ok));
+  exception when others then
+    perform pg_temp.rls_check('a subject outside the academy programs is refused', false, sqlerrm);
+  end;
+
+  -- Clean up (cascades to profiles and teaching profiles).
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+  delete from auth.users where email in ('rls-test-instructor@example.invalid', 'rls-test-instructor2@example.invalid', 'rls-test-inst-student@example.invalid', 'rls-test-inst-admin@example.invalid');
+
+  select count(*) into n from pg_temp.rls_results where not pass;
+  if n = 0 then
+    raise notice 'ALL PASS (% checks, including instructors)', (select count(*) from pg_temp.rls_results);
+  else
+    raise notice '% FAILED of % checks (including instructors)', n, (select count(*) from pg_temp.rls_results);
   end if;
 end $$;
 

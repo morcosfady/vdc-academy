@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { emptyState, loginAs, mockSupabase, seedUser, type MockState } from "./helpers/mockSupabase";
-import { PASSWORD, RECRUITER, STUDENT, chooseRole, consent, fillAccount, fillRecruiter, fillStudent, next, setField, year } from "./helpers/register";
+import { INSTRUCTOR, PASSWORD, RECRUITER, STUDENT, chooseRole, consent, fillAccount, fillInstructor, fillRecruiter, fillStudent, next, setField, year } from "./helpers/register";
 
 // v9 registration with roles, against the in-memory Supabase (`?mock=1`, tests/helpers/mockSupabase.ts), which
 // mirrors supabase/migrations/0005_roles_registration.sql (profile from metadata, grants, guards, visibility).
@@ -30,18 +30,17 @@ async function rest(page: Page, method: string, path: string, body?: unknown) {
 test("step 1 needs a role; the choice shows on later steps with Change", async ({ page }) => {
   await mockSupabase(page);
   await open(page, "signup/");
-  await expect(page.getByRole("heading", { name: "Are you a student or a recruiter?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Are you a student or an instructor?" })).toBeVisible();
   await expect(page.getByText("STEP 01 / 04")).toBeVisible();
   await next(page);
-  await expect(summary(page)).toContainText("Please choose Student or Recruiter.");
+  await expect(summary(page)).toContainText("Please choose Student or Instructor.");
   await expect(summary(page)).toBeFocused();
   // keyboard: arrow keys move inside the radio group
   await page.locator('input[name="account_type"][value="student"]').focus();
   await page.keyboard.press("ArrowDown");
-  await expect(page.locator('input[name="account_type"][value="recruiter"]')).toBeChecked();
+  await expect(page.locator('input[name="account_type"][value="instructor"]')).toBeChecked();
   await next(page);
-  await expect(page.getByTestId("chosen-role")).toContainText("Signing up as: Recruiter");
-  await expect(page.getByText("Work email *")).toBeVisible();
+  await expect(page.getByTestId("chosen-role")).toContainText("Signing up as: Instructor");
   await page.getByRole("button", { name: "Change" }).click();
   await expect(page.getByText("STEP 01 / 04")).toBeVisible();
 });
@@ -310,13 +309,13 @@ test("axe and copy: every registration step and onboarding", async ({ page }) =>
     expect(text, label).not.toMatch(/\[[A-Z][A-Z0-9 \/]{1,40}\]/);
   };
   await check("role");
-  await chooseRole(page, "recruiter");
+  await chooseRole(page, "instructor");
   await check("account");
-  await fillAccount(page, "recruiter81@example.com");
-  await check("recruiter details");
+  await fillAccount(page, "instructor83@example.com");
+  await check("instructor details");
   await next(page); // the error summary is part of the check too
-  await check("recruiter details with errors");
-  await page.getByRole("button", { name: "Back" }).click();
+  await check("instructor details with errors");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
   await page.getByRole("button", { name: "Change" }).click();
   await chooseRole(page, "student");
   await next(page);
@@ -338,14 +337,99 @@ for (const w of [390, 360]) {
     const page = await ctx.newPage();
     await mockSupabase(page);
     await open(page, "signup/");
-    await chooseRole(page, "recruiter");
-    await fillAccount(page, "recruiter82@example.com");
+    await chooseRole(page, "instructor");
+    await fillAccount(page, "instructor84@example.com");
     const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(over).toBeLessThanOrEqual(1);
     const heights = await page.locator("main form input:not([type=checkbox]):not([type=radio]):not([name=website]), main form select").evaluateAll((els) => els.map((e) => (e as HTMLElement).getBoundingClientRect().height));
     expect(Math.min(...heights)).toBeGreaterThanOrEqual(48);
-    const lefts = await page.locator('select[name="company_type"], select[name="company_size"]').evaluateAll((els) => els.map((e) => Math.round((e as HTMLElement).getBoundingClientRect().left)));
+    const lefts = await page.locator('select[name="industry_years"], select[name="teaching_years"]').evaluateAll((els) => els.map((e) => Math.round((e as HTMLElement).getBoundingClientRect().left)));
     expect(new Set(lefts).size).toBe(1); // stacked
     await ctx.close();
   });
 }
+
+// ---------------------------------------------------------------- v11: instructors replace recruiters at sign-up
+
+test("step 1 offers Student and Instructor only (no Recruiter card)", async ({ page }) => {
+  await mockSupabase(page);
+  await open(page, "signup/");
+  await expect(page.locator('input[name="account_type"]')).toHaveCount(2);
+  await expect(page.locator('input[name="account_type"][value="student"]')).toHaveCount(1);
+  await expect(page.locator('input[name="account_type"][value="instructor"]')).toHaveCount(1);
+  await expect(page.getByText("Recruiter", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("I teach BIM and VDC courses.")).toBeVisible();
+});
+
+test("instructor details: every field required, LinkedIn checked, a subject and a real bio needed, confirmation required; pending review note", async ({ page }) => {
+  const state = await mockSupabase(page);
+  await open(page, "signup/");
+  await chooseRole(page, "instructor");
+  await fillAccount(page, "instructor77@example.com");
+  await fillInstructor(page, {}, []);
+  await next(page);
+  await expect(summary(page)).toContainText("Please choose at least one program you can teach.");
+  await page.locator('input[name="subjects"][value="revit-mep"]').check();
+  for (const k of Object.keys(INSTRUCTOR)) {
+    if (k === "bio") await page.locator('textarea[name="bio"]').fill("");
+    else await setField(page, k, "");
+    await next(page);
+    await expect(summary(page), `empty ${k}`).toBeVisible();
+    if (k === "bio") await page.locator('textarea[name="bio"]').fill(INSTRUCTOR.bio);
+    else await setField(page, k, (INSTRUCTOR as Record<string, string>)[k]);
+  }
+  await page.locator('textarea[name="bio"]').fill("Too short.");
+  await setField(page, "linkedin_url", "https://example.com/in/someone");
+  await next(page);
+  await expect(summary(page)).toContainText("Please write at least 40 characters about your background.");
+  await expect(summary(page)).toContainText("Please enter your LinkedIn profile link");
+  await page.locator('textarea[name="bio"]').fill(INSTRUCTOR.bio);
+  await setField(page, "linkedin_url", INSTRUCTOR.linkedin_url);
+  await next(page);
+  await consent(page, false);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(summary(page)).toContainText("Please confirm your details are accurate and that you can teach this material.");
+  await page.locator('input[name="authorised_confirmed"]').check();
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Your instructor profile will be reviewed by our team within 2 working days.")).toBeVisible();
+  const u = state.users.find((x) => x.email === "instructor77@example.com")!;
+  expect(state.tables.profiles.find((x) => x.id === u.id)).toMatchObject({ role: "instructor", account_type: "instructor", onboarding_complete: true });
+  expect(state.tables.instructor_profiles.find((x) => x.id === u.id)).toMatchObject({ verification_status: "pending", subjects: ["revit-mep"], info_confirmed: true, employer: "Sample Company Y" });
+  const meta = (state.requests.find((r) => r.path === "/auth/v1/signup")!.body as { data: Record<string, unknown> }).data;
+  expect(Object.keys(meta)).not.toContain("role");
+});
+
+test("an instructor reads no applications or student profiles, cannot apply, cannot approve itself or switch type", async ({ page }) => {
+  const state = emptyState();
+  const student = seedUser(state, "student81@example.com", PASSWORD, { full_name: "Sample Student 81" });
+  state.tables.applications.push({ id: "aaaaaaaa-0000-4000-8000-000000000081", user_id: student, status: "submitted", programs: ["revit-mep"], full_name: "Sample Student 81", email: "student81@example.com", created_at: new Date().toISOString() });
+  const ins = seedUser(state, "instructor81@example.com", PASSWORD, { full_name: "Sample Instructor 81" }, "instructor");
+  await mockSupabase(page, state);
+  await loginAs(page, state, ins);
+  await open(page, "account/");
+  expect((await rest(page, "GET", "applications?select=*")).body).toEqual([]);
+  expect((await rest(page, "GET", `profiles?select=*&id=eq.${student}`)).body).toEqual([]);
+  expect((await rest(page, "POST", "applications", { status: "draft", full_name: "x", programs: ["revit-mep"] })).status).toBe(403);
+  await rest(page, "PATCH", `instructor_profiles?id=eq.${ins}`, { verification_status: "approved", job_title: "Head of BIM" });
+  expect(state.tables.instructor_profiles.find((x) => x.id === ins)).toMatchObject({ verification_status: "pending", job_title: "Head of BIM" });
+  expect((await rest(page, "PATCH", `profiles?id=eq.${ins}`, { role: "admin" })).status).toBe(400);
+  expect((await rest(page, "PATCH", `profiles?id=eq.${ins}`, { account_type: "student" })).status).toBe(400);
+  expect(state.tables.profiles.find((x) => x.id === ins)).toMatchObject({ role: "instructor", account_type: "instructor" });
+});
+
+test("an instructor with an incomplete profile is sent to /onboarding/ and finishes it there", async ({ page }) => {
+  const state = emptyState();
+  const id = seedUser(state, "instructor82@example.com", PASSWORD, { full_name: "Sample Instructor 82" }, "instructor", { onboarding: false, profile: { phone: null } });
+  await mockSupabase(page, state);
+  await loginAs(page, state, id);
+  await open(page, "account/");
+  await expect(page).toHaveURL(/\/onboarding\//);
+  await expect(page.getByText("Account type: Instructor.")).toBeVisible();
+  await fillInstructor(page, { full_name: "Sample Instructor 82" });
+  await next(page);
+  await consent(page, true);
+  await page.getByRole("button", { name: "Finish setup" }).click();
+  await expect(page).toHaveURL(/\/account\//);
+  expect(state.tables.profiles.find((x) => x.id === id)).toMatchObject({ onboarding_complete: true, account_type: "instructor" });
+  expect(state.tables.instructor_profiles.find((x) => x.id === id)).toMatchObject({ employer: "Sample Company Y", info_confirmed: true, verification_status: "pending" });
+});

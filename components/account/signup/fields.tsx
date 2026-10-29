@@ -87,7 +87,7 @@ export function CheckGroup({ legend, name, options, value, onChange, error }: { 
 }
 
 // The two big role cards: a real radio group (arrow keys move, Space picks), drawn as paper cards.
-export function RoleCards({ legend, value, onChange, cards, error }: { legend: string; value: string; onChange: (v: "student" | "recruiter") => void; cards: { value: "student" | "recruiter"; title: string; text: string; icon: React.ReactNode }[]; error?: string }) {
+export function RoleCards({ legend, value, onChange, cards, error }: { legend: string; value: string; onChange: (v: "student" | "instructor" | "recruiter") => void; cards: { value: "student" | "instructor" | "recruiter"; title: string; text: string; icon: React.ReactNode }[]; error?: string }) {
   const id = useId();
   return (
     <fieldset aria-describedby={error ? `${id}-e` : undefined}>
@@ -122,6 +122,12 @@ export const CapIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
     <path d="M2 9l10-5 10 5-10 5L2 9z" />
     <path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5" />
+  </svg>
+);
+export const PresenterIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round">
+    <rect x="3" y="3.5" width="18" height="11" rx="1.5" />
+    <path d="M12 14.5V19M8 20.5l4-1.5 4 1.5M7 8h6M7 11h9" />
   </svg>
 );
 export const BriefcaseIcon = () => (

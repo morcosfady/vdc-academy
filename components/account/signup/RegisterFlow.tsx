@@ -9,13 +9,13 @@ import { demoOn } from "@/lib/demo/browser";
 import { track } from "@/lib/analytics";
 import type { CurrentStatus } from "@/lib/db";
 import {
-  CAREER_GOALS, COMPANY_SIZES, COMPANY_TYPES, DEGREE_FIELDS, DEGREE_LEVELS, EXPECTED_HIRES, EXPERIENCE, FORMATS, HEARD_FROM, HIRING_ROLES, MIN_AGE, REVIT_LEVELS, STUDENT_STATUS,
-  accountSchema, consentSchema, freshGradYear, isFreeEmail, labelOf, ownerSchema, recruiterMeta, recruiterSchema, studentMeta, studentSchema, type Opt,
+  AVAILABILITY, BIO_MAX, BIO_MIN, CAREER_GOALS, COMPANY_SIZES, COMPANY_TYPES, DEGREE_FIELDS, DEGREE_LEVELS, EXPECTED_HIRES, EXPERIENCE, FORMATS, HEARD_FROM, HIRING_ROLES, INDUSTRY_YEARS, INSTRUCTOR_SUBJECTS, MIN_AGE, REVIT_LEVELS, STUDENT_STATUS, TEACHING_YEARS,
+  accountSchema, consentSchema, freshGradYear, instructorMeta, instructorSchema, isFreeEmail, labelOf, ownerSchema, recruiterMeta, recruiterSchema, studentMeta, studentSchema, type Opt,
 } from "@/lib/signupSchema";
 import { Input } from "@/components/ds/Forms";
 import { Stepper } from "@/components/ds/Controls";
 import { Tag } from "@/components/ds/Chips";
-import { Check } from "@/components/forms/Field";
+import { Check, TextareaField } from "@/components/forms/Field";
 import { Turnstile } from "@/components/forms/Turnstile";
 import { Button } from "@/components/ui/Button";
 import { account } from "@/content/copy-account";
@@ -26,7 +26,7 @@ import { PasswordInput } from "../PasswordInput";
 import { LiveStatus, Notice } from "../Notice";
 import { FormSkeleton } from "../Skeleton";
 import { useNextParam, withNext } from "../useNext";
-import { BriefcaseIcon, CapIcon, CheckGroup, DateField, OptSelect, RoleCards } from "./fields";
+import { CapIcon, CheckGroup, DateField, OptSelect, PresenterIcon, RoleCards } from "./fields";
 
 const c = account.register;
 const o = account.onboarding;
@@ -36,7 +36,7 @@ const SIGNUP_KEY = "vdc-signup-draft";
 const ONBOARD_KEY = "vdc-onboarding-draft";
 const RESEND_S = 60;
 
-type Kind = "student" | "recruiter" | "team";
+type Kind = "student" | "instructor" | "recruiter" | "team";
 type Step = "role" | "account" | "details" | "review";
 type Mode = "signup" | "onboarding";
 
@@ -46,6 +46,7 @@ type V = {
   degree_field: string; degree_level: string; university: string; graduation_year: string; experience_years: string; revit_level: string; career_goal: string;
   preferred_format: string; heard_from: string;
   job_title: string; company_name: string; company_website: string; company_type: string; company_size: string; linkedin_url: string; hiring_roles: string[]; expected_hires: string;
+  employer: string; industry_years: string; teaching_years: string; subjects: string[]; teaching_format: string; availability: string; bio: string;
   consent_terms: boolean; consent_contact: boolean; authorised_confirmed: boolean;
 };
 const EMPTY: V = {
@@ -53,6 +54,7 @@ const EMPTY: V = {
   full_name: "", phone: "", whatsapp_same: true, whatsapp: "", country: "", city: "", date_of_birth: "", current_status: "",
   degree_field: "", degree_level: "", university: "", graduation_year: "", experience_years: "", revit_level: "", career_goal: "", preferred_format: "", heard_from: "",
   job_title: "", company_name: "", company_website: "", company_type: "", company_size: "", linkedin_url: "", hiring_roles: [], expected_hires: "",
+  employer: "", industry_years: "", teaching_years: "", subjects: [], teaching_format: "", availability: "", bio: "",
   consent_terms: false, consent_contact: false, authorised_confirmed: false,
 };
 const SECRET: (keyof V)[] = ["password", "confirm"];
@@ -99,7 +101,7 @@ const clearDraft = (key: string) => {
 // signed-in user whose profile is incomplete). Same steps, same schemas; onboarding skips the account step and
 // keeps an account type that is already set.
 export function RegisterFlow({ mode }: { mode: Mode }) {
-  const { enabled, ready, user, profile, recruiter, isAdmin, needsOnboarding, refreshProfile } = useAuth();
+  const { enabled, ready, user, profile, recruiter, instructor, isAdmin, needsOnboarding, refreshProfile } = useAuth();
   const router = useRouter();
   const next = useNextParam();
   const key = mode === "signup" ? SIGNUP_KEY : ONBOARD_KEY;
@@ -123,7 +125,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
   const honeypot = useRef<HTMLInputElement>(null);
 
   // onboarding: an account type set at sign-up is locked; admins take the short team step
-  const lockedKind: Kind | null = mode === "onboarding" ? (isAdmin ? "team" : profile?.account_type === "student" || profile?.account_type === "recruiter" ? profile.account_type : null) : null;
+  const lockedKind: Kind | null = mode === "onboarding" ? (isAdmin ? "team" : profile?.account_type === "student" || profile?.account_type === "instructor" || profile?.account_type === "recruiter" ? profile.account_type : null) : null;
   const steps: Step[] = useMemo(() => {
     if (mode === "signup") return ["role", "account", "details", "review"];
     return lockedKind ? ["details", "review"] : ["role", "details", "review"];
@@ -154,6 +156,10 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
         base = { ...base, job_title: String(r.job_title ?? ""), company_name: String(r.company_name ?? ""), company_website: String(r.company_website ?? ""), company_type: String(r.company_type ?? ""), company_size: String(r.company_size ?? ""), linkedin_url: String(r.linkedin_url ?? ""), hiring_roles: (r.hiring_roles as string[]) ?? [], expected_hires: String(r.expected_hires ?? "") };
       }
     }
+    if (mode === "onboarding" && instructor) {
+      const i = instructor as unknown as Record<string, unknown>;
+      base = { ...base, job_title: String(i.job_title ?? ""), employer: String(i.employer ?? ""), industry_years: String(i.industry_years ?? ""), teaching_years: String(i.teaching_years ?? ""), subjects: (i.subjects as string[]) ?? [], teaching_format: String(i.teaching_format ?? ""), availability: String(i.availability ?? ""), linkedin_url: String(i.linkedin_url ?? ""), bio: String(i.bio ?? "") };
+    }
     if (d) {
       const merged = { ...base, ...Object.fromEntries(Object.entries(d.v).filter(([, x]) => x !== "" && x !== null && x !== undefined)) } as V;
       setV({ ...merged, password: "", confirm: "" });
@@ -161,15 +167,15 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
       if (typeof d.step === "number") setStepIndex(Math.max(0, Math.min(d.step, 3)));
       setRestored(Boolean(d.v.full_name || d.v.email || d.kind));
     } else setV(base);
-    // /signup/?as=student|recruiter preselects the role (the demo tour cards use it)
+    // /signup/?as=student|instructor|recruiter preselects the role (the demo tour cards use it; recruiter is not offered as a card)
     if (mode === "signup" && !d?.kind) {
       try {
         const as = new URLSearchParams(window.location.search).get("as");
-        if (as === "student" || as === "recruiter") setKind(as);
+        if (as === "student" || as === "instructor" || as === "recruiter") setKind(as);
       } catch {}
     }
     setLoaded(true);
-  }, [ready, loaded, mode, user, profile, recruiter, key, lockedKind]);
+  }, [ready, loaded, mode, user, profile, recruiter, instructor, key, lockedKind]);
 
   // Autosave (never the password). Signup also keeps the step so a refresh lands where you were.
   useEffect(() => {
@@ -206,10 +212,11 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
       if (s === "details") {
         if (effectiveKind === "student") return issues(studentSchema.safeParse(values));
         if (effectiveKind === "recruiter") return issues(recruiterSchema.safeParse(values));
+        if (effectiveKind === "instructor") return issues(instructorSchema.safeParse(values));
         if (effectiveKind === "team") return issues(ownerSchema.safeParse(values));
         return { account_type: c.errors.role };
       }
-      return issues(consentSchema(effectiveKind === "recruiter").safeParse(values));
+      return issues(consentSchema(effectiveKind === "recruiter" || effectiveKind === "instructor" ? effectiveKind : false).safeParse(values));
     },
     [effectiveKind],
   );
@@ -277,6 +284,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
       const meta =
         effectiveKind === "student" ? studentMeta(studentSchema.parse(v), consents)
         : effectiveKind === "recruiter" ? recruiterMeta(recruiterSchema.parse(v), consents)
+        : effectiveKind === "instructor" ? instructorMeta(instructorSchema.parse(v), consents)
         : { full_name: v.full_name.trim(), first_name: v.full_name.trim().split(/\s+/)[0], phone: v.phone.trim(), team: true, consent_terms: v.consent_terms, consent_contact: v.consent_contact };
       const { data, error } = await sb.auth.signUp({
         email: v.email.trim(),
@@ -306,7 +314,14 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
     let patch: Record<string, unknown>;
     if (effectiveKind === "team") patch = { full_name: v.full_name.trim(), phone: v.phone.trim() };
     else {
-      const meta = effectiveKind === "student" ? studentMeta(studentSchema.parse(v), consents) : recruiterMeta(recruiterSchema.parse(v), consents);
+      const meta = effectiveKind === "student" ? studentMeta(studentSchema.parse(v), consents) : effectiveKind === "instructor" ? instructorMeta(instructorSchema.parse(v), consents) : recruiterMeta(recruiterSchema.parse(v), consents);
+      if (effectiveKind === "instructor") {
+        const r = await sb.from("instructor_profiles").upsert({ id: uid, job_title: meta.job_title, employer: meta.employer, industry_years: meta.industry_years, teaching_years: meta.teaching_years, subjects: meta.subjects, teaching_format: meta.teaching_format, availability: meta.availability, linkedin_url: meta.linkedin_url, bio: meta.bio, info_confirmed: meta.info_confirmed });
+        if (r.error) {
+          setPhase("form");
+          return setFailure(c.errors.save);
+        }
+      }
       if (effectiveKind === "recruiter") {
         const r = await sb.from("recruiter_profiles").upsert({ id: uid, job_title: meta.job_title, company_name: meta.company_name, company_website: meta.company_website, company_type: meta.company_type, company_size: meta.company_size, linkedin_url: meta.linkedin_url, hiring_roles: meta.hiring_roles, expected_hires: meta.expected_hires, authorised_confirmed: meta.authorised_confirmed });
         if (r.error) {
@@ -343,19 +358,21 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
     if (!effectiveKind) setKind("student");
     setV((cur) => ({
       ...cur,
-      ...(mode === "signup" ? { email: `${k === "recruiter" ? "recruiter" : "student"}${n}@example.com`, password: "demo-password-1", confirm: "demo-password-1" } : {}),
-      full_name: k === "recruiter" ? `Sample Recruiter ${n}` : `Sample Student ${n}`,
+      ...(mode === "signup" ? { email: `${k === "recruiter" ? "recruiter" : k === "instructor" ? "instructor" : "student"}${n}@example.com`, password: "demo-password-1", confirm: "demo-password-1" } : {}),
+      full_name: k === "recruiter" ? `Sample Recruiter ${n}` : k === "instructor" ? `Sample Instructor ${n}` : `Sample Student ${n}`,
       phone: "+1 555 010 0100", whatsapp_same: true, country: "USA", city: "Fort Worth", heard_from: "linkedin",
       date_of_birth: "2001-05-14", current_status: "fresh_grad", degree_field: "architecture", degree_level: "bachelor", university: "Sample University", graduation_year: String(year - 1),
       experience_years: "lt1", revit_level: "beginner", career_goal: "bim_coordinator", preferred_format: "online",
       job_title: "Talent lead", company_name: "Sample Company C", company_website: "https://example.com", company_type: "general_contractor", company_size: "51-200",
-      linkedin_url: `https://www.linkedin.com/in/sample-recruiter-${n}`, hiring_roles: ["bim_coordinator", "vdc_engineer"], expected_hires: "2-5",
-      consent_terms: true, consent_contact: true, authorised_confirmed: k === "recruiter",
+      linkedin_url: `https://www.linkedin.com/in/sample-${k === "instructor" ? "instructor" : "recruiter"}-${n}`, hiring_roles: ["bim_coordinator", "vdc_engineer"], expected_hires: "2-5",
+      employer: "Sample Company C", industry_years: "10-15", teaching_years: "2-5", subjects: ["revit-architecture", "bim-fundamentals-revit"], teaching_format: "either", availability: "evenings",
+      bio: "Sample instructor. Ten years of BIM delivery on commercial projects and a few years teaching Revit to new modelers.",
+      consent_terms: true, consent_contact: true, authorised_confirmed: k === "recruiter" || k === "instructor",
     }));
   }
 
   // ---- screens
-  const titleKey = step === "details" ? (effectiveKind === "recruiter" ? "recruiter" : effectiveKind === "team" ? "owner" : "student") : step;
+  const titleKey = step === "details" ? (effectiveKind === "recruiter" ? "recruiter" : effectiveKind === "instructor" ? "instructor" : effectiveKind === "team" ? "owner" : "student") : step;
   const shell = (title: string, lead: string | undefined, body: React.ReactNode) => (
     <AuthSplit sheet={mode === "signup" ? c.sheet : o.sheet} name={mode === "signup" ? c.name : o.name} title={title} lead={lead} panelLabel={`Student sheet · ${mode === "signup" ? c.sheet : o.sheet}`}>
       {body}
@@ -372,6 +389,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
       c.check.lead(v.email.trim()),
       <div className="grid gap-6" data-testid="check-email">
         {effectiveKind === "recruiter" && <Notice tone="info">{c.check.recruiter}</Notice>}
+        {effectiveKind === "instructor" && <Notice tone="info">{c.check.instructor}</Notice>}
         {effectiveKind === "team" && <p className="t-small text-dim">{c.check.team}</p>}
         <div className="flex flex-wrap items-center gap-6">
           <Button type="button" variant="secondary" onClick={resend} disabled={cooldown > 0}>
@@ -455,7 +473,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
             error={e("account_type")}
             cards={[
               { value: "student", title: c.cards.student.title, text: c.cards.student.text, icon: <CapIcon /> },
-              { value: "recruiter", title: c.cards.recruiter.title, text: c.cards.recruiter.text, icon: <BriefcaseIcon /> },
+              { value: "instructor", title: c.cards.instructor.title, text: c.cards.instructor.text, icon: <PresenterIcon /> },
             ]}
           />
           {mode === "signup" && (
@@ -495,9 +513,15 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
         </div>
       )}
 
-      {step === "details" && (effectiveKind === "student" || effectiveKind === "recruiter") && (
+      {step === "details" && (effectiveKind === "student" || effectiveKind === "recruiter" || effectiveKind === "instructor") && (
         <div className="grid gap-7">
           {field("full_name", { autoComplete: "name" })}
+          {effectiveKind === "instructor" && (
+            <>
+              {field("job_title", { autoComplete: "organization-title" })}
+              {field("employer", { autoComplete: "organization" })}
+            </>
+          )}
           {effectiveKind === "recruiter" && (
             <>
               {field("job_title", { autoComplete: "organization-title" })}
@@ -547,6 +571,26 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
               {select("preferred_format", FORMATS)}
             </>
           )}
+          {effectiveKind === "instructor" && (
+            <>
+              <div className="grid gap-7 sm:grid-cols-2">
+                {select("industry_years", INDUSTRY_YEARS)}
+                {select("teaching_years", TEACHING_YEARS)}
+              </div>
+              <CheckGroup legend={c.fields.subjects} name="subjects" options={INSTRUCTOR_SUBJECTS} value={v.subjects} onChange={(x) => { set("subjects", x); setTouched((t) => ({ ...t, subjects: true })); }} error={e("subjects")} />
+              <div className="grid gap-7 sm:grid-cols-2">
+                {select("teaching_format", FORMATS)}
+                {select("availability", AVAILABILITY)}
+              </div>
+              {field("linkedin_url", { type: "url", inputMode: "url" })}
+              <div>
+                <TextareaField label={`${c.fields.bio} *`} name="bio" rows={5} maxLength={BIO_MAX} value={v.bio} onChange={(ev) => set("bio", ev.target.value)} onBlur={blur("bio")} error={e("bio")} required />
+                <p className="mono mt-2 text-end !normal-case" aria-live="off">
+                  {c.bioCount(v.bio.trim().length, BIO_MIN, BIO_MAX)}
+                </p>
+              </div>
+            </>
+          )}
           {effectiveKind === "recruiter" && (
             <>
               {field("linkedin_url", { type: "url", inputMode: "url" })}
@@ -563,14 +607,14 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
           <Review mode={mode} kind={effectiveKind} v={v} onEdit={(s) => goTo(steps.indexOf(s))} hasRoleStep={steps.includes("role")} />
           <fieldset className="grid gap-1">
             <legend className="mono mb-2">{c.review.consent}</legend>
-            {(["consent_terms", "consent_contact", ...(effectiveKind === "recruiter" ? ["authorised_confirmed"] : [])] as (keyof V)[]).map((k) => (
+            {(["consent_terms", "consent_contact", ...(effectiveKind === "recruiter" || effectiveKind === "instructor" ? ["authorised_confirmed"] : [])] as (keyof V)[]).map((k) => (
               <div key={k}>
                 <Check
                   name={k}
                   checked={Boolean(v[k])}
                   onChange={(ev) => { set(k, ev.target.checked as never); setTouched((t) => ({ ...t, [k]: true })); }}
                   aria-invalid={e(k) ? true : undefined}
-                  label={k === "consent_terms" ? <TermsLabel /> : k === "consent_contact" ? c.consents.contact : c.consents.authorised}
+                  label={k === "consent_terms" ? <TermsLabel /> : k === "consent_contact" ? c.consents.contact : effectiveKind === "instructor" ? c.consents.instructorInfo : c.consents.authorised}
                 />
                 {e(k) && (
                   <p role="alert" className="ps-7 text-[13px] leading-5 text-err">
@@ -673,6 +717,13 @@ function Review({ mode, kind, v, onEdit, hasRoleStep }: { mode: Mode; kind: Kind
   const details: [string, string][] =
     kind === "team"
       ? [[L("full_name"), v.full_name], [L("phone"), v.phone]]
+      : kind === "instructor"
+        ? [
+            [L("full_name"), v.full_name], [L("job_title"), v.job_title], [L("employer"), v.employer], [L("phone"), v.phone], [`${L("country")}, ${L("city")}`, `${v.country}, ${v.city}`],
+            [L("industry_years"), labelOf(INDUSTRY_YEARS, v.industry_years)], [L("teaching_years"), labelOf(TEACHING_YEARS, v.teaching_years)],
+            [L("subjects"), v.subjects.map((x) => labelOf(INSTRUCTOR_SUBJECTS, x)).join(", ")], [L("teaching_format"), labelOf(FORMATS, v.teaching_format)], [L("availability"), labelOf(AVAILABILITY, v.availability)],
+            [L("linkedin_url"), v.linkedin_url], [L("bio"), v.bio], [L("heard_from"), labelOf(HEARD_FROM, v.heard_from)],
+          ]
       : kind === "recruiter"
         ? [
             [L("full_name"), v.full_name], [L("job_title"), v.job_title], [L("company_name"), v.company_name], [L("company_website"), v.company_website],
