@@ -21,6 +21,7 @@ export function accountLinks({ isAdmin, isRecruiter, isInstructor = false }: { i
   if (isInstructor)
     return [
       { href: "/account/", label: m.dashboard },
+      { href: "/account/#students", label: account.instructor.menuStudents },
       { href: "/account/profile/#teaching", label: m.teaching },
     ];
   if (isRecruiter)

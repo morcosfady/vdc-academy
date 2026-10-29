@@ -68,10 +68,12 @@ test("pending instructor: I-100 sheet, pending banner, teaching card and an hone
   await expect(card).toContainText("Twelve years of BIM delivery");
   await expect(card.getByRole("link", { name: "Edit teaching profile" })).toHaveAttribute("href", /\/account\/profile\/#teaching$/);
 
-  const cohorts = page.getByTestId("cohorts");
-  await expect(cohorts).toContainText("Your cohorts");
-  await expect(cohorts).toContainText("Coming soon");
-  await expect(cohorts).toContainText("Cohort and class assignments will appear here once the academy schedules them.");
+  // the cohorts placeholder is gone: a pending instructor gets an honest note and no student data
+  await expect(page.getByTestId("cohorts")).toHaveCount(0);
+  const students = page.locator("#students");
+  await expect(students).toContainText("Your students");
+  await expect(page.getByTestId("students-locked")).toContainText("Students appear here after the academy team approves your profile.");
+  await expect(page.getByTestId("student-card")).toHaveCount(0);
 
   // neither the student nor the recruiter dashboard is rendered for an instructor
   await expect(page.getByText("Programs for you")).toHaveCount(0);
@@ -235,7 +237,8 @@ test("header for an instructor: Dashboard instead of Apply, instructor menu item
   await expect(header.getByRole("link", { name: "Hire talent" })).toHaveCount(0);
 
   await header.getByRole("button", { name: "Account menu" }).click();
-  await expect(page.getByRole("menuitem")).toHaveText([/Dashboard/, /Teaching profile/, /Sign out/]);
+  await expect(page.getByRole("menuitem")).toHaveText([/Dashboard/, /My students/, /Teaching profile/, /Sign out/]);
+  await expect(page.getByRole("menuitem", { name: /My students/ })).toHaveAttribute("href", /\/account\/#students$/);
   await expect(page.getByRole("menuitem", { name: /My applications/ })).toHaveCount(0);
   await expect(page.getByRole("menuitem", { name: /Teaching profile/ })).toHaveAttribute("href", /\/account\/profile\/#teaching$/);
   await page.getByRole("menuitem", { name: /Teaching profile/ }).click();
@@ -247,6 +250,7 @@ test("header for an instructor: Dashboard instead of Apply, instructor menu item
   await page.getByRole("button", { name: "Menu", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Menu" });
   await expect(dialog.getByRole("link", { name: /Teaching profile/ })).toBeVisible();
+  await expect(dialog.getByRole("link", { name: /My students/ })).toHaveAttribute("href", /\/account\/#students$/);
   await expect(dialog.getByRole("link", { name: "Dashboard", exact: true })).toHaveAttribute("href", /\/account\/$/);
   await expect(dialog.getByRole("link", { name: "Apply now" })).toHaveCount(0);
   await expect(dialog.getByRole("link", { name: "Hire talent" })).toHaveCount(0);

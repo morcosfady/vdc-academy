@@ -208,4 +208,52 @@ export const evaluations = {
   },
 
   overview: { label: "Moderation", awaiting: "Evaluations awaiting review" },
+
+  // Instructors evaluate the students the academy team assigned to them. Sheet tag I-210. The shared form strings
+  // (errors, counts, sending, saving, locked) come from `form` above.
+  instructorEvals: {
+    sheet: "I-210",
+    name: "Evaluation",
+    title: "Evaluate a student.",
+    lead: "Be specific and fair. Write what you would say to the student in person.",
+    back: "Back to your students",
+    instructorsOnly: "Evaluations of students are written by approved instructors.",
+    notApproved: "Evaluations open as soon as the academy team has approved your profile.",
+    loadError: "We could not load this student. Check your connection and try again.",
+    missing: { title: "We could not find that student.", text: "The academy team has not assigned this student to you, or the link is out of date.", action: "Back to your students" },
+    student: { label: "Student", program: "Program", assigned: "Assigned" },
+    noProgram: "No program yet",
+    context: { label: "What is this based on?", choose: "Select one", existing: "You already have an evaluation for this. You are editing it." },
+    scoresLead: "1 is well below what you expect at this point in the course, 5 is well above it.",
+    overallLead: "Your overall impression, not an average.",
+    readiness: { label: "How ready is this student for work?", choose: "Select one", error: "Please choose how ready the student is." },
+    privateNote: { label: "Private note", tag: "Only the team sees this", hint: "Context for the academy team. The student never reads it." },
+    review: "Your evaluation goes to the academy team first. The student sees it after the team publishes it.",
+    another: "Back to your students",
+    limit: "You have reached today's limit of 30 evaluations. Please come back tomorrow.",
+    notAssigned: "This student is not assigned to you, so you cannot evaluate them.",
+
+    // The "Your evaluations" list on the instructor dashboard.
+    mine: {
+      label: "Your evaluations",
+      empty: "You have not written an evaluation yet.",
+      student: "Student",
+      context: "Based on",
+      sent: "Sent",
+      edit: "Edit",
+      view: "View",
+      teamNote: "Note from the team",
+      unknownStudent: "A student who is no longer assigned to you",
+      status: { submitted: "Waiting for the team", published: "Published", hidden: "Hidden" },
+      statusNote: {
+        submitted: "The academy team reads it first. You can still edit it.",
+        published: "Published. The student can read it. It can no longer be edited.",
+        hidden: "The academy team did not publish it. It can no longer be edited.",
+      },
+    },
+
+    // What a student reads on the S-130 card when an instructor wrote it.
+    studentCard: { from: "From your instructor", anInstructor: "Your instructor", program: "Program" },
+    studentEmpty: "Evaluations from your instructors appear here after the academy team publishes them.",
+  },
 } as const;
