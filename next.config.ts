@@ -8,6 +8,15 @@ const raw = process.env.NEXT_PUBLIC_BASE_PATH;
 const basePath = pages ? (raw === undefined ? "/vdc-academy" : raw.replace(/\/$/, "")) : "";
 process.env.NEXT_PUBLIC_BASE_PATH = basePath;
 
+// Calendar sample dates (content/calendar.ts): the first Monday after the build, fixed here once so the server render
+// and the browser read the same value. Set NEXT_PUBLIC_CALENDAR_BASE=YYYY-MM-DD to pin it.
+if (!process.env.NEXT_PUBLIC_CALENDAR_BASE) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  const t = new Date(Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day)));
+  t.setUTCDate(t.getUTCDate() + (((8 - t.getUTCDay()) % 7) || 7));
+  process.env.NEXT_PUBLIC_CALENDAR_BASE = t.toISOString().slice(0, 10);
+}
+
 const nextConfig: NextConfig = pages
   ? {
       output: "export",

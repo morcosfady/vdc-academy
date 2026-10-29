@@ -1,0 +1,88 @@
+// Calendar page copy. One place for every string so the owner can edit the wording without touching the components.
+// While CALENDAR_IS_SAMPLE is true (content/calendar.ts) the page shows `sampleBanner`.
+export const calendarCopy = {
+  sheet: "C-100",
+  name: "CALENDAR",
+  title: "What is on.",
+  lead: "Live sessions, info sessions, workshops, application deadlines and cohort starts, day by day.",
+  sampleBanner: {
+    title: "Sample schedule.",
+    text: "These dates show how the calendar will look; real dates are published here once confirmed.",
+  },
+  metaTitle: "Calendar: Sessions, Workshops and Deadlines",
+  metaDescription: "See what is on at VDC Academy: live sessions, info sessions, workshops, application deadlines and cohort starts, with Add to calendar for each.",
+  timeZoneNote: "All times are Central Time (CT).",
+  types: {
+    session: { label: "Live session", plural: "Live sessions", letter: "S" },
+    info: { label: "Info session", plural: "Info sessions", letter: "I" },
+    workshop: { label: "Workshop", plural: "Workshops", letter: "W" },
+    deadline: { label: "Deadline", plural: "Deadlines", letter: "D" },
+    cohort: { label: "Cohort start", plural: "Cohort starts", letter: "C" },
+  },
+  filters: {
+    label: "Event type",
+    all: "All",
+    program: "Program",
+    allPrograms: "All programs",
+    legend: "Key",
+  },
+  nav: {
+    prev: "Previous month",
+    next: "Next month",
+    today: "Today",
+    view: "Calendar view",
+    month: "Month",
+    agenda: "Agenda",
+  },
+  nextUp: {
+    title: "Next up",
+    empty: "Nothing coming up for this filter.",
+  },
+  grid: {
+    label: (month: string) => `${month}, month grid`,
+    more: (n: number) => `+${n} more`,
+    dayLabel: (full: string, n: number, today: boolean) => `${full}${today ? ", today" : ""}${n ? `, ${n} ${n === 1 ? "event" : "events"}` : ", no events"}`,
+    todayMark: "Today",
+  },
+  agenda: {
+    label: (month: string) => `${month}, agenda`,
+    today: "Today",
+    details: "Details",
+  },
+  status: (month: string, n: number) => `Showing ${month}: ${n} ${n === 1 ? "event" : "events"}.`,
+  empty: {
+    title: "Nothing on this month.",
+    textFiltered: "No events match the filters for this month.",
+    text: "No events are listed for this month yet.",
+    jump: "Go to the next event",
+    clear: "Clear filters",
+  },
+  event: {
+    when: "When",
+    where: "Where",
+    program: "Program",
+    allDay: "All day",
+    sampleDate: "Sample date",
+    close: "Close",
+    viewProgram: "View the program",
+    apply: "Apply",
+    ask: "Ask a question",
+  },
+  day: {
+    title: (full: string) => full,
+    empty: "No events on this day.",
+  },
+  add: {
+    button: "Add to calendar",
+    ics: "Download .ics",
+    google: "Open in Google Calendar",
+    all: (n: number) => `Download all as .ics (${n})`,
+    allNone: "Download all as .ics",
+    sampleNote: "Sample schedule: this date is an example and is not confirmed yet.",
+  },
+  upcoming: {
+    title: "Upcoming",
+    open: "Open the calendar",
+    empty: "No upcoming dates yet. Check the calendar soon.",
+  },
+} as const;
