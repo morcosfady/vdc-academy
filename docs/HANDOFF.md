@@ -4,7 +4,28 @@ Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, re
 Repo (public): https://github.com/morcosfady/vdc-academy
 Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
-## v9: registration with roles (2026-10-21), continue here
+## v10: student evaluations by recruiters (branch `vdc-evaluations`), read this first
+
+Recruiters whose company the team verified browse students who opted in and write structured evaluations; the team publishes them; students read the published ones. Everything runs on the in-browser mock/demo engine today; the SQL is in `supabase/migrations/0007_evaluations.sql` and its proof is in `supabase/tests/rls_accounts.sql` (checks 31 to 49, **not yet run by CI**: the database job must confirm them, see "Needs CI" below).
+
+### Privacy model (enforced in SQL, mirrored in `lib/demo/engine.ts`)
+- `profiles.talent_visible` (default false) is the student's opt-in. A guard trigger lets only the student change it (an admin edit of somebody else's profile keeps the stored value), only a student account can turn it on, and the server stamps `talent_consent_at`. Turning it off hides the student at once and keeps published evaluations.
+- Recruiters never read `profiles`. They read the view `public.talent_cards`: first name plus the last-name initial, city, country, graduation year, programs the student is enrolled in, software skills from their applications, and LinkedIn/portfolio links if filled. No email, phone, birth date, photo, university or document. The view returns rows only to a verified recruiter (`recruiter_profiles.verification_status = 'approved'`) or an admin. It runs with the owner's rights on purpose (it is the privacy boundary), so the Supabase advisor will list it as a security definer view: accepted.
+- `public.student_evaluations`: six criteria in `scores` jsonb (keys `modeling`, `coordination`, `standards`, `communication`, `professionalism`, `portfolio`, each 1 to 5), `overall`, `recommendation`, `strengths`, `improvements`, `private_note` (each up to 1000 characters, no HTML tags), `context`, `show_company_name`, `status` (`submitted`, `published`, `hidden`). One row per (student, recruiter, context). Recruiters read their own rows, admins all, **students have no policy on the table**: they read `public.my_evaluations`, a view with only published rows and no `private_note`, recruiter id, status or moderation columns; the company name appears only when `show_company_name` is true.
+- Guards: inserts are forced to `submitted`, the author is the caller, the target must be an opted-in student, at most 20 per recruiter per 24 hours, ids never change, a recruiter edits only while `submitted`, an admin can only moderate (words stay as written) and a hide needs a note, `notified_at` is written only by the function.
+- Hide note: the recruiter can read the team's hide note on their own row (the admin screen says so).
+
+### Screens
+- Recruiter `/account/`: R-200 TALENT (search, program, year and skill filters, cards with Evaluate or Edit evaluation) and My evaluations, both only for a verified recruiter; `/account/evaluate/?student=<id>[&context=<key>]` (R-210) is the form with a live "what the student will see" preview and read-only mode for decided evaluations. Others see the verification banner and a quiet locked card.
+- Student: S-130 EVALUATIONS card on `/account/` (count, average, per-criterion thin-line bars, one card per published evaluation, two empty states) and the visibility switch on `/account/profile/#visibility`.
+- Admin: `/admin/evaluations/` (AD-400, which Users also uses: renumber one if you want unique sheet numbers), table with status filter, search, sort, paging, CSV without free text, detail drawer with the private note, Publish and Hide (note required). Overview card "Evaluations awaiting review". Publishing calls `on-evaluation-published` (best effort; the email names no company and shows no scores).
+- Demo `/demo/`: twelve cards (10 to 12 are new). Seed: Sample Student A to H (A to E opted in, 24 applications now), Sample Company E and F (approved) beside A to D, nine evaluations in every state.
+
+### Needs CI or the owner
+- Push once: `.github/workflows/db-tests.yml` applies 0001 to 0007 twice and runs the proof; it now requires at least 50 PASS. Nothing in 0007 or checks 31 to 49 has run on a real Postgres yet.
+- Deploy the sixth function (`supabase functions deploy on-evaluation-published`), see `docs/GO-LIVE.md`.
+
+## v9: registration with roles (2026-10-21)
 
 Everything below is on `main` and deployed. The design did not change. Supabase is still not connected, so the new flows run on the in-browser mock (tests) and the demo (presenting). The database side is no longer untested: `.github/workflows/db-tests.yml` starts a local Supabase stack on every push that touches `supabase/**`, applies every migration twice and runs `supabase/tests/rls_accounts.sql`: **33 of 33 checks PASS**.
 
@@ -58,7 +79,7 @@ Nine cards: register as a student, register as a recruiter, apply, student dashb
 ### Open items
 - Super admin differences (see Roles above).
 - A promote/demote screen for admins (planned super-admin-only).
-- Student opt-in to share a profile, then recruiter browsing (deliberately not built).
+- Student opt-in to share a profile, then recruiter browsing: built in v10 above.
 - `brand-palette` is a local, unpushed preview branch from the client colour review (2026-10-21); keep or delete.
 
 ## v8: launch ready (2026-10-20), see v9 above

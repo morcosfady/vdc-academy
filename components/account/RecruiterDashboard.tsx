@@ -218,12 +218,12 @@ function TalentSummary({ status }: { status: VerificationStatus }) {
   const t = evaluations.recruiter;
   const open = status === "approved";
   return (
-    <section className="card p-6" aria-labelledby="talent-h" data-testid="talent-pool">
+    <section className="card p-6" aria-labelledby="talent-summary-h" data-testid="talent-pool">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="mono">{t.label}</p>
         <Tag tone={open ? "blueprint" : "brass"}>{open ? t.summary.open : t.summary.closed}</Tag>
       </div>
-      <h3 id="talent-h" className="mt-3 !text-[1.375rem]">
+      <h3 id="talent-summary-h" className="mt-3 !text-[1.375rem]">
         {t.title}
       </h3>
       <p className="t-small mt-2 text-muted">{open ? t.summary.text : t.locked[status === "rejected" ? "rejected" : "pending"]}</p>

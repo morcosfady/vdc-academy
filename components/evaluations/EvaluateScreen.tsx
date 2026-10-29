@@ -269,8 +269,13 @@ function Loaded({ studentId, contextParam }: { studentId: string; contextParam: 
           ) : (
             <>
               <fieldset className="grid gap-8">
-                <legend className="mono rule-b w-full pb-3 !text-xs !font-normal !tracking-[0.08em]">{f.scoresTitle}</legend>
-                <p className="t-small -mt-2 text-muted">{f.scoresLead}</p>
+                <legend className="sr-only">{f.scoresTitle}</legend>
+                <div>
+                  <p className="mono rule-b pb-3 !text-xs !font-normal !tracking-[0.08em]" aria-hidden>
+                    {f.scoresTitle}
+                  </p>
+                  <p className="t-small mt-4 text-muted">{f.scoresLead}</p>
+                </div>
                 {CRITERIA.map((k) => (
                   <ScoreInput key={k.key} name={`score-${k.key}`} label={k.label} hint={k.hint} value={values.scores[k.key]} onChange={(n) => setScore(k.key, n)} error={errors[`score-${k.key}`]} />
                 ))}

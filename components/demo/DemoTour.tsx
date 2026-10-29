@@ -100,7 +100,7 @@ const cards = [
     title: "Student sees an evaluation",
     text: "Sample Student A opted in and has three published evaluations: scores as thin lines, strengths, what to work on. The private note never appears. Switch visibility off on the profile and the student leaves the talent list.",
     hint: "Logged in as studenta@example.com.",
-    action: "Open the dashboard card",
+    action: "Open the evaluations card",
     go: () => demo.asTalentStudent("/account/#evaluations"),
     second: { label: "Visibility switch", go: () => demo.asTalentStudent("/account/profile/#visibility") },
   },

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/account/Notice";
 import { Block } from "@/components/account/Skeleton";
 import { Panel } from "@/components/account/AccountShell";
-import { fmtDate, shortId } from "@/components/account/format";
+import { fmtDate } from "@/components/account/format";
 import { programTitle } from "./parts";
 
 const c = evaluations.recruiter;
@@ -193,9 +193,9 @@ function TalentCardView({ card, mine }: { card: TalentCard; mine: StudentEvaluat
   const portfolio = safeHref(card.portfolio_url);
   return (
     <article className="card flex w-full flex-col p-6" aria-labelledby={`tc-${card.student_id}`} data-testid="talent-card" data-student={card.student_id}>
-      <div className="flex items-center justify-between gap-3">
-        <span className="mono !text-text">ST-{shortId(card.student_id)}</span>
-        {mine.length > 0 && <Tag tone="blueprint">{k.evaluated(mine.length)}</Tag>}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <span className="mono !text-text">ST-{card.student_id.replace(/-/g, "").slice(-6).toUpperCase()}</span>
+        {mine.length > 0 && <Tag tone="blueprint" className="whitespace-nowrap">{k.evaluated(mine.length)}</Tag>}
       </div>
       <h4 id={`tc-${card.student_id}`} className="mt-4 !text-[1.375rem] !font-semibold !tracking-normal">
         {card.display_name}
