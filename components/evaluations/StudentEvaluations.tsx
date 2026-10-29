@@ -59,7 +59,7 @@ export function StudentEvaluations({ className }: { className?: string }) {
           <Empty visible={visible} />
         ) : (
           <div className="grid-12 gap-y-8">
-            <div className="card col-span-12 self-start p-6 lg:col-span-4" data-testid="evaluation-summary">
+            <div className="card col-span-12 min-w-0 self-start p-6 lg:col-span-4" data-testid="evaluation-summary">
               <p className="mono">{c.published}</p>
               <p className="mt-2 text-[2.25rem] font-semibold leading-none tabular-nums text-text" data-testid="evaluation-count">
                 {list.length}
@@ -77,9 +77,9 @@ export function StudentEvaluations({ className }: { className?: string }) {
                 <ScoreBars items={CRITERIA.map((k) => ({ key: k.key, label: k.label, value: avg.byCriterion[k.key] ?? 0 }))} />
               </div>
             </div>
-            <ul className="col-span-12 grid gap-6 lg:col-span-8" aria-label={c.list}>
+            <ul className="col-span-12 grid min-w-0 gap-6 lg:col-span-8" aria-label={c.list}>
               {list.map((ev) => (
-                <li key={ev.id}>
+                <li key={ev.id} className="min-w-0">
                   <StudentEvaluationCard ev={ev} />
                 </li>
               ))}

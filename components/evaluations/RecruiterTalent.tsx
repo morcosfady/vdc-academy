@@ -162,7 +162,7 @@ function TalentList({ cards, mine }: { cards: TalentCard[] | null; mine: Student
         ) : (
           <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3" aria-label={c.label}>
             {shown.map((card) => (
-              <li key={card.student_id} className="flex">
+              <li key={card.student_id} className="flex min-w-0">
                 <TalentCardView card={card} mine={(mine ?? []).filter((e) => e.student_id === card.student_id)} />
               </li>
             ))}

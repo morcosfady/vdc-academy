@@ -329,7 +329,8 @@ function Detail({ row, onClose, onDecide }: { row: Row | null; onClose: () => vo
   return (
     <Drawer open={Boolean(row)} onClose={onClose} title={d.title} footer={footer}>
       {row && (
-        <div className="grid gap-6" data-testid="evaluation-detail" data-status={row.status}>
+        // The drawer scrolls, so its content takes keyboard focus (arrow keys and Page Down scroll it).
+        <div className="grid min-w-0 gap-6 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--accent)]" role="region" aria-label={d.title} tabIndex={0} data-testid="evaluation-detail" data-status={row.status}>
           <div className="flex flex-wrap items-center gap-3">
             <EvaluationBadge status={row.status} />
             <Tag tone="brass">{recommendationLabel(row.recommendation)}</Tag>

@@ -201,7 +201,7 @@ function Loaded({ studentId, contextParam }: { studentId: string; contextParam: 
 
   return (
     <div className="grid-12 gap-y-10">
-      <div className="col-span-12 lg:col-span-7 lg:row-start-1">
+      <div className="col-span-12 min-w-0 lg:col-span-7 lg:row-start-1">
         <section className="card mb-10 p-6" aria-label={f.student.label} data-testid="evaluate-student">
           <p className="mono">{f.student.label}</p>
           <h2 className="mt-2 !text-[1.375rem] !font-semibold !tracking-normal">{card.display_name}</h2>
@@ -309,13 +309,13 @@ function Loaded({ studentId, contextParam }: { studentId: string; contextParam: 
         </form>
       </div>
 
-      <aside className="col-span-12 self-start lg:col-span-5 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-24" aria-label={f.previewTitle} data-testid="evaluation-preview-panel">
+      <aside className="col-span-12 min-w-0 self-start lg:col-span-5 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-24" aria-label={f.previewTitle} data-testid="evaluation-preview-panel">
         <p className="mono">{f.previewTitle}</p>
         <p className="t-small mt-1 text-dim">{f.previewLead}</p>
         <StudentEvaluationCard ev={preview} preview className="mt-4" />
       </aside>
 
-      <div className="col-span-12 grid gap-5 lg:col-span-7 lg:row-start-2">
+      <div className="col-span-12 grid min-w-0 gap-5 lg:col-span-7 lg:row-start-2">
         {phase === "done" && saved && (
           <div className="grid gap-4" data-testid="evaluation-sent">
             <Notice tone="ok">{saved === "created" ? f.success : f.savedEdit}</Notice>

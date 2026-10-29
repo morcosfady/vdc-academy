@@ -165,7 +165,7 @@ export const evaluations = {
     ],
     reset: "Clear filters",
     csvName: "vdc-evaluations",
-    columns: { student: "Student", company: "Recruiter company", recommendation: "Recommendation", overall: "Overall", context: "Based on", status: "Status", sent: "Sent" },
+    columns: { student: "Student", company: "Company", recommendation: "Recommends", overall: "Overall", context: "Based on", status: "Status", sent: "Sent" },
     empty: { title: "No evaluations to show.", text: "When a verified recruiter sends one, it appears here." },
     unknown: "Unknown",
     open: "Open evaluation",

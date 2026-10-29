@@ -92,8 +92,20 @@ async function openAs(page: Page, s: Seed, userId: string, path: string) {
   await page.waitForLoadState("networkidle");
 }
 
-const serious = async (page: Page) => (await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id} (${v.nodes.length})`);
+const serious = async (page: Page) => (await new AxeBuilder({ page }).analyze()).violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => `${v.id} (${v.nodes.length}): ${v.nodes.slice(0, 4).map((n) => n.target.join(" ") + " " + (n.any[0]?.message ?? "")).join(" | ")}`);
 const overflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+// The elements that stick out past the right edge, for a readable failure message.
+const offenders = (page: Page) =>
+  page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const out: string[] = [];
+    document.querySelectorAll("body *").forEach((el) => {
+      const r = (el as HTMLElement).getBoundingClientRect();
+      const inScroller = (() => { for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if (o === "auto" || o === "scroll") return true; } return false; })();
+      if (!inScroller && r.right > vw + 2 && r.width > 0) out.push(`${el.tagName.toLowerCase()}[${(el as HTMLElement).dataset.testid ?? (el as HTMLElement).className.toString().slice(0, 50)}] right=${Math.round(r.right)}`);
+    });
+    return out.slice(0, 8).join("; ");
+  });
 
 // ---- the rules, straight against the engine (the same rules 0007 and supabase/tests/rls_accounts.sql prove in Postgres)
 
@@ -416,7 +428,8 @@ test("the student sees nothing until the team publishes; then scores, company or
   expect(s.state.tables.student_evaluations[0].published_at).toBeTruthy();
 
   const before = s.state.requests.length;
-  await page.goto("account/?mock=1#evaluations");
+  await page.reload();
+  await page.waitForLoadState("networkidle");
   const cards = page.getByTestId("evaluation-card");
   await expect(cards).toHaveCount(2);
   await expect(page.getByTestId("evaluation-count")).toHaveText("2");
@@ -643,7 +656,8 @@ test("no horizontal overflow at 360 and 390 on the new screens", async ({ page }
     ] as const) {
       const p = await asOther(page, s, who, path, { width: w, height: 800 });
       await p.waitForTimeout(600);
-      expect(await overflow(p), `${path} at ${w}`).toBeLessThanOrEqual(0);
+      const over = await overflow(p);
+      expect(over, `${path} at ${w}: ${over > 0 ? await offenders(p) : ""}`).toBeLessThanOrEqual(0);
       await done(p);
     }
   }
@@ -674,6 +688,7 @@ test("axe: no serious or critical issues on the talent section, the form, the st
   const drawer = await asOther(page, s, s.admin, "admin/evaluations/");
   await drawer.getByTestId("open-evaluation").first().click();
   await expect(drawer.getByTestId("evaluation-detail")).toBeVisible();
+  await drawer.waitForTimeout(700); // the drawer fades in; measure contrast at rest
   expect(await serious(drawer), "drawer").toEqual([]);
   await done(drawer);
 });

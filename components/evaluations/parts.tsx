@@ -77,7 +77,7 @@ export const criteriaItems = (scores: Record<string, number>) => CRITERIA.map((c
 export function StudentEvaluationCard({ ev, className, preview = false }: { ev: EvaluationView; className?: string; preview?: boolean }) {
   const c = evaluations.student.card;
   return (
-    <article className={cn("card p-6 md:p-7", className)} data-testid={preview ? "evaluation-preview" : "evaluation-card"} aria-label={`${c.from} ${ev.company_name ?? c.aVerifiedRecruiter}`}>
+    <article className={cn("card min-w-0 max-w-full p-6 md:p-7", className)} data-testid={preview ? "evaluation-preview" : "evaluation-card"} aria-label={`${c.from} ${ev.company_name ?? c.aVerifiedRecruiter}`}>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
           <p className="mono">{c.from}</p>
