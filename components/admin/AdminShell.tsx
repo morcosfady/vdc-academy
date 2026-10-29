@@ -24,12 +24,13 @@ const NAV_PERMISSION: Record<string, Permission> = {
   "/admin/users/": "manage_users",
   "/admin/recruiters/": "verify_recruiters",
   "/admin/instructors/": "verify_instructors",
+  "/admin/assignments/": "assign_students",
   "/admin/hiring/": "manage_hiring_requests",
   "/admin/evaluations/": "moderate_evaluations",
 };
 
 // The admin frame: RequireAuth, a can(permission) gate, a sheet-tagged header, the mono index nav (01 Overview,
-// 02 Applications, 03 Leads, 04 Users, 05 Recruiters, 06 Instructors, 07 Hiring, 08 Evaluations) and the page body. Accounts without the
+// 02 Applications, 03 Leads, 04 Users, 05 Recruiters, 06 Instructors, 07 Assignments, 08 Hiring, 09 Evaluations) and the page body. Accounts without the
 // permission get the 403; logged-out visitors go to /login/.
 export function AdminShell({
   sheet,

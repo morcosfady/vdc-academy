@@ -282,4 +282,7 @@ test("axe: no serious or critical issues on the dashboard, profile, application 
   await page.goto("admin/instructors/");
   await page.locator('[data-testid="instructor-card"]').first().waitFor();
   expect(await serious(page), "admin instructors").toEqual([]);
+  await page.goto("admin/assignments/");
+  await page.locator('[data-testid="instructor-group"]').first().waitFor();
+  expect(await serious(page), "admin assignments").toEqual([]);
 });

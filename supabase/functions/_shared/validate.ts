@@ -70,9 +70,16 @@ export function validateInstructorVerifiedBody(b: Record<string, unknown>): Vali
   return { ok: true, value: { instructor_id: b.instructor_id, status: b.status } };
 }
 
-export function validateEvaluationBody(b: Record<string, unknown>): Validation<{ evaluation_id: string }> {
+// `kind` says which table holds the evaluation: a recruiter's (student_evaluations, the default) or an instructor's
+// (instructor_evaluations, migration 0009). A body without `kind` is a recruiter evaluation, as before.
+export const EVALUATION_KINDS = ["recruiter", "instructor"] as const;
+export type EvaluationKind = (typeof EVALUATION_KINDS)[number];
+export const isEvaluationKind = (v: unknown): v is EvaluationKind => typeof v === "string" && (EVALUATION_KINDS as readonly string[]).includes(v);
+
+export function validateEvaluationBody(b: Record<string, unknown>): Validation<{ evaluation_id: string; kind: EvaluationKind }> {
   if (!isUuid(b.evaluation_id)) return { ok: false, error: "evaluation_id must be a uuid" };
-  return { ok: true, value: { evaluation_id: b.evaluation_id } };
+  if (b.kind !== undefined && !isEvaluationKind(b.kind)) return { ok: false, error: "kind must be recruiter or instructor" };
+  return { ok: true, value: { evaluation_id: b.evaluation_id, kind: b.kind ?? "recruiter" } };
 }
 
 // Text helpers used when building emails from database rows.

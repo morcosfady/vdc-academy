@@ -36,9 +36,11 @@ The free plan allows **2 active projects per account**, and the `morcosfady` acc
 7. `supabase/migrations/0007_evaluations.sql` (student opt-in, the talent list for verified recruiters, evaluations and the student-safe view)
 8. `supabase/migrations/0008_instructors.sql` (the instructor role and `instructor_profiles` with the verification columns; the sign-up offers Student or Instructor)
 
-All eight are safe to run twice. CLI alternative, if you install it in step 6 first: `supabase db push`.
+9. `supabase/migrations/0009_instructor_evaluations.sql` (the team assigns students to instructors; verified instructors evaluate the students assigned to them; the student reads published evaluations through the student-safe view)
 
-What you have now: `profiles` (one row per user, with `account_type` student, instructor or recruiter and `role` student, instructor, recruiter, admin or super_admin), `recruiter_profiles` (company details and the verification status), `instructor_profiles` (the teaching profile and the verification status), `hiring_requests`, `applications` (owned by a user, `draft` to `enrolled`), `application_events` (the student's timeline), `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`. Students only ever see their own rows; admins see everything. The old `admin_emails` table still works as a fallback.
+All nine are safe to run twice. CLI alternative, if you install it in step 6 first: `supabase db push`.
+
+What you have now: `profiles` (one row per user, with `account_type` student, instructor or recruiter and `role` student, instructor, recruiter, admin or super_admin), `recruiter_profiles` (company details and the verification status), `instructor_profiles` (the teaching profile and the verification status), `hiring_requests`, `instructor_assignments` (which students each instructor teaches, set by the team), `instructor_evaluations` (what instructors write about them, reviewed by the team), `applications` (owned by a user, `draft` to `enrolled`), `application_events` (the student's timeline), `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`. Students only ever see their own rows; admins see everything. The old `admin_emails` table still works as a fallback.
 
 ## 3. Authentication (4 min)
 
@@ -105,7 +107,7 @@ Seven functions run inside Supabase. The browser calls them with the signed-in u
 | `notify-lead` | a visitor sends a lead or a contact message | rate limited; verifies Turnstile; emails you a summary, once per row |
 | `on-account-verified` | the confirmation link lands on `/auth/callback/` | email must be confirmed; sends the welcome email for the role (student, instructor or recruiter under review, or team access) once per account; for a recruiter or an instructor also emails you "New recruiter to review" or "New instructor to review" once |
 | `on-recruiter-verified` | you approve or reject a recruiter in `/admin/recruiters/` | admin only; emails the recruiter "verified" or the rejection with your note and a contact link, once per decision |
-| `on-evaluation-published` | you publish a student evaluation in `/admin/evaluations/` | admin only; emails the student that an evaluation was published (no company, no scores), once per evaluation |
+| `on-evaluation-published` | you publish an evaluation in `/admin/evaluations/` (the Recruiters or the Instructors side) | admin only; emails the student, once per evaluation: "A recruiter evaluated your work" (no company, no scores) or, when the page sends `kind: "instructor"`, "Your instructor shared feedback" (program name only: no instructor name or contact details, no scores, no private note) |
 | `on-instructor-verified` | you approve or reject an instructor in `/admin/instructors/` | admin only; emails the instructor "approved" or the rejection with your note and a contact link, once per decision |
 
 The email templates are plain TypeScript functions (`supabase/functions/_shared/email.ts`), not React Email: the static repo has no build step for the functions, and plain functions deploy as they are.
@@ -181,7 +183,7 @@ They sign out and in again to see **Admin**. To remove an admin, set the role ba
 4. Supabase > **Table Editor > applications**: one row, `status = submitted`, `notified_at` set, `turnstile_ok` true (or empty without a Turnstile secret), `turnstile_token` empty. **Storage > documents > <user id>/**: your PDF.
 5. As admin: `/admin`, open the application, change the status to **Under review**. The student inbox gets "We are reviewing your application"; the row's `status_notified_at` is set; the student dashboard shows the step.
 6. Send one contact message from `/contact`: a "Contact message from ..." email arrives; the row has `notified_at`.
-7. Instructor: sign up a third address and choose **Instructor**. After the confirmation email, "Your VDC Academy instructor account is created" arrives, and you get "New instructor to review". Approve it as described in "Approve instructors" below; the instructor gets "Your instructor profile is approved".
+7. Instructor: sign up a third address and choose **Instructor**. After the confirmation email, "Your VDC Academy instructor account is created" arrives, and you get "New instructor to review". Approve it as described in "Approve instructors" below; the instructor gets "Your instructor profile is approved". Then assign the test student to that instructor in `/admin/assignments/`, let the instructor write an evaluation, and publish it in `/admin/evaluations/` on the **Instructors** side: the student gets "Your instructor shared feedback".
 8. Delete the test rows afterwards (Table Editor) or delete the test user in **Authentication > Users** (the rows and files cascade).
 
 If no email arrives: **Edge Functions > (function) > Logs** shows the call and any Resend status. `401` means the user session was missing; `403` means the caller is not the owner or not an admin; `409` means the application is not `submitted`.
@@ -194,6 +196,14 @@ If no email arrives: **Edge Functions > (function) > Logs** shows the call and a
 4. **Approve**, or **Reject** with a short note (required, up to 1000 characters). The instructor sees the note and gets it by email.
 5. The decision is saved with your name and the time. The email is best effort: if it fails, the decision still stands and the function logs say why.
 
+## Assign students and publish instructor evaluations (what the team does)
+
+1. An instructor must be approved first (above). Pending and rejected instructors cannot receive students.
+2. Open **Admin > Assignments**. Under "Assign a student" choose the instructor, search the student by name or email, optionally choose the program, then **Assign student**. A second assignment of the same pair is refused with a plain message. **Remove** (with a confirmation) ends an assignment; evaluations already written stay.
+3. The instructor sees only the name and program of the students assigned to them, never their email, phone, documents or application.
+4. Instructors send evaluations for review. Open **Admin > Evaluations**, choose **Instructors** at the top, open an evaluation (the private note is visible to the team only) and **Publish** or **Hide**. Hiding needs a note (up to 1000 characters) that the instructor can read.
+5. Publishing emails the student "Your instructor shared feedback" through `on-evaluation-published`. The email is best effort: if it fails, the evaluation is still published and the function logs say why.
+
 ## Local testing without keys
 
 - `?mock=1` on the apply page points writes at a fake server that Playwright intercepts (`tests/apply.spec.ts`). Nothing is sent anywhere.
@@ -205,7 +215,7 @@ If no email arrives: **Edge Functions > (function) > Logs** shows the call and a
 | Step | Done when |
 | --- | --- |
 | 1 Project | `vdc-academy` exists in `us-east-1`; Project URL and anon key copied |
-| 2 Migrations | 0001 to 0008 ran without errors |
+| 2 Migrations | 0001 to 0009 ran without errors |
 | 3 Auth | Site URL and five redirect URLs saved; Email provider with confirmation on; three email templates pasted; optional Google |
 | 4 Storage | `documents` and `avatars` exist and are Private |
 | 5 Resend | domain verified, API key created, from address chosen |

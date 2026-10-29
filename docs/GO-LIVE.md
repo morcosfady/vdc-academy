@@ -28,6 +28,8 @@ The owner made a new Supabase account with `thefadys99@gmail.com`, organization 
 | 7 Site | Done: repository variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the public publishable key) set; the site was redeployed and talks to the real project. |
 | 8 Owner | Eddie Eshak signs up with the team link and `thefadys99@gmail.com`, then confirms the email. |
 
+**New since this run (v12, instructor evaluations): migration `0009_instructor_evaluations.sql` and the changed `on-evaluation-published` function are not on the live project yet.** Apply 0009 the same way as the others (`supabase db push --db-url`, it is re-runnable), then redeploy that one function (the other six did not change). Until both are done, `/admin/assignments/` and the Instructors side of `/admin/evaluations/` show an error because the tables do not exist.
+
 To reach this project with the MCP, an Administrator invitation was sent to the Supabase login used for Pharaoh's Bites (accept it from that inbox). After the work is done the owner can remove that member from Team.
 
 ## Before you start (Owner)
@@ -44,9 +46,9 @@ To reach this project with the MCP, an Administrator invitation was sent to the 
 
 ## 2. Migrations and the RLS proof (Claude)
 
-1. Apply in order, 0001 to 0008: `supabase/migrations/0001_init.sql`, `0002_hardening.sql`, `0003_accounts.sql`, `0004_notifications.sql`, `0005_roles_registration.sql` (roles, recruiters, hiring requests, the owner's role grant), `0006_emails.sql` (welcome and recruiter alert stamps), `0007_evaluations.sql` (student opt-in, talent list, evaluations by verified recruiters, the student-safe view), `0008_instructors.sql` (the instructor role and `instructor_profiles` with the verification columns; the sign-up offers Student or Instructor) (MCP `apply_migration`, or `supabase link --project-ref <ref>` then `supabase db push`). All eight are re-runnable.
+1. Apply in order, 0001 to 0009: `supabase/migrations/0001_init.sql`, `0002_hardening.sql`, `0003_accounts.sql`, `0004_notifications.sql`, `0005_roles_registration.sql` (roles, recruiters, hiring requests, the owner's role grant), `0006_emails.sql` (welcome and recruiter alert stamps), `0007_evaluations.sql` (student opt-in, talent list, evaluations by verified recruiters, the student-safe view), `0008_instructors.sql` (the instructor role and `instructor_profiles` with the verification columns; the sign-up offers Student or Instructor), `0009_instructor_evaluations.sql` (the team assigns students to instructors in `instructor_assignments`; verified instructors write `instructor_evaluations`; the views `my_students` for the instructor and `my_evaluations` for the student, which now also shows published instructor evaluations) (MCP `apply_migration`, or `supabase link --project-ref <ref>` then `supabase db push`). All nine are re-runnable.
 2. Run `supabase/tests/rls_accounts.sql` (MCP `execute_sql` or the SQL editor). Paste the PASS/FAIL summary into `docs/HANDOFF.md`. **Every check must PASS (at least 50)**; a FAIL stops the runbook until it is fixed with a new migration. The same proof already runs in CI on every push to `main` that touches `supabase/**` (`.github/workflows/db-tests.yml`: a local Supabase stack, every migration applied twice, fails on any FAIL), so a live FAIL means the live project differs from a fresh stack.
-3. `list_tables` and confirm: `profiles`, `recruiter_profiles`, `instructor_profiles`, `hiring_requests`, `student_evaluations`, `role_grants`, `applications`, `application_events`, `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`, `admin_emails`, all with RLS on.
+3. `list_tables` and confirm: `profiles`, `recruiter_profiles`, `instructor_profiles`, `hiring_requests`, `student_evaluations`, `instructor_assignments`, `instructor_evaluations`, `role_grants`, `applications`, `application_events`, `account_deletion_requests`, `leads`, `contact_messages`, `newsletter_subscribers`, `admin_emails`, all with RLS on.
 
 ## 3. Advisors (Claude)
 
@@ -76,7 +78,7 @@ supabase secrets set RESEND_API_KEY=... EMAIL_FROM="VDC Academy <...>" ADMIN_NOT
 
 - **Client email: `thefadys99@gmail.com`** (confirmed by the owner 2026-10-29). It is both the super admin (granted in migration 0005) and `ADMIN_NOTIFY_EMAIL`, so every "new application / lead / recruiter" email goes there. Create the Resend account with this address too, so the test sender can reach it before a domain is verified.
 - `RESEND_API_KEY` and `EMAIL_FROM` come from the owner (Resend, below). Until a domain is verified, use `EMAIL_FROM="VDC Academy <onboarding@resend.dev>"`: Resend's test sender delivers **only to the Resend account owner's own address**, so `ADMIN_NOTIFY_EMAIL` and the step 9 test email must be that address.
-- Seven functions: the three from v7, `on-account-verified` and `on-recruiter-verified` (v9 account emails), `on-evaluation-published` (tells a student an evaluation was published) and `on-instructor-verified` (tells an instructor the profile was approved or not), see "Emails" below. All seven use the same secrets; `ADMIN_NOTIFY_EMAIL` also receives the "New recruiter to review" and "New instructor to review" emails.
+- Seven functions: the three from v7, `on-account-verified` and `on-recruiter-verified` (v9 account emails), `on-evaluation-published` (tells a student an evaluation was published, from a recruiter or from an instructor: the page sends `kind: "instructor"` for the second) and `on-instructor-verified` (tells an instructor the profile was approved or not), see "Emails" below. All seven use the same secrets; `ADMIN_NOTIFY_EMAIL` also receives the "New recruiter to review" and "New instructor to review" emails.
 - `TURNSTILE_SECRET_KEY` can wait; without it the functions skip the bot check and record "not configured".
 - Typed into the terminal by the owner or set in **Edge Functions > Secrets**. Never pasted into a file or a commit.
 
@@ -112,7 +114,7 @@ With a test email the owner provides:
 5. As admin: `/admin/`, open the application, verify the discount, change the status to **Under review**.
 6. Inbox: the status email. Student dashboard: the timeline step.
 7. Recruiter: sign up a second test address as a recruiter and confirm. Its inbox: "Your VDC Academy company account is under review"; admin inbox: "New recruiter to review: ...". As admin, approve it in `/admin/recruiters/`: its inbox gets "Your company account is verified" and `recruiter_profiles.verify_notified_at` is set. With the Resend test sender only the Resend owner's inbox receives mail, so run this sub-step after the domain is verified.
-8. Instructor: sign up a third test address as an instructor and confirm. Its inbox: "Your VDC Academy instructor account is created"; admin inbox: "New instructor to review: ...". As admin, approve it in `/admin/instructors/`: its inbox gets "Your instructor profile is approved" and `instructor_profiles.verify_notified_at` is set. Same Resend test sender limit as the recruiter sub-step.
+8. Instructor: sign up a third test address as an instructor and confirm. Its inbox: "Your VDC Academy instructor account is created"; admin inbox: "New instructor to review: ...". As admin, approve it in `/admin/instructors/`: its inbox gets "Your instructor profile is approved" and `instructor_profiles.verify_notified_at` is set. Same Resend test sender limit as the recruiter sub-step. Then the instructor evaluation: as admin open `/admin/assignments/` and assign a test student to the approved test instructor; as that instructor write an evaluation for the student; as admin open `/admin/evaluations/`, switch to **Instructors** and publish it. The student inbox gets "Your instructor shared feedback" and `instructor_evaluations.notified_at` is set. The email names the program only: check that it shows no scores, no private note and no instructor contact details.
 9. Clean up: delete the test user in **Authentication > Users** (rows and files cascade) or with `delete from auth.users where email = '<test email>';`, then check `storage.objects` has nothing left under that user id.
 
 Record each sub-step as done or failed in the status log, with the function log line for any failure (ids and status codes only).
@@ -143,7 +145,8 @@ Every email the site sends. The Auth emails come from Supabase (built-in mailer,
 | We received your VDC Academy application | a student submits | `on-application-submitted` (`notified_at`) | the student |
 | New application: name (program) | the same | `on-application-submitted` (`notified_at`) | `ADMIN_NOTIFY_EMAIL` |
 | Status email (one per status) | an admin changes an application status | `on-status-changed` (`status_notified_at`) | the student |
-| A recruiter evaluated your work | an admin publishes an evaluation (it names no company and shows no scores) | `on-evaluation-published` (`student_evaluations.notified_at`) | the student |
+| A recruiter evaluated your work | an admin publishes a recruiter evaluation (it names no company and shows no scores) | `on-evaluation-published` (`student_evaluations.notified_at`) | the student |
+| Your instructor shared feedback | an admin publishes an instructor evaluation (it names the program only: no instructor name or contact details, no scores, no private note, nothing about the review) | `on-evaluation-published` with `kind: "instructor"` (`instructor_evaluations.notified_at`) | the student |
 | New lead / Contact message from name | a lead form or the contact form | `notify-lead` (`notified_at`) | `ADMIN_NOTIFY_EMAIL` |
 
 ## What the team does when an instructor signs up
@@ -154,6 +157,14 @@ Every email the site sends. The Auth emails come from Supabase (built-in mailer,
 4. Click **Approve**, or **Reject** and write a short note. The note is required (up to 1000 characters). The instructor sees it on their account and in the email, so write it for them.
 5. The screen saves the decision with your name and the time, then asks `on-instructor-verified` to send the email: "Your instructor profile is approved" or "About your VDC Academy instructor profile". If the email fails, the decision still stands: check **Edge Functions > on-instructor-verified > Logs**.
 6. Changed your mind? Use the other button on the same card. A new decision sends a new email.
+
+## What the team does with instructor evaluations
+
+Three steps, in this order. Instructors never see a student's email, phone, documents or application: only the name and program of the students assigned to them.
+
+1. **Approve the instructor** (see above). Only an approved instructor can receive students or write evaluations.
+2. **Assign students.** Open **Admin > Assignments** (`/admin/assignments/`). In "Assign a student" choose an approved instructor, find the student by name or email (only students with a finished profile are listed), optionally choose the program, and click **Assign student**. A student can be assigned to the same instructor only once; the screen says so. Below, every instructor is listed with their students, the program and the date. **Remove** asks for a confirmation first. A pending instructor shows "Approve this instructor first". "Students without an instructor" lists who has nobody yet; its **Assign** button fills the form.
+3. **Publish evaluations.** Instructors send evaluations for review. Open **Admin > Evaluations** (`/admin/evaluations/`) and switch to **Instructors**. The counters show how many are waiting, published or hidden. Open one to read it, the private note included (only the team sees it). **Publish** makes it visible to the student and asks `on-evaluation-published` (with `kind: "instructor"`) to send "Your instructor shared feedback"; if the email fails the evaluation is still published. **Hide** needs a note (up to 1000 characters) that the instructor can read; the student sees nothing. The words of the evaluation never change: the team decides, it does not edit.
 
 ## Owner-only items
 
