@@ -14,6 +14,22 @@ Update this table every time the runbook runs.
 | 2 to 9 | Not started: they all need the project. |
 | 10 | This table and `docs/HANDOFF.md` (v9). |
 
+### 2026-10-29 (v11): the project exists and the site is connected
+
+The owner made a new Supabase account with `thefadys99@gmail.com`, organization "VDC Academy" (free), project `vdc-academy`, ref `fbgshdhmfxqzocmtahfl`, region Americas. The database password was chosen by the owner and is in no file.
+
+| Step | State |
+| --- | --- |
+| 1 Project | Done (ref above). |
+| 2 Migrations | Done: 0001 to 0008 applied with `supabase db push --db-url` (16 public tables, 3 storage buckets, owner grant `thefadys99@gmail.com` = super_admin present). The RLS proof file was **not** run on this project (the CLI runs one statement at a time); the same file passes in CI on a real Postgres stack on every push. |
+| 3 Advisors | Not run yet (needs the Supabase MCP on this organization, see below). |
+| 4 Auth settings | Done in the dashboard: Site URL `https://morcosfady.github.io/vdc-academy`, redirect URL `https://morcosfady.github.io/vdc-academy/**`, email confirmation on, secure email change on, minimum password 8. **Not done:** the three custom email templates, custom SMTP (Resend), CAPTCHA. |
+| 5 to 6 Functions and secrets | Not done: deploying the seven Edge Functions and setting their secrets needs the MCP (or a CLI access token). Until then sign-up and login work, but the welcome, status and "new application" emails do not send. |
+| 7 Site | Done: repository variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the public publishable key) set; the site was redeployed and talks to the real project. |
+| 8 Owner | Eddie Eshak signs up with the team link and `thefadys99@gmail.com`, then confirms the email. |
+
+To reach this project with the MCP, an Administrator invitation was sent to the Supabase login used for Pharaoh's Bites (accept it from that inbox). After the work is done the owner can remove that member from Team.
+
 ## Before you start (Owner)
 
 1. **Free a Supabase slot.** Pause or delete one of the two active projects (Dashboard > the project > Project Settings > General > Pause project), or upgrade one organization to Pro. Pausing keeps the data; a paused free project can be restored later.
