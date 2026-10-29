@@ -16,7 +16,6 @@ export function accountLinks({ isAdmin, isRecruiter, isInstructor = false }: { i
   if (isAdmin)
     return [
       { href: "/admin/", label: m.admin },
-      { href: "/account/", label: m.dashboard },
       { href: "/account/profile/", label: m.profile },
     ];
   if (isInstructor)
@@ -85,6 +84,11 @@ export function AccountMenu({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
+      {isAdmin && (
+        <Button href="/admin/" className={cn("hidden whitespace-nowrap !h-10 !px-4 sm:inline-flex sm:!h-11 sm:!px-5", compact && "!h-10")}>
+          {m.admin}
+        </Button>
+      )}
       {isInstructor && (
         <Button href="/account/" className={cn("hidden whitespace-nowrap !h-10 !px-4 sm:inline-flex sm:!h-11 sm:!px-5", compact && "!h-10")}>
           {m.dashboard}

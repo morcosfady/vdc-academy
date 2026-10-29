@@ -168,3 +168,18 @@ test("demo: Fill sample data signs up an instructor and the pending dashboard op
   await expect(page.getByTestId("verification-banner")).toHaveAttribute("data-status", "pending");
   expect(leaks).toEqual([]);
 });
+
+// The academy team has no application: /account/ sends a super admin to /admin/, the header shows Admin (not Apply or
+// a student dashboard) and the account menu has no Dashboard entry.
+test("super admin: /account/ goes to /admin/, header and menu show Admin, no student application", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("demo/");
+  await page.getByRole("button", { name: "Open as super admin" }).click();
+  await page.waitForURL(/\/admin\//);
+  await page.goto("account/");
+  await page.waitForURL(/\/admin\/$/);
+  await expect(page.getByText("Start your application")).toHaveCount(0);
+  await expect(page.locator("header").getByRole("link", { name: "Admin", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await expect(page.getByRole("menuitem")).toHaveText([/Admin/, /Profile/, /Sign out/]);
+});

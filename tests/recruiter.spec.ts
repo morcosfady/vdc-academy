@@ -213,7 +213,7 @@ test("super admin badge shows for a super admin and not for an admin; team menu"
   await open(page, "about/");
   await page.getByRole("button", { name: "Account menu" }).click();
   await expect(page.getByTestId("super-admin-badge")).toHaveText("Super admin");
-  await expect(page.getByRole("menuitem")).toHaveText([/Admin/, /Dashboard/, /Profile/, /Sign out/]);
+  await expect(page.getByRole("menuitem")).toHaveText([/Admin/, /Profile/, /Sign out/]);
 
   const ctx = await browser.newContext({ baseURL: process.env.BASE_URL ?? "http://localhost:4173/vdc-academy/" });
   const p2 = await ctx.newPage();

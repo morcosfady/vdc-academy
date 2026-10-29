@@ -24,6 +24,7 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
       ];
   const hire = signedIn && isRecruiter;
   const dash = signedIn && isInstructor;
+  const team = signedIn && isAdmin;
   const email = shown(content.contact.email);
   const rule = { borderColor: "var(--rule)" };
 
@@ -113,8 +114,8 @@ export function MenuOverlay({ open, onClose }: { open: boolean; onClose: () => v
                     {copy.menu.signOut}
                   </button>
                 )}
-                <Button href={hire ? "/account/#hiring" : dash ? "/account/" : "/apply"} onClick={onClose}>
-                  {hire ? copy.menu.hire : dash ? copy.menu.dashboard : copy.menu.applyNow}
+                <Button href={team ? "/admin/" : hire ? "/account/#hiring" : dash ? "/account/" : "/apply"} onClick={onClose}>
+                  {team ? copy.menu.admin : hire ? copy.menu.hire : dash ? copy.menu.dashboard : copy.menu.applyNow}
                 </Button>
               </span>
             </div>

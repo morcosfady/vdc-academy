@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { firstName, type Application, type ApplicationEvent } from "@/lib/db";
@@ -23,9 +24,15 @@ import { StudentEvaluations } from "@/components/evaluations/StudentEvaluations"
 
 const c = account.dashboard;
 
-// /account/ by role: instructors get I-100, recruiters R-100; students (and the team) keep the student dashboard.
+// /account/ by role: instructors get I-100, recruiters R-100, students keep the student dashboard. The academy team
+// (admin and super admin) have no application: they go straight to /admin/.
 export function Dashboard() {
-  const { isRecruiter, isInstructor } = useAuth();
+  const { isRecruiter, isInstructor, isAdmin } = useAuth();
+  const router = useRouter();
+  useEffect(() => {
+    if (isAdmin) router.replace("/admin/");
+  }, [isAdmin, router]);
+  if (isAdmin) return <Block className="mx-auto mt-32 h-40 max-w-[960px]" />;
   if (isInstructor) return <InstructorDashboard />;
   return isRecruiter ? <RecruiterDashboard /> : <StudentDashboard />;
 }
