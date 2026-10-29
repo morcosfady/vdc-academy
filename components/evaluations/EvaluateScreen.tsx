@@ -197,6 +197,10 @@ function Loaded({ studentId, contextParam }: { studentId: string; contextParam: 
     strengths: values.strengths.trim(),
     improvements: values.improvements.trim(),
     company_name: values.show_company_name ? (recruiter?.company_name ?? null) : null,
+    source: "recruiter",
+    author_name: null,
+    program: null,
+    readiness: null,
   };
 
   return (

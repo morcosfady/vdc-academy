@@ -137,6 +137,52 @@ export type StudentEvaluation = {
   updated_at: string;
 };
 
+// Evaluations of students by the instructor who teaches them (supabase/migrations/0009_instructor_evaluations.sql).
+export type InstructorContext = "mid_course" | "end_of_course" | "project_review";
+export type Readiness = "ready" | "almost_there" | "needs_practice";
+
+// public.instructor_assignments: the team assigns a student to an instructor. Instructors read their own rows only.
+export type InstructorAssignment = {
+  id: string;
+  instructor_id: string;
+  student_id: string;
+  program: string | null; // a program slug
+  created_by: string | null;
+  created_at: string;
+};
+
+// public.my_students: what a verified instructor sees of an assigned student. Name and program only.
+export type MyStudent = {
+  assignment_id: string;
+  student_id: string;
+  full_name: string | null;
+  program: string | null;
+  assigned_at: string;
+};
+
+// public.instructor_evaluations: readable by the instructor who wrote it and by admins. Never by the student.
+export type InstructorEvaluation = {
+  id: string;
+  student_id: string;
+  instructor_id: string;
+  program: string | null;
+  context: InstructorContext;
+  scores: EvaluationScores;
+  overall: number;
+  readiness: Readiness;
+  strengths: string;
+  improvements: string;
+  private_note: string;
+  status: EvaluationStatus;
+  moderation_note: string | null;
+  moderated_by: string | null;
+  moderated_at: string | null;
+  published_at: string | null;
+  notified_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 // public.talent_cards: what a verified recruiter may see about a student who opted in. Nothing else about the student.
 export type TalentCard = {
   student_id: string;
@@ -154,13 +200,18 @@ export type TalentCard = {
 export type EvaluationView = {
   id: string;
   published_at: string | null;
-  context: EvaluationContext;
+  context: EvaluationContext | InstructorContext;
   scores: EvaluationScores;
   overall: number;
-  recommendation: Recommendation;
+  recommendation: Recommendation | null; // recruiters only
   strengths: string;
   improvements: string;
   company_name: string | null; // null when the recruiter chose not to show it
+  // 0009: the view now also carries the published evaluations of the student's instructors
+  source: "recruiter" | "instructor";
+  author_name: string | null; // instructors: first name and the initial of the last name
+  program: string | null; // instructors: a program slug
+  readiness: Readiness | null; // instructors only
 };
 
 export const evaluationStatusLabel: Record<EvaluationStatus, string> = { submitted: "Submitted", published: "Published", hidden: "Hidden" };

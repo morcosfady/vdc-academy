@@ -49,7 +49,7 @@ export type MockOptions = {
 
 export const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-const TABLES = ["profiles", "recruiter_profiles", "instructor_profiles", "hiring_requests", "applications", "application_events", "leads", "contact_messages", "newsletter_subscribers", "account_deletion_requests", "student_evaluations"];
+const TABLES = ["profiles", "recruiter_profiles", "instructor_profiles", "instructor_assignments", "instructor_evaluations", "hiring_requests", "applications", "application_events", "leads", "contact_messages", "newsletter_subscribers", "account_deletion_requests", "student_evaluations"];
 
 export function emptyState(): MockState {
   return { users: [], tables: Object.fromEntries(TABLES.map((t) => [t, []])), session: null, files: {}, requests: [], nextId: 1, roleGrants: [] };
@@ -213,6 +213,9 @@ function visible(state: MockState, table: string, r: Row, who: Who): boolean {
     }
     case "account_deletion_requests":
       return r.user_id === who.id;
+    case "instructor_assignments":
+    case "instructor_evaluations": // an instructor reads their own rows; students have no policy at all
+      return r.instructor_id === who.id && who.profile?.account_type === "instructor" && who.profile?.role === "instructor";
     case "student_evaluations": // recruiters read their own rows; students have no policy at all
       return r.recruiter_id === who.id && who.profile?.account_type === "recruiter" && who.profile?.role === "recruiter";
     case "leads":
@@ -319,14 +322,34 @@ function talentCards(state: MockState, who: Who): Row[] {
     });
 }
 
-// public.my_evaluations: the signed-in student's published rows. No private note, no recruiter, no status.
+// public.my_evaluations (0009): the signed-in student's published rows from recruiters and instructors. No private note,
+// no author id, no status.
 function myEvaluations(state: MockState, who: Who): Row[] {
   if (!who.id) return [];
-  return state.tables.student_evaluations
+  const fromRecruiters = state.tables.student_evaluations
     .filter((e) => e.student_id === who.id && e.status === "published")
     .map((e) => {
       const company = String(state.tables.recruiter_profiles.find((r) => r.id === e.recruiter_id)?.company_name ?? "").trim();
-      return { id: e.id, published_at: e.published_at, context: e.context, scores: e.scores, overall: e.overall, recommendation: e.recommendation, strengths: e.strengths, improvements: e.improvements, company_name: e.show_company_name && company ? company : null };
+      return { id: e.id, published_at: e.published_at, context: e.context, scores: e.scores, overall: e.overall, recommendation: e.recommendation, strengths: e.strengths, improvements: e.improvements, company_name: e.show_company_name && company ? company : null, source: "recruiter", author_name: null, program: null, readiness: null };
+    });
+  const fromInstructors = state.tables.instructor_evaluations
+    .filter((e) => e.student_id === who.id && e.status === "published")
+    .map((e) => {
+      const author = state.tables.profiles.find((p) => p.id === e.instructor_id);
+      return { id: e.id, published_at: e.published_at, context: e.context, scores: e.scores, overall: e.overall, recommendation: null, strengths: e.strengths, improvements: e.improvements, company_name: null, source: "instructor", author_name: firstNameLastInitial(author?.full_name), program: e.program ?? null, readiness: e.readiness };
+    });
+  return [...fromRecruiters, ...fromInstructors];
+}
+
+// public.my_students (0009): the students assigned to the signed-in verified instructor. Name and program only.
+function myStudents(state: MockState, who: Who): Row[] {
+  if (!who.id || !isVerifiedInstructor(state, who.id)) return [];
+  return state.tables.instructor_assignments
+    .filter((a) => a.instructor_id === who.id)
+    .map((a) => {
+      const p = state.tables.profiles.find((x) => x.id === a.student_id);
+      const name = String(p?.full_name ?? "").trim();
+      return { assignment_id: a.id, student_id: a.student_id, full_name: name || null, program: a.program ?? null, assigned_at: a.created_at };
     });
 }
 
@@ -390,6 +413,97 @@ function patchEvaluation(r: Row, patch: Row, who: Who, trusted: boolean): MockRe
   if (evaluationInvalid(next)) return checkFailed();
   Object.assign(r, next, { id: r.id, created_at: r.created_at, updated_at: now() });
   return null;
+}
+
+// ---- instructor evaluations (0009)
+
+const INSTRUCTOR_CONTEXTS = ["mid_course", "end_of_course", "project_review"];
+const INSTRUCTOR_READINESS = ["ready", "almost_there", "needs_practice"];
+const INSTRUCTOR_DAILY_CAP = 30;
+const PROGRAM_SLUGS = ["vdc-professional-bootcamp", "bim-fundamentals-revit", "revit-architecture", "revit-structure", "revit-mep", "low-voltage-bim", "revit-family-creation", "navisworks-clash-detection", "4d-5d-simulation", "dynamo-for-revit", "bim-management-iso-19650"];
+
+const isVerifiedInstructor = (state: MockState, id: string | null) => {
+  if (!id) return false;
+  const p = state.tables.profiles.find((x) => x.id === id);
+  const i = state.tables.instructor_profiles.find((x) => x.id === id);
+  return p?.account_type === "instructor" && p?.role === "instructor" && i?.verification_status === "approved";
+};
+
+function instructorEvaluationInvalid(r: Row): boolean {
+  const s = r.scores as Record<string, unknown> | null;
+  const keys = s && typeof s === "object" && !Array.isArray(s) ? Object.keys(s) : [];
+  if (keys.length !== 6 || !CRITERIA_KEYS.every((k) => keys.includes(k))) return true;
+  if (!CRITERIA_KEYS.every((k) => Number.isInteger((s as Record<string, unknown>)[k]) && (s as Record<string, number>)[k] >= 1 && (s as Record<string, number>)[k] <= 5)) return true;
+  if (!Number.isInteger(r.overall) || (r.overall as number) < 1 || (r.overall as number) > 5) return true;
+  if (!INSTRUCTOR_CONTEXTS.includes(String(r.context)) || !INSTRUCTOR_READINESS.includes(String(r.readiness)) || !EVALUATION_STATUSES.includes(String(r.status))) return true;
+  if (r.program !== null && r.program !== undefined && !PROGRAM_SLUGS.includes(String(r.program))) return true;
+  for (const k of ["strengths", "improvements", "private_note"]) {
+    if (typeof r[k] !== "string" || (r[k] as string).length > EVALUATION_TEXT_MAX || HTML_TAG.test(r[k] as string)) return true;
+  }
+  const note = r.moderation_note;
+  if (note !== null && note !== undefined && (String(note).length > EVALUATION_TEXT_MAX || HTML_TAG.test(String(note)))) return true;
+  return r.student_id === r.instructor_id;
+}
+const instructorCheckFailed = (): MockResponse => raise('new row for relation "instructor_evaluations" violates check constraint', 400, "23514");
+
+// instructor_evaluations_guard on insert, then the insert policy, then the constraints.
+function insertInstructorEvaluation(state: MockState, input: Row, who: Who, trusted: boolean): { row: Row } | { error: MockResponse } {
+  const at = now();
+  const row: Row = { program: null, strengths: "", improvements: "", private_note: "", status: "submitted", moderation_note: null, moderated_by: null, moderated_at: null, published_at: null, notified_at: null, ...input, id: uuid(state.nextId++), created_at: at, updated_at: at };
+  if (!trusted) {
+    if (!who.id) return { error: deny("permission denied for table instructor_evaluations", 401) };
+    Object.assign(row, { instructor_id: who.id, status: "submitted", moderation_note: null, moderated_by: null, moderated_at: null, published_at: null, notified_at: null });
+    if (!state.tables.instructor_assignments.some((a) => a.instructor_id === who.id && a.student_id === row.student_id)) return { error: raise("this student is not assigned to you") };
+    const recent = state.tables.instructor_evaluations.filter((x) => x.instructor_id === who.id && Date.now() - Date.parse(String(x.created_at)) < 86400_000).length;
+    if (recent >= INSTRUCTOR_DAILY_CAP) return { error: raise(`daily limit of ${INSTRUCTOR_DAILY_CAP} evaluations reached`) };
+    if (!isVerifiedInstructor(state, who.id)) return { error: deny('new row violates row-level security policy for table "instructor_evaluations"') };
+  }
+  if (instructorEvaluationInvalid(row)) return { error: instructorCheckFailed() };
+  if (state.tables.instructor_evaluations.some((x) => x.student_id === row.student_id && x.instructor_id === row.instructor_id && x.context === row.context)) {
+    return { error: raise('duplicate key value violates unique constraint "instructor_evaluations_one_per_context"', 409, "23505") };
+  }
+  return { row };
+}
+
+// instructor_evaluations_guard on update. `r` is already visible and updatable for this caller.
+function patchInstructorEvaluation(r: Row, patch: Row, who: Who, trusted: boolean): MockResponse | null {
+  const next: Row = { ...r, ...patch };
+  if (next.student_id !== r.student_id || next.instructor_id !== r.instructor_id) return raise("the student and the instructor of an evaluation never change");
+  if (!trusted) {
+    next.context = r.context;
+    next.program = r.program;
+    next.notified_at = r.notified_at;
+    if (who.admin) {
+      for (const k of ["scores", "overall", "readiness", "strengths", "improvements", "private_note"]) next[k] = r[k];
+      const changed = next.status !== r.status || (next.moderation_note ?? null) !== (r.moderation_note ?? null);
+      next.moderated_by = changed ? who.id : r.moderated_by;
+      next.moderated_at = changed ? now() : r.moderated_at;
+      if (next.status === "hidden" && !String(next.moderation_note ?? "").trim()) return raise("a note is required to hide an evaluation");
+      next.published_at = next.status === "published" ? (r.published_at ?? now()) : r.published_at;
+    } else {
+      next.status = "submitted";
+      for (const k of ["moderation_note", "moderated_by", "moderated_at", "published_at"]) next[k] = r[k];
+    }
+  }
+  if (instructorEvaluationInvalid(next)) return instructorCheckFailed();
+  Object.assign(r, next, { id: r.id, created_at: r.created_at, updated_at: now() });
+  return null;
+}
+
+// instructor_assignments_guard on insert (the policy already limits writes to the team).
+function insertAssignment(state: MockState, input: Row, who: Who): { row: Row } | { error: MockResponse } {
+  const at = now();
+  const row: Row = { program: null, created_by: who.id, ...input, id: uuid(state.nextId++), created_at: at };
+  const ins = state.tables.profiles.find((x) => x.id === row.instructor_id);
+  const stu = state.tables.profiles.find((x) => x.id === row.student_id);
+  if (!ins || ins.account_type !== "instructor" || ins.role !== "instructor") return { error: raise("an assignment needs an instructor account") };
+  if (!stu || stu.account_type !== "student" || stu.role !== "student") return { error: raise("an assignment needs a student account") };
+  if (row.instructor_id === row.student_id) return { error: raise('new row for relation "instructor_assignments" violates check constraint', 400, "23514") };
+  if (row.program !== null && row.program !== undefined && !PROGRAM_SLUGS.includes(String(row.program))) return { error: raise('new row for relation "instructor_assignments" violates check constraint', 400, "23514") };
+  if (state.tables.instructor_assignments.some((x) => x.instructor_id === row.instructor_id && x.student_id === row.student_id)) {
+    return { error: raise('duplicate key value violates unique constraint "instructor_assignments_unique"', 409, "23505") };
+  }
+  return { row };
 }
 
 function guardRecruiter(state: MockState, before: Row | null, next: Row, who: Who): string | null {
@@ -596,13 +710,13 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
     const trustedWrite = sub === undefined && !me;
 
     if (table === "role_grants") return json(who.superAdmin ? (state.roleGrants ?? []).map((g) => ({ ...g })) : []);
-    const isView = table === "talent_cards" || table === "my_evaluations";
+    const isView = table === "talent_cards" || table === "my_evaluations" || table === "my_students";
     if (isView) {
       // views: read only, never for anonymous visitors (the database revokes them from anon)
       if (!me && !trustedWrite) return deny(`permission denied for view ${table}`, 401);
       if (method !== "GET") return deny(`cannot change view ${table}`, 405);
     }
-    const rows = isView ? (table === "talent_cards" ? talentCards(state, who) : myEvaluations(state, who)) : (state.tables[table] ??= []);
+    const rows = isView ? (table === "talent_cards" ? talentCards(state, who) : table === "my_students" ? myStudents(state, who) : myEvaluations(state, who)) : (state.tables[table] ??= []);
     const { f, order, limit } = parseFilters(sp);
     const accept = headers["accept"] ?? "";
     const prefer = headers["prefer"] ?? "";
@@ -627,6 +741,21 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
       const created: Row[] = [];
       const upsert = prefer.includes("resolution=merge-duplicates");
       for (const r of incoming) {
+        if (table === "instructor_evaluations") {
+          const made = insertInstructorEvaluation(state, r, who, trustedWrite);
+          if ("error" in made) return made.error;
+          rows.push(made.row);
+          created.push(made.row);
+          continue;
+        }
+        if (table === "instructor_assignments") {
+          if (!trustedWrite && !who.admin) return deny('new row violates row-level security policy for table "instructor_assignments"');
+          const made = insertAssignment(state, r, trustedWrite ? { ...who, id: null } : who);
+          if ("error" in made) return made.error;
+          rows.push(made.row);
+          created.push(made.row);
+          continue;
+        }
         if (table === "student_evaluations") {
           const made = insertEvaluation(state, r, who, trustedWrite);
           if ("error" in made) return made.error;
@@ -696,6 +825,17 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
       const patch = (body ?? {}) as Row;
       const changed: Row[] = [];
       for (const r of rows.filter(match)) {
+        if (table === "instructor_evaluations") {
+          if (!trustedWrite && !who.admin && !(r.instructor_id === who.id && r.status === "submitted" && isVerifiedInstructor(state, who.id))) continue;
+          const err = patchInstructorEvaluation(r, patch, who, trustedWrite);
+          if (err) return err;
+          changed.push(r);
+          continue;
+        }
+        if (table === "instructor_assignments" && !trustedWrite) {
+          if (!who.admin) continue; // update policy: the team only
+          if (patch.instructor_id !== undefined || patch.student_id !== undefined) return raise("the instructor and the student of an assignment never change");
+        }
         if (table === "student_evaluations") {
           // update policy: the author while the row is still submitted (and verified), or the team
           if (!trustedWrite && !who.admin && !(r.recruiter_id === who.id && r.status === "submitted" && isVerifiedRecruiter(state, who.id))) continue;
@@ -734,7 +874,7 @@ export function handle(state: MockState, req: MockRequest, opts: MockOptions = {
     }
 
     if (method === "DELETE") {
-      const deletable = (r: Row) => trustedWrite || (who.admin && table !== "student_evaluations") || (table === "applications" && r.user_id === who.id && r.status === "draft");
+      const deletable = (r: Row) => trustedWrite || (who.admin && table !== "student_evaluations" && table !== "instructor_evaluations") || (table === "applications" && r.user_id === who.id && r.status === "draft");
       const gone = rows.filter((r) => match(r) && deletable(r));
       state.tables[table] = rows.filter((r) => !gone.includes(r));
       return prefer.includes("return=minimal") ? { status: 204, text: "" } : json(gone);

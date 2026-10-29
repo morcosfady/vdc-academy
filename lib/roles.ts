@@ -28,6 +28,7 @@ export type Permission =
   // instructors
   | "edit_teaching_profile"
   | "view_own_teaching"
+  | "evaluate_assigned_students" // verified instructors only, enforced in the database
   // recruiters
   | "send_hiring_request"
   | "view_own_hiring_requests"
@@ -43,12 +44,13 @@ export type Permission =
   | "read_inbox"
   | "export_csv"
   | "moderate_evaluations"
+  | "assign_students"
   // super admin only (the owner named the first one: the calendar)
   | "manage_calendar"
   | "manage_admins"
   | "site_settings";
 
-const ADMIN: Permission[] = ["view_admin", "review_applications", "verify_discounts", "manage_users", "verify_recruiters", "verify_instructors", "manage_hiring_requests", "read_inbox", "export_csv", "moderate_evaluations"];
+const ADMIN: Permission[] = ["view_admin", "review_applications", "verify_discounts", "manage_users", "verify_recruiters", "verify_instructors", "manage_hiring_requests", "read_inbox", "export_csv", "moderate_evaluations", "assign_students"];
 
 // TODO(super admin): the owner will list what only the super admin may do. Move those permissions out of ADMIN
 // and into SUPER_ONLY (for example manage_admins, site_settings), then gate the screens with can(). Until then
@@ -58,7 +60,7 @@ const SUPER_ONLY: Permission[] = ["manage_calendar"];
 
 export const PERMISSIONS: Record<Role, readonly Permission[]> = {
   student: ["apply", "view_own_applications", "view_own_evaluations"],
-  instructor: ["edit_teaching_profile", "view_own_teaching"],
+  instructor: ["edit_teaching_profile", "view_own_teaching", "evaluate_assigned_students"],
   recruiter: ["send_hiring_request", "view_own_hiring_requests", "evaluate_students"],
   admin: ADMIN,
   super_admin: [...ADMIN, ...SUPER_ONLY],

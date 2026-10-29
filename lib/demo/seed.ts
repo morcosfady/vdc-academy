@@ -281,6 +281,7 @@ function seedTalent(state: MockState, adminId: string, recruiterIds: string[]) {
       newsletter: false, notes: null, utm: null, turnstile_ok: true,
     });
   });
+  seedTeaching(state, adminId, ids);
   evaluationSeed.forEach((e, n) => {
     const sent = at(e.daysAgo);
     const decided = e.status !== "submitted";
@@ -290,6 +291,48 @@ function seedTalent(state: MockState, adminId: string, recruiterIds: string[]) {
       student_id: ids[e.student], recruiter_id: recruiterIds[e.recruiter], application_id: null, context: e.context,
       scores: Object.fromEntries(CRITERION_ORDER.map((k, i) => [k, e.scores[i]])), overall: e.overall, recommendation: e.rec,
       strengths: e.strengths, improvements: e.improvements, private_note: e.privateNote, show_company_name: e.showCompany,
+      status: e.status, moderation_note: e.hideNote ?? null, moderated_by: decided ? adminId : null, moderated_at: decided ? decidedAt : null,
+      published_at: e.status === "published" ? decidedAt : null, notified_at: e.status === "published" ? decidedAt : null,
+      created_at: sent, updated_at: sent,
+    });
+  });
+}
+
+// Instructor assignments and evaluations (0009). Sample Instructor 02 and 04 are approved; 01 is pending, 03 rejected.
+// `ids` maps the talent students A to E; the demo student is Sample Student 01.
+function seedTeaching(state: MockState, adminId: string, ids: Record<string, string>) {
+  const instructorId = (n: number) => state.users.find((u) => u.email === `instructor${String(n).padStart(2, "0")}@example.com`)?.id;
+  const i2 = instructorId(2);
+  const i4 = instructorId(4);
+  const demo = demoStudentId(state);
+  if (!i2 || !i4 || !demo) return;
+  const roster: [string, string, string | null][] = [
+    [i2, ids.A, "revit-architecture"],
+    [i2, ids.B, "navisworks-clash-detection"],
+    [i2, demo, "bim-fundamentals-revit"],
+    [i4, ids.C, "revit-mep"],
+    [i4, ids.D, "dynamo-for-revit"],
+  ];
+  roster.forEach(([instructor, student, program], n) => {
+    state.tables.instructor_assignments.push({ id: `a5516000-0000-4000-8000-${String(n + 1).padStart(12, "0")}`, instructor_id: instructor, student_id: student, program, created_by: adminId, created_at: at(30 - n) });
+  });
+  type Seed = { instructor: string; student: string; program: string | null; context: string; status: "submitted" | "published" | "hidden"; scores: number[]; overall: number; readiness: string; strengths: string; improvements: string; privateNote: string; hideNote?: string; daysAgo: number };
+  const list: Seed[] = [
+    { instructor: i2, student: ids.A, program: "revit-architecture", context: "end_of_course", status: "published", scores: [4, 4, 5, 4, 5, 4], overall: 4, readiness: "ready", strengths: "Clean, well named families and a clear sheet set. Asks good questions in class.", improvements: "Check the level of detail before you share a model, and keep the browser organization tidy.", privateNote: "Strong candidate for the next advanced cohort.", daysAgo: 8 },
+    { instructor: i2, student: ids.B, program: "navisworks-clash-detection", context: "mid_course", status: "submitted", scores: [3, 4, 3, 4, 5, 3], overall: 4, readiness: "almost_there", strengths: "Finds clashes quickly and explains each one in plain words.", improvements: "Group the clashes by discipline before the report and name the viewpoints.", privateNote: "", daysAgo: 2 },
+    { instructor: i2, student: demo, program: "bim-fundamentals-revit", context: "mid_course", status: "published", scores: [3, 3, 4, 4, 5, 3], overall: 4, readiness: "almost_there", strengths: "Reliable and on time. Good progress on views and sheets.", improvements: "Practice linking models and shared coordinates before the final project.", privateNote: "", daysAgo: 5 },
+    { instructor: i4, student: ids.C, program: "revit-mep", context: "project_review", status: "hidden", scores: [3, 3, 3, 3, 3, 3], overall: 3, readiness: "needs_practice", strengths: "Turned the work in on time.", improvements: "Needs more practice with duct routing.", privateNote: "", hideNote: "Too short to help the student. Ask the instructor to add detail.", daysAgo: 6 },
+    { instructor: i4, student: ids.D, program: "dynamo-for-revit", context: "mid_course", status: "submitted", scores: [4, 3, 4, 3, 4, 4], overall: 4, readiness: "almost_there", strengths: "Builds clear graphs and documents each step.", improvements: "Test the script on a second model before sharing it with the group.", privateNote: "", daysAgo: 1 },
+  ];
+  list.forEach((e, n) => {
+    const sent = at(e.daysAgo);
+    const decided = e.status !== "submitted";
+    const decidedAt = at(Math.max(0, e.daysAgo - 1));
+    state.tables.instructor_evaluations.push({
+      id: `1e5e0000-0000-4000-8000-${String(n + 1).padStart(12, "0")}`,
+      student_id: e.student, instructor_id: e.instructor, program: e.program, context: e.context,
+      scores: Object.fromEntries(CRITERION_ORDER.map((k, i) => [k, e.scores[i]])), overall: e.overall, readiness: e.readiness,
+      strengths: e.strengths, improvements: e.improvements, private_note: e.privateNote,
       status: e.status, moderation_note: e.hideNote ?? null, moderated_by: decided ? adminId : null, moderated_at: decided ? decidedAt : null,
       published_at: e.status === "published" ? decidedAt : null, notified_at: e.status === "published" ? decidedAt : null,
       created_at: sent, updated_at: sent,

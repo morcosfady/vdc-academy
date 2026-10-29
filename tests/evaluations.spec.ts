@@ -219,7 +219,7 @@ test("engine: the student reads only published evaluations, through a view witho
   const mine = call(s.state, s.ana, "GET", "my_evaluations").body as Record<string, unknown>[];
   expect(mine.length).toBe(2);
   expect(JSON.stringify(mine)).not.toContain(PRIVATE);
-  for (const m of mine) expect(Object.keys(m).sort()).toEqual(["company_name", "context", "id", "improvements", "overall", "published_at", "recommendation", "scores", "strengths"]);
+  for (const m of mine) expect(Object.keys(m).sort()).toEqual(["author_name", "company_name", "context", "id", "improvements", "overall", "program", "published_at", "readiness", "recommendation", "scores", "source", "strengths"]);
   expect(mine.find((m) => m.id === pub.id)!.company_name).toBeNull();
   expect(mine.find((m) => m.id !== pub.id)!.company_name).toBe("Build Co");
   expect(call(s.state, s.ben, "GET", "my_evaluations").body).toEqual([]);
