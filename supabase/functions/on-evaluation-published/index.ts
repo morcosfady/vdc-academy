@@ -1,21 +1,26 @@
 // Edge Function `on-evaluation-published`. The admin evaluations page calls it after it publishes an evaluation:
 // supabase.functions.invoke("on-evaluation-published", { body: { evaluation_id } }). Failures are ignored by the page.
 //
+// The body may carry kind: "instructor" for an evaluation written by an instructor (table instructor_evaluations, migration
+// 0009). Without kind, or with kind "recruiter", it is a recruiter evaluation (table student_evaluations), as before.
+//
 // 1. The caller must be signed in and an admin (is_admin(), the same check RLS uses).
 // 2. Load the evaluation with the service role. It must be 'published' and not emailed yet (notified_at is empty).
 // 3. Claim notified_at with a conditional update (a double click sends once), then email the student. A failed send
 //    releases the claim so a retry can send.
 //
-// The email says only that a recruiter evaluated the student's work and links to the dashboard. It names no company and
-// shows no scores, and it never contains the private note: the evaluation itself is read on the dashboard.
+// The recruiter email says only that a recruiter evaluated the student's work and links to the dashboard. It names no
+// company and shows no scores. The instructor email says "Your instructor shared feedback" with the program name and the
+// same link. Neither contains the private note, the instructor's contact details or anything about the team's review: the
+// evaluation itself is read on the dashboard.
 //
 // Secrets: RESEND_API_KEY, EMAIL_FROM, ADMIN_NOTIFY_EMAIL (reply-to), SITE_URL.
 // Returns JSON { ok: true, sent } or { ok: false, error }. Logs never contain names or emails.
 import { fail, ok, preflight } from "../_shared/cors.ts";
 import { adminEmail, getCaller, serviceClient, siteUrl } from "../_shared/clients.ts";
-import { evaluationPublished } from "../_shared/email.ts";
+import { evaluationPublished, instructorEvaluationPublished } from "../_shared/email.ts";
 import { sendEmail } from "../_shared/resend.ts";
-import { firstName, readJson, str, validateEvaluationBody } from "../_shared/validate.ts";
+import { firstName, programName, readJson, str, validateEvaluationBody } from "../_shared/validate.ts";
 
 Deno.serve(async (req) => {
   const pre = preflight(req);
@@ -26,14 +31,17 @@ Deno.serve(async (req) => {
   if (!body.ok) return fail(body.error, 400);
   const parsed = validateEvaluationBody(body.value);
   if (!parsed.ok) return fail(parsed.error, 400);
-  const { evaluation_id: id } = parsed.value;
+  const { evaluation_id: id, kind } = parsed.value;
+  const table = kind === "instructor" ? "instructor_evaluations" : "student_evaluations";
 
   const caller = await getCaller(req);
   if (!caller) return fail("sign in required", 401);
   if (!caller.isAdmin) return fail("admin only", 403);
 
   const db = serviceClient();
-  const { data: row, error } = await db.from("student_evaluations").select("id, student_id, status, notified_at").eq("id", id).maybeSingle();
+  const columns: string = kind === "instructor" ? "id, student_id, status, notified_at, program" : "id, student_id, status, notified_at";
+  const { data, error } = await db.from(table).select(columns).eq("id", id).maybeSingle();
+  const row = data as { id: string; student_id: string; status: string; notified_at: string | null; program?: string | null } | null;
   if (error) {
     console.error("load evaluation failed", error.code ?? "", { id });
     return fail("could not load the evaluation", 500);
@@ -50,7 +58,7 @@ Deno.serve(async (req) => {
 
   // Claim: only while notified_at is still empty and the evaluation is still published.
   const { data: claimed, error: claimError } = await db
-    .from("student_evaluations")
+    .from(table)
     .update({ notified_at: new Date().toISOString() })
     .eq("id", id)
     .eq("status", "published")
@@ -62,14 +70,18 @@ Deno.serve(async (req) => {
   }
   if (!claimed || claimed.length === 0) return fail("this evaluation was already emailed", 409);
 
-  const mail = evaluationPublished({ firstName: firstName(profile?.full_name), accountUrl: siteUrl("/account/#evaluations") });
+  const accountUrl = siteUrl("/account/#evaluations");
+  const mail =
+    kind === "instructor"
+      ? instructorEvaluationPublished({ firstName: firstName(profile?.full_name), program: programName(row.program), accountUrl })
+      : evaluationPublished({ firstName: firstName(profile?.full_name), accountUrl });
   const sent = await sendEmail({ to, subject: mail.subject, html: mail.html, text: mail.text, replyTo: adminEmail() || undefined });
 
   if (!sent) {
-    const { error: release } = await db.from("student_evaluations").update({ notified_at: null }).eq("id", id);
+    const { error: release } = await db.from(table).update({ notified_at: null }).eq("id", id);
     if (release) console.error("release notified_at failed", release.code ?? "", { id });
   }
 
-  console.log("evaluation published notice", { id, sent });
+  console.log("evaluation published notice", { id, kind, sent });
   return ok({ sent });
 });

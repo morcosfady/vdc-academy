@@ -56,4 +56,5 @@ The privacy policy and terms now live in `content/copy-pages.ts` (`pages.privacy
 - [ ] Refund terms and payment or installment policy: the terms still say they are sent with the acceptance message
 - [ ] Data location statement (Supabase, United States, us-east-1) and the list of processors (Supabase, Resend, Cloudflare Turnstile, GitHub Pages); add Google if Google sign-in is turned on
 - [ ] Marketing consent wording (opt-in checkbox) and the unsubscribe route (profile page or reply)
+- [ ] Instructor access sentence (privacy, "How we protect it"): assigned instructors see a student's name and program and write evaluations the team reviews first; they do not see email, phone, documents or application
 - [ ] Whether a Texas or US-wide privacy notice needs extra disclosures (for example a "do not sell" statement) for the expected audience

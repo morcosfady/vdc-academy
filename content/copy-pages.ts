@@ -417,6 +417,7 @@ export const pages = {
         h: "How we protect it",
         p: [
           "Every table uses row level security: your account can read and change only your own rows. Only staff with an admin role can see applications. Uploaded files sit in private buckets and are opened through short-lived links. Passwords are never visible to us. Network addresses are hashed before they are stored.",
+          "Instructors assigned to you by the academy can see your name and program, and write evaluations. The academy team reviews each evaluation before you see it. Instructors do not see your email, phone, documents or application.",
         ],
       },
       {

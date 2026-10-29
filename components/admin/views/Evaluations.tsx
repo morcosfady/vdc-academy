@@ -17,6 +17,7 @@ import { TableSkeleton } from "../Skeleton";
 import { EmptyState, ErrorState } from "../States";
 import { fmtDate, fmtDateTime, sb, unwrap, useLoad } from "../util";
 import { EvaluationBadge } from "../StatusBadge";
+import { InstructorEvaluations, SourceSwitch } from "./InstructorEvaluations";
 
 const c = evaluations.admin;
 const common = adminCopy.common;
@@ -94,7 +95,19 @@ const csvRow = (r: Row): Record<string, unknown> => ({
   ...Object.fromEntries(CRITERIA.map((k) => [`score_${k.key}`, r.scores?.[k.key] ?? ""])),
 });
 
+// Two sources share this screen: recruiter evaluations (below, unchanged) and instructor evaluations (InstructorEvaluations.tsx).
+// The switch is the first thing in the body; ?source=instructors opens the second one.
+type Source = "recruiter" | "instructor";
+
 export function Evaluations() {
+  const [source, setSource] = useState<Source>("recruiter");
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("source") === "instructors") setSource("instructor");
+  }, []);
+  return source === "instructor" ? <InstructorEvaluations onSource={setSource} /> : <RecruiterEvaluations onSource={setSource} />;
+}
+
+function RecruiterEvaluations({ onSource }: { onSource: (s: Source) => void }) {
   const [f, setF] = useState<Filters | null>(null);
   const [draft, setDraft] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -168,6 +181,7 @@ export function Evaluations() {
       actions={<CsvButton name={c.csvName} columns={csvColumns} disabled={!f || data.loading} rows={() => Promise.resolve(filtered.map(csvRow))} />}
     >
       <div className="grid gap-5">
+        <SourceSwitch source="recruiter" onChange={onSource} />
         <div className="grid gap-x-6 gap-y-4 md:grid-cols-[minmax(0,420px)_1fr] md:items-center">
           <Input label={c.search} type="search" value={draft} onChange={(e) => setDraft(e.target.value)} autoComplete="off" data-testid="search" />
         </div>

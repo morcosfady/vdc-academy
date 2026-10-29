@@ -419,3 +419,16 @@ export function evaluationPublished(a: { firstName: string; accountUrl: string }
   };
   return { subject: "A recruiter evaluated your work", ...render(sheet) };
 }
+
+// 11b. Student: an instructor's evaluation was published. Only the program name: no instructor name or contact details, no
+// scores, no private note and nothing about the team's review. The dashboard has the evaluation itself.
+export function instructorEvaluationPublished(a: { firstName: string; program: string; accountUrl: string }): Email {
+  const sheet: Sheet = {
+    tag: "S-130 · FEEDBACK",
+    title: `${a.firstName}, your instructor shared feedback.`,
+    intro: [a.program ? `Your instructor wrote feedback on your work in ${a.program}. It is on your dashboard now.` : "Your instructor wrote feedback on your work. It is on your dashboard now."],
+    button: { label: "Read the feedback", href: a.accountUrl },
+    outro: ["Only the instructors the academy assigned to you can write about your work. Reply to this email if you have a question about it."],
+  };
+  return { subject: "Your instructor shared feedback", ...render(sheet) };
+}
