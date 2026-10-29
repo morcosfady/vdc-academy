@@ -87,9 +87,35 @@ test("card 02 shows the student dashboard at Under review with a pending discoun
   expect(leaks).toEqual([]);
 });
 
-test("register cards: Fill sample data creates a student and a recruiter, confirmed at once", async ({ page }) => {
+test("register card 02 opens the instructor sign-up and no recruiter card is offered", async ({ page }) => {
   const leaks = await noNetworkToSupabase(page);
-  for (const [card, role] of [["Register as a student", "student"], ["Register as a recruiter", "recruiter"]] as const) {
+  await page.goto("demo/");
+  await expect(page.getByRole("button", { name: "Register as a recruiter" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Register as an instructor" }).click();
+  await page.waitForURL(/\/signup\/\?as=instructor/);
+  expect(leaks).toEqual([]);
+});
+
+test("card 06 shows the instructor dashboard pending, and the approved view", async ({ page }) => {
+  const leaks = await noNetworkToSupabase(page);
+  await page.goto("demo/");
+  await page.getByRole("button", { name: "Open the instructor dashboard" }).click();
+  await page.waitForURL(/\/account\/$/);
+  await expect(page.getByText("I-100", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("verification-banner")).toHaveAttribute("data-status", "pending");
+  await expect(page.getByTestId("teaching-card")).toContainText("Sample Instructor 01");
+  await expect(page.getByTestId("cohorts")).toContainText("Coming soon");
+  await page.goto("demo/");
+  await page.getByRole("button", { name: "Approved view" }).click();
+  await page.waitForURL(/\/account\/$/);
+  await expect(page.getByTestId("verification-banner")).toHaveAttribute("data-status", "approved");
+  await expect(page.getByTestId("teaching-card")).toContainText("Sample Instructor 02");
+  expect(leaks).toEqual([]);
+});
+
+test("register card 01: Fill sample data creates a student, confirmed at once", async ({ page }) => {
+  const leaks = await noNetworkToSupabase(page);
+  for (const [card, role] of [["Register as a student", "student"]] as const) {
     await page.goto("demo/");
     await page.getByRole("button", { name: card }).click();
     await page.waitForURL(/\/signup\/\?as=/);

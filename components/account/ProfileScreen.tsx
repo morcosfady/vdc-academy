@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { z } from "@/lib/zod";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
-import { initials, verificationLabel, type Profile, type RecruiterProfile } from "@/lib/db";
+import { initials, verificationLabel, type InstructorProfile, type Profile, type RecruiterProfile } from "@/lib/db";
 import { roleLabel } from "@/lib/roles";
 import { options } from "@/lib/applySchema";
 import {
   ACCOUNT_TYPES,
+  AVAILABILITY,
+  BIO_MAX,
   CAREER_GOALS,
   COMPANY_SIZES,
   COMPANY_TYPES,
@@ -19,9 +21,13 @@ import {
   FORMATS,
   HEARD_FROM,
   HIRING_ROLES,
+  INDUSTRY_YEARS,
+  INSTRUCTOR_SUBJECTS,
+  instructorSchema,
   MIN_AGE,
   REVIT_LEVELS,
   STUDENT_STATUS,
+  TEACHING_YEARS,
   labelOf,
   ownerSchema,
   phoneRule,
@@ -50,7 +56,7 @@ const CHOOSE = "Select one";
 
 // Three shapes of the same screen. Every field required at sign-up stays required here: the database refuses to
 // clear one on a completed profile (profiles_guard / profile_complete in 0005), so the form checks first.
-type Variant = "student" | "recruiter" | "team";
+type Variant = "student" | "recruiter" | "instructor" | "team";
 
 type Values = {
   full_name: string;
@@ -82,11 +88,20 @@ type Values = {
   company_linkedin: string;
   hiring_roles: string[];
   expected_hires: string;
+  // instructors: the teaching row (instructor_profiles); job_title is shared with the recruiter fields above
+  employer: string;
+  industry_years: string;
+  teaching_years: string;
+  subjects: string[];
+  teaching_format: string;
+  availability: string;
+  teaching_linkedin: string;
+  bio: string;
 };
 
 const s = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
-const fromProfile = (p: Profile, r: RecruiterProfile | null): Values => ({
+const fromProfile = (p: Profile, r: RecruiterProfile | null, t: InstructorProfile | null): Values => ({
   full_name: s(p.full_name),
   phone: s(p.phone),
   whatsapp: s(p.whatsapp),
@@ -107,7 +122,7 @@ const fromProfile = (p: Profile, r: RecruiterProfile | null): Values => ({
   linkedin_url: s(p.linkedin_url),
   portfolio_url: s(p.portfolio_url),
   marketing_opt_in: p.marketing_opt_in,
-  job_title: s(r?.job_title),
+  job_title: s(r?.job_title ?? t?.job_title),
   company_name: s(r?.company_name),
   company_website: s(r?.company_website),
   company_type: s(r?.company_type),
@@ -115,6 +130,14 @@ const fromProfile = (p: Profile, r: RecruiterProfile | null): Values => ({
   company_linkedin: s(r?.linkedin_url),
   hiring_roles: r?.hiring_roles ?? [],
   expected_hires: s(r?.expected_hires),
+  employer: s(t?.employer),
+  industry_years: s(t?.industry_years),
+  teaching_years: s(t?.teaching_years),
+  subjects: t?.subjects ?? [],
+  teaching_format: s(t?.teaching_format),
+  availability: s(t?.availability),
+  teaching_linkedin: s(t?.linkedin_url),
+  bio: s(t?.bio),
 });
 
 const opt = (v: string) => (v === CHOOSE || v.trim() === "" ? null : v.trim());
@@ -140,13 +163,14 @@ function collect(results: Issues[], rename: Record<string, string> = {}) {
 function validate(variant: Variant, v: Values) {
   if (variant === "student") return collect([studentSchema.safeParse({ ...v, whatsapp_same: false }), extras.safeParse(v)]);
   if (variant === "recruiter") return collect([recruiterSchema.safeParse({ ...v, linkedin_url: v.company_linkedin })], { linkedin_url: "company_linkedin" });
+  if (variant === "instructor") return collect([instructorSchema.safeParse({ ...v, linkedin_url: v.teaching_linkedin })], { linkedin_url: "teaching_linkedin" });
   return collect([ownerSchema.safeParse(v), teamExtras.safeParse(v)]);
 }
 
 function profilePatch(variant: Variant, v: Values) {
   const t = (x: string) => x.trim();
   const base = { full_name: t(v.full_name), phone: t(v.phone), country: opt(v.country), city: opt(v.city), marketing_opt_in: v.marketing_opt_in };
-  if (variant === "recruiter") return { ...base, heard_from: v.heard_from };
+  if (variant === "recruiter" || variant === "instructor") return { ...base, heard_from: v.heard_from };
   const links = { language: opt(v.language), linkedin_url: opt(v.linkedin_url), portfolio_url: opt(v.portfolio_url), whatsapp: opt(v.whatsapp) };
   if (variant === "team") return { ...base, ...links };
   return {
@@ -178,6 +202,19 @@ const companyPatch = (v: Values) => ({
   expected_hires: v.expected_hires,
 });
 
+// Only the teaching fields: the verification columns are the team's and never leave the browser.
+const teachingPatch = (v: Values) => ({
+  job_title: v.job_title.trim(),
+  employer: v.employer.trim(),
+  industry_years: v.industry_years,
+  teaching_years: v.teaching_years,
+  subjects: v.subjects,
+  teaching_format: v.teaching_format,
+  availability: v.availability,
+  linkedin_url: v.teaching_linkedin.trim(),
+  bio: v.bio.trim(),
+});
+
 const maxDob = () => {
   const d = new Date();
   d.setFullYear(d.getFullYear() - MIN_AGE);
@@ -185,11 +222,11 @@ const maxDob = () => {
 };
 
 export function ProfileScreen() {
-  const { isRecruiter } = useAuth();
+  const { isRecruiter, isInstructor } = useAuth();
   const [deleted, setDeleted] = useState(false);
   if (deleted) return <DeletedScreen />;
   return (
-    <AccountShell sheet={c.sheet} name={c.name} title={c.title} lead={isRecruiter ? c.leadRecruiter : c.lead}>
+    <AccountShell sheet={c.sheet} name={c.name} title={c.title} lead={isInstructor ? account.instructor.profile.lead : isRecruiter ? c.leadRecruiter : c.lead}>
       <Body onDeleted={() => setDeleted(true)} />
     </AccountShell>
   );
@@ -215,8 +252,9 @@ function DeletedScreen() {
 }
 
 function Body({ onDeleted }: { onDeleted: () => void }) {
-  const { user, profile, recruiter, role, isAdmin, isRecruiter, refreshProfile, signOut } = useAuth();
-  const variant: Variant = isAdmin ? "team" : isRecruiter ? "recruiter" : "student";
+  const { user, profile, recruiter, instructor, role, isAdmin, isRecruiter, isInstructor, refreshProfile, signOut } = useAuth();
+  const variant: Variant = isAdmin ? "team" : isInstructor ? "instructor" : isRecruiter ? "recruiter" : "student";
+  const org = variant === "recruiter" || variant === "instructor"; // company and teaching accounts share the short person section
   const [values, setValues] = useState<Values | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
@@ -224,8 +262,8 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
 
   // Fill the form once from the profile; later profile refreshes do not overwrite what the person is typing.
   useEffect(() => {
-    if (profile && !values) setValues(fromProfile(profile, recruiter));
-  }, [profile, recruiter, values]);
+    if (profile && !values) setValues(fromProfile(profile, recruiter, instructor));
+  }, [profile, recruiter, instructor, values]);
 
   useHashScroll(values !== null);
 
@@ -254,6 +292,10 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
       const r = await sb.from("recruiter_profiles").update(companyPatch(values)).eq("id", user.id);
       failed = Boolean(r.error);
     }
+    if (variant === "instructor") {
+      const t = await sb.from("instructor_profiles").update(teachingPatch(values)).eq("id", user.id);
+      failed = Boolean(t.error);
+    }
     if (!failed) {
       const p = await sb.from("profiles").update(profilePatch(variant, values)).eq("id", user.id);
       failed = Boolean(p.error);
@@ -277,6 +319,7 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
     <Input label={required ? req(label) : label} name={k} value={String(values[k] ?? "")} onChange={(ev) => set(k, ev.target.value as never)} error={errors[k]} required={required} {...extra} />
   );
   const pick = (k: keyof Values, label: string, list: Opt[]) => <OptSelect label={req(label)} name={k} options={list} value={String(values[k] ?? "")} onChange={(x) => set(k, x as never)} error={errors[k]} placeholder={c.choose} />;
+  const ti = account.instructor;
   const typeLabel = labelOf(ACCOUNT_TYPES, profile?.account_type) || roleLabel[role];
 
   return (
@@ -297,9 +340,9 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
             <div className="grid gap-7 sm:grid-cols-2">
               {text("full_name", c.fields.full_name, { autoComplete: "name", className: "sm:col-span-2" })}
               {text("phone", c.fields.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
-              {variant !== "recruiter" && text("whatsapp", c.fields.whatsapp, { type: "tel", inputMode: "tel" }, variant === "student")}
+              {!org && text("whatsapp", c.fields.whatsapp, { type: "tel", inputMode: "tel" }, variant === "student")}
               {variant === "student" && <DateField label={req(c.fields.date_of_birth)} name="date_of_birth" value={values.date_of_birth} onChange={(x) => set("date_of_birth", x)} error={errors.date_of_birth} max={maxDob()} />}
-              {variant !== "recruiter" && <Select label={c.fields.language} name="language" options={[CHOOSE, ...options.language]} value={values.language} onChange={(e) => set("language", e.target.value)} />}
+              {!org && <Select label={c.fields.language} name="language" options={[CHOOSE, ...options.language]} value={values.language} onChange={(e) => set("language", e.target.value)} />}
             </div>
           </Panel>
 
@@ -350,7 +393,31 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
             </Panel>
           )}
 
-          {variant !== "recruiter" && (
+          {variant === "instructor" && (
+            <Panel id="teaching" label={ti.profile.section} className="scroll-mt-24">
+              <p className="t-small mb-7 text-muted">{ti.profile.sectionLead}</p>
+              <div className="grid gap-7 sm:grid-cols-2">
+                {text("job_title", ti.fields.job_title, { autoComplete: "organization-title" })}
+                {text("employer", ti.fields.employer, { autoComplete: "organization" })}
+                {text("teaching_linkedin", ti.fields.teaching_linkedin, { type: "url", inputMode: "url" })}
+                {pick("industry_years", ti.fields.industry_years, INDUSTRY_YEARS)}
+                {pick("teaching_years", ti.fields.teaching_years, TEACHING_YEARS)}
+                {pick("teaching_format", ti.fields.teaching_format, FORMATS)}
+                {pick("availability", ti.fields.availability, AVAILABILITY)}
+                <div className="sm:col-span-2">
+                  <CheckGroup legend={ti.fields.subjects} name="subjects" options={INSTRUCTOR_SUBJECTS} value={values.subjects} onChange={(x) => set("subjects", x)} error={errors.subjects} />
+                </div>
+                <div className="sm:col-span-2">
+                  <TextareaField label={req(ti.fields.bio)} name="bio" rows={5} maxLength={BIO_MAX} required value={values.bio} onChange={(e) => set("bio", e.target.value)} error={errors.bio} />
+                  <p className="mono mt-2 text-end !normal-case" aria-live="off">
+                    {ti.profile.bioCount(values.bio.length, BIO_MAX)}
+                  </p>
+                </div>
+              </div>
+            </Panel>
+          )}
+
+          {!org && (
             <Panel label={c.sections.links}>
               <div className="grid gap-7 sm:grid-cols-2">
                 {text("linkedin_url", c.fields.linkedin_url, { type: "url", inputMode: "url" }, false)}
@@ -392,7 +459,25 @@ function Body({ onDeleted }: { onDeleted: () => void }) {
       <aside className="order-first col-span-12 self-start lg:order-none lg:col-span-4 lg:sticky lg:top-24">
         {variant === "student" && <CompletenessMeter profile={profile} className="card p-6" />}
         {variant === "recruiter" && <VerificationCard recruiter={recruiter} />}
+        {variant === "instructor" && <InstructorVerificationCard instructor={instructor} />}
       </aside>
+    </div>
+  );
+}
+
+// Read-only: only the academy team changes an instructor's review.
+function InstructorVerificationCard({ instructor }: { instructor: InstructorProfile | null }) {
+  const status = instructor?.verification_status ?? "pending";
+  const ti = account.instructor;
+  return (
+    <div className="card p-6" data-testid="verification-status" data-status={status}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="mono">{ti.profile.verification}</p>
+        <Tag tone={status === "approved" ? "blueprint" : status === "pending" ? "brass" : "default"}>{verificationLabel[status]}</Tag>
+      </div>
+      <p className="t-small mt-4 text-muted">{ti.banner[status]}</p>
+      {status === "rejected" && instructor?.rejection_note && <p className="t-small mt-3 border-s-2 ps-4 text-text" style={{ borderColor: "var(--err)" }}>{instructor.rejection_note}</p>}
+      <p className="mono mt-5 !normal-case">{ti.profile.verificationNote}</p>
     </div>
   );
 }
