@@ -170,7 +170,7 @@ test("logged-out visit to /account/ goes to the login page with next", async ({ 
   await mockSupabase(page);
   await open(page, "account/");
   await expect(page).toHaveURL(/\/login\/\?next=%2Faccount%2F/);
-  await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Log in", level: 1 })).toBeVisible();
 });
 
 test("seeded student sees the timeline with a dated Submitted step, documents and the application page by id", async ({ page }) => {
@@ -310,10 +310,16 @@ test("header: Log in shows without keys and the login page explains accounts ope
   await a.waitForLoadState("networkidle");
   expect(await a.evaluate(() => localStorage.getItem("vdc-mock"))).toBeNull();
   await expect(a.getByRole("link", { name: "Apply" }).first()).toBeVisible();
-  await a.getByRole("link", { name: "Log in" }).click();
+  await a.getByRole("link", { name: "Log in" }).first().click();
   await a.waitForURL(/\/login\/$/);
+  // the real form is there with a clear Create account button; submitting says accounts are not open yet
+  await expect(a.getByRole("button", { name: "Log in", exact: true })).toBeVisible();
+  await expect(a.getByTestId("login-new").getByRole("link", { name: "Create account" })).toHaveAttribute("href", /\/signup\/$/);
+  await expect(a.getByText("demo", { exact: false })).toHaveCount(0);
+  await a.locator('input[name="email"]').fill("someone@example.com");
+  await a.locator('input[name="password"]').fill("Something1");
+  await a.getByRole("button", { name: "Log in", exact: true }).click();
   await expect(a.getByRole("heading", { name: "Accounts open soon." })).toBeVisible();
-  await expect(a.getByRole("link", { name: "Try sign-up in the demo" })).toHaveAttribute("href", /\/demo\/$/);
   await off.close();
   // 2. A client exists (here the mock stands in for real keys): the link appears with nothing else changed.
   const on = await browser.newContext({ baseURL: base });

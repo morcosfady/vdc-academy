@@ -4,8 +4,9 @@
 export const account = {
   notice: {
     title: "Accounts open soon.",
-    lead: "Log in and Create account switch on when the academy opens accounts. You can try the full sign-up now in the demo, or leave your email and we will tell you when it opens.",
-    demo: "Try sign-up in the demo",
+    lead: "We are finishing account setup. Leave your email and we will tell you the day Log in and Create account open.",
+    back: "Back",
+    banner: "Accounts are not open yet. You can look around, and we will email you the day they open.",
     topic: "Tell me when accounts open",
     button: "Tell me",
   },
@@ -157,8 +158,8 @@ export const account = {
   login: {
     sheet: "S-001",
     name: "Log in",
-    title: "Welcome back.",
-    lead: "Log in to see your application and your documents.",
+    title: "Log in",
+    lead: "Welcome back. Use the email you signed up with.",
     tabs: { password: "Password", magic: "Email me a link" },
     email: "Email",
     password: "Password",
@@ -177,6 +178,9 @@ export const account = {
     or: "or",
     noAccount: "New here?",
     signup: "Create an account",
+    newTitle: "New to VDC Academy?",
+    newLead: "Create an account to apply, follow your application and keep your documents in one place. Recruiters can sign up to hire.",
+    newButton: "Create account",
     errors: {
       email: "Please enter a valid email address.",
       password: "Please enter your password.",

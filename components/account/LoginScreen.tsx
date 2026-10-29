@@ -29,7 +29,7 @@ export function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [phase, setPhase] = useState<"idle" | "sending" | "magicSent">("idle");
+  const [phase, setPhase] = useState<"idle" | "sending" | "magicSent" | "off">("idle");
   const [failure, setFailure] = useState<"" | "invalid" | "unconfirmed" | "noUser" | "generic">("");
   const [resent, setResent] = useState(false);
   const [forgot, setForgot] = useState(false);
@@ -52,7 +52,7 @@ export function LoginScreen() {
     setErrors(errs);
     if (Object.keys(errs).length) return;
     const sb = getSupabase();
-    if (!sb) return;
+    if (!sb) return setPhase("off"); // accounts are not switched on yet: say so, never fail silently
     setFailure("");
     setPhase("sending");
     if (tab === "magic") {
@@ -97,7 +97,7 @@ export function LoginScreen() {
   const shell = (children: React.ReactNode) => <AuthSplit sheet={c.sheet} name={c.name} title={c.title} lead={c.lead} panelLabel="Student sheet · S-001">{children}</AuthSplit>;
 
   if (!ready || user) return shell(<FormSkeleton />);
-  if (!enabled) return shell(<AuthNotice />);
+  if (phase === "off") return shell(<AuthNotice onBack={() => setPhase("idle")} />);
 
   if (phase === "magicSent")
     return shell(
@@ -110,7 +110,9 @@ export function LoginScreen() {
     );
 
   return shell(
-    <div className="grid gap-7">
+    <div className="grid gap-6">
+      {!enabled && <Notice tone="info">{account.notice.banner}</Notice>}
+      <div className="grid gap-7 rounded-[12px] border p-6 md:p-8" style={{ borderColor: "var(--rule)" }}>
       <GoogleButton label={c.google} orLabel={c.or} next={next} />
       <Tabs
         label="Log in method"
@@ -138,7 +140,7 @@ export function LoginScreen() {
               }}
               aria-expanded={forgot}
               aria-controls={forgotId}
-              className="ul-draw justify-self-start pb-0.5 text-[15px] text-muted hover:text-accent-text"
+              className="ul-draw justify-self-end pb-0.5 text-[15px] text-muted hover:text-accent-text"
             >
               {c.forgot}
             </button>
@@ -166,18 +168,12 @@ export function LoginScreen() {
             )}
           </Notice>
         )}
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <Button type="submit" disabled={phase === "sending"} className="sm:min-w-[200px]">
+        <div className="grid">
+          <Button type="submit" disabled={phase === "sending"} className="w-full">
             {phase === "sending" ? (tab === "magic" ? c.magicSending : c.sending) : tab === "magic" ? c.magicSubmit : c.submit}
           </Button>
-          <p className="text-[15px] text-muted">
-            {c.noAccount}{" "}
-            <Link prefetch={false} href={withNext("/signup/", next)} className="ul-draw pb-0.5 font-medium text-text hover:text-accent-text">
-              {c.signup}
-            </Link>
-          </p>
         </div>
-        <LiveStatus>{phase === "sending" ? c.sending : ""}</LiveStatus>
+        <LiveStatus className="sr-only">{phase === "sending" ? c.sending : ""}</LiveStatus>
       </form>
 
       <div id={forgotId} hidden={!forgot} className="rounded-[8px] border p-6" style={{ borderColor: "var(--rule)" }}>
@@ -204,6 +200,17 @@ export function LoginScreen() {
             </Button>
           </form>
         )}
+      </div>
+      </div>
+
+      <div className="grid gap-4 rounded-[12px] bg-paper-2 p-6 md:p-8" data-testid="login-new">
+        <div>
+          <h2 className="!text-[1.125rem] !font-semibold !tracking-normal">{c.newTitle}</h2>
+          <p className="t-small mt-1 text-muted">{c.newLead}</p>
+        </div>
+        <Button href={withNext("/signup/", next)} variant="secondary" className="w-full">
+          {c.newButton}
+        </Button>
       </div>
     </div>,
   );

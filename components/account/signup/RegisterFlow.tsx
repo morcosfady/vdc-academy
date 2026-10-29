@@ -110,7 +110,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [summary, setSummary] = useState(false);
-  const [phase, setPhase] = useState<"form" | "sending" | "sent">("form");
+  const [phase, setPhase] = useState<"form" | "sending" | "sent" | "off">("form");
   const [failure, setFailure] = useState("");
   const [restored, setRestored] = useState(false);
   const [token, setToken] = useState("");
@@ -268,7 +268,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
     }
     if (honeypot.current?.value) return setPhase("sent"); // a bot: pretend, send nothing
     const sb = getSupabase();
-    if (!sb) return setFailure(c.errors.generic);
+    if (!sb) return setPhase("off"); // accounts are not switched on yet
     setPhase("sending");
     setFailure("");
     const consents = { consent_terms: v.consent_terms, consent_contact: v.consent_contact, authorised_confirmed: v.authorised_confirmed };
@@ -363,7 +363,8 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
   );
 
   if (!ready || !loaded) return shell(mode === "signup" ? c.titles.role : o.title, undefined, <FormSkeleton />);
-  if (!enabled) return shell(c.titles.role, c.leads.role, <AuthNotice />);
+  if (!enabled && mode === "onboarding") return shell(c.titles.role, c.leads.role, <AuthNotice />);
+  if (phase === "off") return shell(c.titles.role, c.leads.role, <AuthNotice onBack={() => setPhase("form")} />);
 
   if (phase === "sent")
     return shell(
@@ -403,6 +404,7 @@ export function RegisterFlow({ mode }: { mode: Mode }) {
         else onContinue();
       }}
     >
+      {!enabled && <Notice tone="info">{account.notice.banner}</Notice>}
       <div ref={topRef} tabIndex={-1} className="outline-none">
         <Stepper step={stepIndex + 1} total={steps.length} labels={steps.map((s) => c.steps[s === "details" && effectiveKind === "team" ? "owner" : s])} />
       </div>
