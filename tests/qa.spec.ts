@@ -192,13 +192,20 @@ test("keyboard: dashboard and admin table are reachable and open with Enter", as
   const admin = seedUser(state, "admin@example.com", "demo-password-1", { full_name: "Sample Admin" }, "admin");
   const s1 = seedUser(state, "student01@example.com", "demo-password-1", { full_name: "Sample Student 01" });
   state.tables.applications.push({ id: "aaaaaaaa-0000-4000-8000-000000000001", user_id: s1, status: "submitted", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), submitted_at: new Date().toISOString(), full_name: "Sample Student 01", email: "student01@example.com", programs: ["revit-mep"], discount_type: null, discount_status: "none", discount_percent: 0, country: "USA" });
+  // the student dashboard is checked as a student (the academy team is sent to /admin/ from /account/)
+  const sp = await page.context().newPage();
+  await sp.bringToFront();
+  await mockSupabase(sp, state);
+  await loginAs(sp, state, s1);
+  await sp.goto("account/?mock=1");
+  await sp.waitForLoadState("networkidle");
+  await sp.waitForTimeout(800);
+  await tabTo(sp, (e) => e.tag === "a" && /Edit profile|View/.test(e.text));
+  expect(await focusVisible(sp)).toBe(true);
+  await sp.close();
+  await page.bringToFront();
   await mockSupabase(page, state);
   await loginAs(page, state, admin);
-  await page.goto("account/?mock=1");
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(800);
-  await tabTo(page, (e) => e.tag === "a" && /Start your application/.test(e.text));
-  expect(await focusVisible(page)).toBe(true);
   await page.goto("admin/applications/?mock=1");
   await page.locator('[data-testid="app-row"]').first().waitFor();
   await tabTo(page, (e) => e.tag === "a" && /Sample Student 01|Open/.test(e.text), 80);
