@@ -6,11 +6,13 @@
 -- results table that is returned at the end. Safe to run more than once: the throwaway rows are removed at the
 -- end, and at the start in case an earlier run stopped half way.
 --
--- Requires 0004 to 0008. Checks 16 to 30 cover v9: recruiters, hiring requests, role grants (super admin only after
+-- Requires 0004 to 0009. Checks 16 to 30 cover v9: recruiters, hiring requests, role grants (super admin only after
 -- the email is confirmed) and the rule that onboarding_complete needs every required field. Checks 31 to 49 cover
 -- 0007: the student opt-in, the talent list, evaluations by verified recruiters, moderation, the student-safe view
 -- (no private note) and the daily cap of 20 evaluations per recruiter. Checks 50 to 61 cover 0008: instructors
--- (sign-up metadata, no student data, no self approval, admin approval, program subjects).
+-- (sign-up metadata, no student data, no self approval, admin approval, program subjects). Checks 62 to 67 cover 0009:
+-- instructor assignments (team only), my_students, instructor evaluations (assigned students only, locked after the team
+-- decides) and the student view.
 --
 -- If the `insert into auth.users` below fails on your project, create the three users by hand instead:
 -- Dashboard > Authentication > Users > Add user > Create new user, "Auto confirm user" on, with the emails
@@ -1240,6 +1242,227 @@ begin
     raise notice 'ALL PASS (% checks, including instructors)', (select count(*) from pg_temp.rls_results);
   else
     raise notice '% FAILED of % checks (including instructors)', n, (select count(*) from pg_temp.rls_results);
+  end if;
+end $$;
+
+-- v11 (migration 0009): instructor assignments and evaluations. Its own throwaway users, removed at the end.
+-- Results are recorded after leaving the restricted role (the results table belongs to the test owner).
+do $$
+declare
+  iv uuid; ip uuid; s1 uuid; s2 uuid; ad uuid;
+  c_iv text; c_ip text; c_s1 text; c_s2 text; c_ad text;
+  n int; n2 int; n3 int; ev_n int; ok boolean; ok2 boolean; txt text; ev uuid; st text; pn text;
+  sc jsonb := '{"modeling":4,"coordination":4,"standards":4,"communication":4,"professionalism":4,"portfolio":4}';
+  good text := '"phone":"+1 555 030 0000","country":"USA","city":"Dallas","heard_from":"bay_bim","job_title":"BIM Manager","employer":"Test Company","industry_years":"10-15","teaching_years":"2-5","subjects":["revit-architecture"],"teaching_format":"either","availability":"evenings","linkedin_url":"https://www.linkedin.com/in/test-instructor","bio":"Ten years of BIM delivery on commercial projects and a few years teaching Revit.","consent_terms":true,"consent_contact":true,"info_confirmed":true';
+begin
+  delete from auth.users where email in ('rls-test-ie-ver@example.invalid', 'rls-test-ie-pend@example.invalid', 'rls-test-ie-s1@example.invalid', 'rls-test-ie-s2@example.invalid', 'rls-test-ie-admin@example.invalid');
+
+  insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change)
+  values
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-ie-ver@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      ('{"account_type":"instructor","full_name":"Test Verified Instructor",' || good || '}')::jsonb, now(), now(), '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-ie-pend@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      ('{"account_type":"instructor","full_name":"Test Pending Instructor",' || good || '}')::jsonb, now(), now(), '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-ie-s1@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      '{"account_type":"student","full_name":"Test Student One"}'::jsonb, now(), now(), '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-ie-s2@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      '{"account_type":"student","full_name":"Test Student Two"}'::jsonb, now(), now(), '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', 'rls-test-ie-admin@example.invalid', extensions.crypt('rls-test-password', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+      '{"full_name":"Test Admin"}'::jsonb, now(), now(), '', '', '', '');
+  select id into iv from auth.users where email = 'rls-test-ie-ver@example.invalid';
+  select id into ip from auth.users where email = 'rls-test-ie-pend@example.invalid';
+  select id into s1 from auth.users where email = 'rls-test-ie-s1@example.invalid';
+  select id into s2 from auth.users where email = 'rls-test-ie-s2@example.invalid';
+  select id into ad from auth.users where email = 'rls-test-ie-admin@example.invalid';
+  -- trusted setup (no JWT), like the SQL editor: the team approves one instructor and one account is an admin
+  update public.profiles set role = 'admin' where id = ad;
+  update public.instructor_profiles set verification_status = 'approved' where id = iv;
+  c_iv := json_build_object('sub', iv, 'role', 'authenticated', 'email', 'rls-test-ie-ver@example.invalid')::text;
+  c_ip := json_build_object('sub', ip, 'role', 'authenticated', 'email', 'rls-test-ie-pend@example.invalid')::text;
+  c_s1 := json_build_object('sub', s1, 'role', 'authenticated', 'email', 'rls-test-ie-s1@example.invalid')::text;
+  c_s2 := json_build_object('sub', s2, 'role', 'authenticated', 'email', 'rls-test-ie-s2@example.invalid')::text;
+  c_ad := json_build_object('sub', ad, 'role', 'authenticated', 'email', 'rls-test-ie-admin@example.invalid')::text;
+
+  -- T62. Only the team assigns students; an instructor and a student cannot.
+  begin
+    perform set_config('request.jwt.claims', c_ad, true);
+    set local role authenticated;
+    insert into public.instructor_assignments (instructor_id, student_id, program) values (iv, s1, 'revit-architecture');
+    insert into public.instructor_assignments (instructor_id, student_id) values (ip, s1);
+    select count(*) into n from public.instructor_assignments where instructor_id in (iv, ip);
+    reset role;
+    perform set_config('request.jwt.claims', c_iv, true);
+    set local role authenticated;
+    ok := false;
+    begin insert into public.instructor_assignments (instructor_id, student_id) values (iv, s2); exception when others then ok := true; end;
+    reset role;
+    perform set_config('request.jwt.claims', c_s1, true);
+    set local role authenticated;
+    ok2 := false;
+    begin insert into public.instructor_assignments (instructor_id, student_id) values (iv, s2); exception when others then ok2 := true; end;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('the team assigns students', n = 2, format('assignments=%s', n));
+    perform pg_temp.rls_check('an instructor cannot assign students', ok, format('refused=%s', ok));
+    perform pg_temp.rls_check('a student cannot assign students', ok2, format('refused=%s', ok2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('assignments: team assigns, instructor and student cannot', false, sqlerrm);
+  end;
+
+  -- T63. An assignment needs an instructor and a student account; a duplicate is refused.
+  begin
+    perform set_config('request.jwt.claims', c_ad, true);
+    set local role authenticated;
+    ok := false;
+    begin insert into public.instructor_assignments (instructor_id, student_id) values (s1, s2); exception when others then ok := true; end;
+    ok2 := false;
+    begin insert into public.instructor_assignments (instructor_id, student_id) values (iv, s1); exception when others then ok2 := true; end;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an assignment needs an instructor account', ok, format('refused=%s', ok));
+    perform pg_temp.rls_check('a duplicate assignment is refused', ok2, format('refused=%s', ok2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('assignment rules', false, sqlerrm);
+  end;
+
+  -- T64. A verified instructor sees only their own students, by name and program, through my_students; a pending one sees none;
+  -- neither can read the student's profile.
+  begin
+    perform set_config('request.jwt.claims', c_iv, true);
+    set local role authenticated;
+    select count(*) into n from public.my_students;
+    select full_name into txt from public.my_students limit 1;
+    select count(*) into n2 from public.profiles where id = s1;
+    select count(*) into n3 from public.instructor_assignments;
+    reset role;
+    perform set_config('request.jwt.claims', c_ip, true);
+    set local role authenticated;
+    select count(*) into ev_n from (select 1 from public.my_students) q;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a verified instructor sees only their own student, by name', n = 1 and txt = 'Test Student One', format('rows=%s name=%s', n, txt));
+    perform pg_temp.rls_check('a pending instructor sees no students', ev_n = 0, format('rows=%s', ev_n));
+    perform pg_temp.rls_check('an instructor cannot read the assigned student profile', n2 = 0, format('rows=%s', n2));
+    perform pg_temp.rls_check('an instructor reads only their own assignments', n3 = 1, format('rows=%s', n3));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('my_students', false, sqlerrm);
+  end;
+
+  -- T65. A verified instructor evaluates an assigned student, never an unassigned one; a pending instructor cannot evaluate.
+  begin
+    perform set_config('request.jwt.claims', c_iv, true);
+    set local role authenticated;
+    insert into public.instructor_evaluations (student_id, instructor_id, program, context, scores, overall, readiness, strengths, improvements, private_note, status)
+      values (s1, iv, 'revit-architecture', 'mid_course', sc, 4, 'almost_there', 'Clear work and good questions.', 'Tidy the browser organization.', 'Team only note.', 'published');
+    select id, status into ev, st from public.instructor_evaluations where instructor_id = iv and student_id = s1;
+    ok := false;
+    begin
+      insert into public.instructor_evaluations (student_id, instructor_id, context, scores, overall, readiness) values (s2, iv, 'mid_course', sc, 3, 'ready');
+    exception when others then ok := sqlerrm like '%not assigned%';
+    end;
+    ok2 := false;
+    begin
+      insert into public.instructor_evaluations (student_id, instructor_id, context, scores, overall, readiness) values (s1, iv, 'mid_course', sc, 3, 'ready');
+    exception when others then ok2 := true;
+    end;
+    reset role;
+    perform set_config('request.jwt.claims', c_ip, true);
+    set local role authenticated;
+    n := 0;
+    begin
+      insert into public.instructor_evaluations (student_id, instructor_id, context, scores, overall, readiness) values (s1, ip, 'mid_course', sc, 3, 'ready');
+      n := 1;
+    exception when others then n := 0;
+    end;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('an evaluation is always submitted, whatever the browser sends', st = 'submitted', format('status=%s', st));
+    perform pg_temp.rls_check('an instructor cannot evaluate a student who is not assigned', ok, format('refused=%s', ok));
+    perform pg_temp.rls_check('a second evaluation for the same context is refused', ok2, format('refused=%s', ok2));
+    perform pg_temp.rls_check('a pending instructor cannot evaluate', n = 0, format('inserted=%s', n));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('instructor evaluation rules', false, sqlerrm);
+  end;
+
+  -- T66. The student cannot read the table; the team publishes (a hide needs a note); after that the instructor is locked out.
+  begin
+    perform set_config('request.jwt.claims', c_s1, true);
+    set local role authenticated;
+    select count(*) into n from public.instructor_evaluations;
+    select count(*) into n2 from public.my_evaluations;
+    reset role;
+    perform set_config('request.jwt.claims', c_ad, true);
+    set local role authenticated;
+    ok := false;
+    begin update public.instructor_evaluations set status = 'hidden' where id = ev; exception when others then ok := sqlerrm like '%note is required%'; end;
+    update public.instructor_evaluations set status = 'published' where id = ev;
+    select status into st from public.instructor_evaluations where id = ev;
+    reset role;
+    perform set_config('request.jwt.claims', c_iv, true);
+    set local role authenticated;
+    ok2 := false;
+    begin update public.instructor_evaluations set strengths = 'Changed after publishing.' where id = ev; exception when others then ok2 := true; end;
+    n3 := (select count(*) from public.instructor_evaluations where id = ev and strengths = 'Changed after publishing.');
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a student cannot read the evaluations table', n = 0, format('rows=%s', n));
+    perform pg_temp.rls_check('the student sees nothing before the team publishes', n2 = 0, format('rows=%s', n2));
+    perform pg_temp.rls_check('hiding an evaluation needs a note', ok, format('refused=%s', ok));
+    perform pg_temp.rls_check('the team publishes an evaluation', st = 'published', format('status=%s', st));
+    perform pg_temp.rls_check('after the team decides the instructor cannot change the evaluation', n3 = 0, format('changed=%s refused=%s', n3, ok2));
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('moderation of instructor evaluations', false, sqlerrm);
+  end;
+
+  -- T67. The student reads the published evaluation through my_evaluations (author as first name and initial, no private
+  -- note, no ids); another student and another instructor read nothing.
+  begin
+    perform set_config('request.jwt.claims', c_s1, true);
+    set local role authenticated;
+    select count(*), max(author_name), max(source) into n, txt, pn from public.my_evaluations;
+    reset role;
+    perform set_config('request.jwt.claims', c_s2, true);
+    set local role authenticated;
+    select count(*) into n2 from public.my_evaluations;
+    reset role;
+    perform set_config('request.jwt.claims', c_ip, true);
+    set local role authenticated;
+    select count(*) into n3 from public.instructor_evaluations;
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('a student reads a published instructor evaluation, author shown as first name and initial',
+      n = 1 and txt = 'Test I.' and pn = 'instructor', format('rows=%s author=%s source=%s', n, txt, pn));
+    perform pg_temp.rls_check('another student reads none of it', n2 = 0, format('rows=%s', n2));
+    perform pg_temp.rls_check('another instructor reads none of it', n3 = 0, format('rows=%s', n3));
+    perform pg_temp.rls_check('the student view has no private note, author id or moderation columns',
+      (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'my_evaluations'
+        and column_name in ('private_note', 'instructor_id', 'recruiter_id', 'moderation_note', 'moderated_by', 'status')) = 0, '');
+  exception when others then
+    reset role;
+    perform set_config('request.jwt.claims', '', true);
+    perform pg_temp.rls_check('student view of instructor evaluations', false, sqlerrm);
+  end;
+
+  -- Clean up (cascades to profiles, assignments and evaluations).
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+  delete from auth.users where email in ('rls-test-ie-ver@example.invalid', 'rls-test-ie-pend@example.invalid', 'rls-test-ie-s1@example.invalid', 'rls-test-ie-s2@example.invalid', 'rls-test-ie-admin@example.invalid');
+
+  select count(*) into n from pg_temp.rls_results where not pass;
+  if n = 0 then
+    raise notice 'ALL PASS (% checks, including instructor evaluations)', (select count(*) from pg_temp.rls_results);
+  else
+    raise notice '% FAILED of % checks (including instructor evaluations)', n, (select count(*) from pg_temp.rls_results);
   end if;
 end $$;
 
