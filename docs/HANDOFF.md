@@ -4,7 +4,17 @@ Live: https://morcosfady.github.io/vdc-academy/ (GitHub Pages, static export, re
 Repo (public): https://github.com/morcosfady/vdc-academy
 Folder: `F:\Projects\VDC Academy`. Spec for the redesign: `VDC-Academy-Claude-Code-Prompt.md` (v1) and the v2 Likova prompt.
 
-## v10: student evaluations by recruiters (branch `vdc-evaluations`), read this first
+## v10: calendar + student evaluations (2026-10-28), read this first
+
+Two features, both merged on `main`: the public calendar (below) and recruiter evaluations (next section). The design did not change. Chromium suite on the merged build: 250 passed, 12 skipped (screenshot captures). Demo: 13 scenes (card 10 calendar, 11 to 13 evaluations).
+
+### Calendar (`/calendar/`, sheet `C-100`)
+- Public, no login. Month grid (desktop), agenda (phones, toggle on desktop), "Next up" strip, type filters (S, I, W, D, C tags) and a program filter, event detail modal with Add to calendar (.ics, Google Calendar) and "Download all as .ics". Student dashboard has an Upcoming card; menu and footer link to it.
+- **The 30 events are a SAMPLE** (`content/calendar.ts`, dates generated relative to the build via `NEXT_PUBLIC_CALENDAR_BASE` set in `next.config.ts`). While `CALENDAR_IS_SAMPLE = true` the page shows a "Sample schedule" banner and `noindex`; the sitemap still lists it. To go live: replace `sampleEvents` (or feed `loadEvents`) and set `CALENDAR_IS_SAMPLE = false` (removes the banner and noindex, turns on `Event` JSON-LD for the next 5 non-deadline events).
+- **Later (not built): super admin adds events from the internal dashboard.** The permission `manage_calendar` already exists in `lib/roles.ts` `SUPER_ONLY`. The seam is `loadEvents()` in `lib/calendar.ts` (marked `TODO(admin dashboard)`): select published rows from a `calendar_events` table, fall back to the sample. No migration exists yet (next number is 0008). Suggested table: id, title, type, start, end, all_day, program, format, location, description, link, published, created_by; public select where published, insert/update/delete only for `super_admin` (use `can()` in the UI plus RLS).
+- Tests: `tests/calendar.spec.ts` (22).
+
+## Evaluations (branch merged)
 
 Recruiters whose company the team verified browse students who opted in and write structured evaluations; the team publishes them; students read the published ones. Everything runs on the in-browser mock/demo engine today; the SQL is in `supabase/migrations/0007_evaluations.sql` and its proof is in `supabase/tests/rls_accounts.sql` (checks 31 to 49, **not yet run by CI**: the database job must confirm them, see "Needs CI" below).
 
